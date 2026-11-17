@@ -22,8 +22,11 @@ vast.ai のアカウントは、このプロジェクト以外の作業と共有
 - `destroy` は、label が `cadex-q8-` で始まらないインスタンスへの送信を拒む。
 - `instances` は、他の作業のインスタンスに `[他の作業：触らない]` と付け、SSH の接続先を出さない。
 
-ただ、`launch`・`check`・`stop`・`resume` は `.env` の接続先に送るので、安全装置が効かない。
-`.env` には、`[このプロジェクト]` と表示された行の接続先しか書かない。
+ただ、`launch`・`check`・`resume` は、環境変数 `VAST_SSH_HOST`/`VAST_SSH_PORT`（`.env` より優先）か
+`.env` の接続先に送るので、安全装置が効かない。そこには `[このプロジェクト]` と表示された行の
+接続先しか入れない。複数台を使うときは、`.env` を書き換えずに環境変数で台ごとに渡す。
+`status`・`pull`・`stop` は、その回を起動した接続先（`run.json` の `host`/`port`）に送る。
+`sweep` は、label が `cadex-q8-` でない台には何もしない。
 
 それ以外のインスタンスには、使う・SSH する・`launch`/`stop`/`resume` する・`destroy` する、の
 どれもしない。**流用を依頼者に提案することもしない。** 必要なら新しく借りる。
@@ -38,15 +41,21 @@ vast.ai の Web コンソールや、公式の `vastai` コマンドで直接操
 
 ## 課金の前に（毎回）
 
-1. **smoke を先に回す**（`configs/train_smoke.json`）。秒/反復を実測し、その値で本番を見積もる。
-   設定ファイルの見積りの係数は仮の値。
-2. `offers` と `estimate` の結果から、次を **依頼者に示し、明示の承認を得る**。
-   - GPU の種別と台数
-   - $/h
-   - 推定時間と推定総額
-   - ディスク容量
-   - 破棄するまで課金が続くこと
-3. 承認は、示した1回の `create --yes` にだけ有効。オファーや設定を変えたら、もう一度示す。
+1. **見積りは実測の秒/反復で出す。smoke では出さない。** 10 反復の smoke は時間のほとんどが
+   JIT コンパイルで、実際の約7倍に出た（4.1 対 0.55 秒/反復）。
+   - 今の設定（8192 envs、128-64、RTX 4090）の実測は約 0.55 秒/反復＝1000 反復で約 550 秒。
+     設定の `estimate.seconds_per_iteration` は 0.6。
+   - 設定や GPU が変わったら、本番の最初の数十反復の `progress.json` で `estimate --from-progress` する。
+   - smoke を回すのは、イメージか学習器か送り方を変えたときだけ（経路と GPU の確認）。
+     本番の前に毎回はさまない。
+2. 借りる前に、次を **依頼者に示す**。
+   - GPU の種別と台数、$/h、推定時間と推定総額、ディスク容量、破棄するまで課金が続くこと
+3. 承認の取り方は、依頼者の言葉で決まる。
+   - **予算の上限と GPU 選びの委任がある**（例「$100 まで使っていい、GPU は任せる」）:
+     その範囲の `create --yes` は承認済み。2 を報告として伝えて進めてよい。
+     ただし、これまでの分を含めた累計が予算を超えそうなら、止まって聞く。
+   - それ以外: 明示の承認を得る。承認は示した1回の `create --yes` にだけ有効。
+     オファーや設定を変えたら、もう一度示す。
 4. `create` は先に `--yes` なしで送り（dry-run）、送る中身を確かめる。
    タイムアウトしたら再送せず、`instances` で作られていないかを確かめる。
 
@@ -83,19 +92,30 @@ curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" \
 
 ## 流れ
 
+複数回（学習シード違い、機体違い）は、**1回1台で並べる**。1回約 550 秒なので、10回なら
+10台で約30分、1台なら約2時間。費用は台数でほとんど変わらない（台×時間が同じ）。
+
 | 段階 | コマンド | 確かめること |
 |---|---|---|
 | 一覧（読むだけ） | `instances` | `[このプロジェクト]` の行だけを扱う |
-| 探す | `offers --config configs/train_smoke.json` | GPU・$/h・推定総額 |
-| 借りる | `create --config … --offer <id>` → 承認 → `--yes` | label が `cadex-q8-…`、ID を控える |
-| 接続先 | `instances` → `.env` の `VAST_SSH_HOST` と `VAST_SSH_PORT` | `[このプロジェクト]` の行の接続先だけ |
-| 箱の確認 | `check --config …` | `backend gpu`、学習器の sha256 が一致 |
-| 起動 | `launch --config … --dry-run` → `launch` | run_id を控える |
-| 監視 | `status <run_id> --watch` | gpu か、報酬と sigma、残り時間 |
-| 回収 | `pull <run_id>` | sha256 の一致、device=gpu |
-| 片付け | `destroy <自分のID>` → `--yes` → `instances` | 一覧から消えた。stop ではなく destroy |
+| 探して借りる | `create --config configs/train_full.json --count N`（dry-run）→ `--yes` | 検索の直後に安い順に借りる。label が `cadex-q8-…`、ID を控える |
+| 回す（複数回） | `sweep --config A --config B --seeds 0-4 --instance <ID> …`（`--dry-run` で計画）→ `--destroy-when-done` | 起動待ち・GPU 確認・起動・監視・回収・失敗の再投入・破棄まで行う。数十分かかるので、ログをファイルに出して裏で回す |
+| 1回だけ | `VAST_SSH_HOST=… VAST_SSH_PORT=… check` → `launch [--seed N --run-id …]` → `status <run_id> --watch` → `pull <run_id>` | `backend gpu`、学習器の sha256、受領書の device=gpu、sha256 の三者一致 |
+| 残す | `q8.training.archive_run(artifacts/runs/vastai/<run>, artifacts/training/<run>)` | 接続先と pid は落ちる。比べるなら `scripts/compare_seeds.py` |
+| 片付け | `instances` で自分の ID が消えたか。残っていれば `destroy <自分のID>` → `--yes` | stop ではなく destroy |
 
-回収した結果を残す方法は `q8-artifacts-and-publishing` を参照（`artifacts/runs/` は Git の追跡外）。
+借りるときの注意（2026-11-17 に実際に起きたこと）:
+
+- **`offers` の表を見てから `--offer <id>` で借りると、id が無効になっていることが多い**（HTTP 400
+  `no_such_ask`）。`--count` を使う。
+- **回線は 1 Gbps 以上**（設定の `min_inet_down_mbps`）。遅い台はイメージの取得が30分以上終わらなかった。
+  表示の速さは保証ではないので、急ぐときは1〜2台多めに借り、起動の早い台を使う（`sweep` は
+  起動しない台を `--boot-timeout` で退かせ、余った台も列が空になれば退かせる）。
+- **GPU が壊れた台がある**（`check` で `cuInit` が `CUDA_ERROR_UNKNOWN`）。`sweep` は退かせる。
+  借り直すときは `--exclude-machine <machine_id>` で同じマシンを外す。
+- 作った直後の台は、数十秒ほど一覧に出ないことがある。消えたと決めつけない。
+
+回収した結果を Git に残す方法は `q8-artifacts-and-publishing` を参照（`artifacts/runs/` は Git の追跡外）。
 
 ## 言い訳と現実
 
@@ -104,7 +124,10 @@ curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" \
 | 「急ぎなので、動いている箱を使えば早い」 | 他人の学習を壊す。新しく借りても数分で済む |
 | 「依頼者が既存を使っていいと言った」 | ID の名指しが無ければ許可ではない。存在を伝えるだけにする |
 | 「流用してよいか聞くだけなら問題ない」 | 提案すること自体が、別作業を壊す選択肢を差し出している。聞かずに新しく借りる |
-| 「見積りは設定の係数で十分」 | 係数は仮の値で、実測と数倍違うことがある。smoke で測る |
+| 「見積りのために smoke を先に回す」 | smoke はほぼコンパイルの時間で、約7倍に出る。本番の実測（約 0.55 秒/反復）か、本番の最初の数十反復で見積もる |
+| 「予算を任されたが、念のため create の前に承認を取り直す」 | 委任された範囲なら承認済み。構成と見積りは伝えて進める。累計が予算を超えそうなときだけ聞く |
+| 「1台で順に回せば管理が楽」 | 費用は同じで時間が台数分の1になる。`sweep` が管理する |
+| 「表で選んだオファーの id で借りる」 | 数分で無効になる。`create --count` で検索の直後に借りる |
 | 「前に承認をもらった」 | 承認はその1回の create だけに有効 |
 | 「CLI が拒んだので、公式の vastai コマンドで消す」 | 拒んだのは、他の作業のものだから。回避しない |
 | 「片付けは stop でいい」 | 停止中もストレージに課金される。回収を確かめてから destroy |
@@ -118,3 +141,5 @@ curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" \
 - `.env` の中身を表示しようとしている
 - タグの実在を確かめずに `--image` を書こうとしている
 - `pull` の検証が終わる前に `destroy` しようとしている
+- 本番の見積りに smoke の時間を使おうとしている
+- 複数台を使うのに `.env` の接続先を書き換えようとしている（環境変数で台ごとに渡す）
