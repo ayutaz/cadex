@@ -1,0 +1,14 @@
+# uvの仮想環境
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# 大きな生成物（再生成できるもの）
+artifacts/runs/
+artifacts/videos/*.mp4
+artifacts/tmp/
+# 認証情報
+.env
+*.pem
+# 製造用STLは scripts/build_robot.py で再生成できる（1機体 約19 MB）。STEPはコミットする
+robot/meshes/*/*.stl

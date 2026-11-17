@@ -1,0 +1,18 @@
+{
+  "_note": "価格は日本の通販（Amazon/AliExpress/秋月電子など）での一般的な目安。2026-11 時点で未確認の推定値。購入前に必ず確認すること。",
+  "currency": "JPY",
+  "items": {
+    "servo/mg90s": {"name": "TowerPro MG90S（金属ギア・マイクロサーボ、180度）", "unit_price": 450, "status": "推定", "note": "互換品が多い。純正品は約800円"},
+    "servo/sg90": {"name": "TowerPro SG90（樹脂ギア・マイクロサーボ、180度）", "unit_price": 300, "status": "推定"},
+    "servo_horn/mg90s-cross": {"name": "十字ホーン（サーボ付属品）", "unit_price": 0, "status": "付属"},
+    "bolt/m2x10-socket": {"name": "M2x10 六角穴付きボルト", "unit_price": 10, "status": "推定"},
+    "standin/esp32s3": {"name": "ESP32-S3-DevKitC-1 互換ボード（N8R2 など）", "unit_price": 1800, "status": "推定"},
+    "standin/imu": {"name": "IMU（MPU-6050 GY-521 / ICM-42688 などのブレークアウト）", "unit_price": 500, "status": "推定"},
+    "standin/battery": {"name": "電池（未定。仮置きの質量のみ）", "unit_price": 0, "status": "未定"},
+    "extra/horn_screw": {"name": "ホーン固定ネジ（サーボ付属）", "unit_price": 0, "status": "付属"},
+    "extra/self_tap_m2x6": {"name": "M2x6 タッピングネジ（ホーンと脚リンクの固定、1関節2本）", "unit_price": 5, "status": "推定"},
+    "extra/wiring": {"name": "ジャンパー線・ピンヘッダ・ユニバーサル基板", "unit_price": 500, "status": "推定"},
+    "filament/pla": {"name": "PLAフィラメント（1 kg 約2,500円）", "unit_price_per_g": 2.5, "status": "推定"},
+    "filament/tpu": {"name": "TPU 95A フィラメント（1 kg 約4,000円）", "unit_price_per_g": 4.0, "status": "推定"}
+  }
+}

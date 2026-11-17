@@ -1,0 +1,660 @@
+{
+  "variant": "base",
+  "cadex_project": "~/cadex-projects/quadruped8",
+  "accepted_revision": "cc4c18a2dc216204984dfa4ccc3891ef957bc43d0de44a2251375ce3bc63f072",
+  "design_script": "robot/design/quadruped8.py",
+  "params": {
+    "body_length": 110.0,
+    "body_width": 64.0,
+    "body_height": 24.0,
+    "hip_x": 42.0,
+    "thigh_length": 45.0,
+    "shin_length": 50.0,
+    "stand_hip_deg": 30.0,
+    "wall": 2.0,
+    "link_thickness": 6.5,
+    "clearance": 0.5,
+    "joint_gap": 1.0,
+    "hub_radius": 12.5,
+    "screw_hole": 2.2,
+    "foot_radius": 6.0,
+    "pla_density": 800.0,
+    "tpu_density": 1200.0,
+    "battery_mass_g": 30.0,
+    "front_hip_min": -45.0,
+    "front_hip_max": 20.0,
+    "rear_hip_min": -35.0,
+    "rear_hip_max": 45.0,
+    "knee_min": -60.0,
+    "knee_max": 45.0,
+    "servo_sg90": 0.0,
+    "rated_fraction": 0.4,
+    "armature": 20.0
+  },
+  "units": "mm, deg, g, N*mm（表記のないものはSI）",
+  "servo": {
+    "stall_torque_nmm": 176.5,
+    "rated_torque_nmm_estimate": 70.6,
+    "source": "CadexCatalog.py の SERVOS（TowerPro公表値 4.8 V）。連続定格は失速の40%とした推定"
+  },
+  "physics": {
+    "total_mass_g": 275.2,
+    "mass_by_group_g": {
+      "battery": 30.0,
+      "electronics": 11.0,
+      "hardware": 2.68,
+      "printed_pla": 120.0,
+      "printed_tpu": 4.34,
+      "servo": 107.2
+    },
+    "com_m": [
+      -0.00863,
+      0.00016,
+      0.07336
+    ],
+    "com_height_mm": 73.4,
+    "feet_xy_mm": {
+      "lf": [
+        42.0,
+        43.8
+      ],
+      "rf": [
+        42.0,
+        -43.8
+      ],
+      "lh": [
+        -42.0,
+        43.8
+      ],
+      "rh": [
+        -42.0,
+        -43.8
+      ]
+    },
+    "support_margin_mm": 33.4,
+    "leg": {
+      "thigh_mm": 45.0,
+      "shin_mm": 50.0,
+      "stand_hip_deg": 30.0,
+      "stand_shin_deg": -26.74
+    },
+    "static_estimate": {
+      "4脚支持（立位）": {
+        "load_per_foot_n": 0.675,
+        "worst_joint_torque_nmm": 15.2,
+        "stall_ratio": 0.086,
+        "rated_ratio": 0.215
+      },
+      "3脚支持（ウォーク）": {
+        "load_per_foot_n": 0.9,
+        "worst_joint_torque_nmm": 20.2,
+        "stall_ratio": 0.115,
+        "rated_ratio": 0.287
+      },
+      "2脚支持（トロット）": {
+        "load_per_foot_n": 1.35,
+        "worst_joint_torque_nmm": 30.4,
+        "stall_ratio": 0.172,
+        "rated_ratio": 0.43
+      }
+    },
+    "sim_hold": {
+      "seconds": 2.0,
+      "body_drop_mm": 0.25,
+      "tilt_deg": 0.074,
+      "mean_abs_torque_nmm": {
+        "hip_lf": 6.1,
+        "knee_lf": 11.66,
+        "hip_rf": 6.09,
+        "knee_rf": 11.55,
+        "hip_lh": 6.41,
+        "knee_lh": 18.62,
+        "hip_rh": 6.4,
+        "knee_rh": 18.51
+      },
+      "worst_stall_ratio": 0.105,
+      "worst_rated_ratio": 0.264
+    },
+    "note": "静力学の見積りは脚の質量と慣性力を無視した下限。MuJoCoの保持は位置サーボの比例帯（5度で失速トルク）を含む。いずれも実機で未検証。"
+  },
+  "clearance": {
+    "source": "cadex clearance / clearance --sweep（OCCTの厳密形状で計測）",
+    "thresholds": {
+      "minimum_gap_mm": 0.1,
+      "maximum_common_volume_mm3": 1e-06
+    },
+    "static_pairs": 595,
+    "static_problems": [],
+    "sweep_status": "complete",
+    "joints": [
+      {
+        "joint": "hip_lf",
+        "status": "complete",
+        "range_degrees": [
+          -45.0,
+          20.0
+        ],
+        "step": 5.0,
+        "samples": 14,
+        "pairs_moving": 174,
+        "pairs_culled": 163,
+        "contacts": []
+      },
+      {
+        "joint": "knee_lf",
+        "status": "complete",
+        "range_degrees": [
+          -60.0,
+          45.0
+        ],
+        "step": 5.0,
+        "samples": 22,
+        "pairs_moving": 96,
+        "pairs_culled": 92,
+        "contacts": []
+      },
+      {
+        "joint": "hip_rf",
+        "status": "complete",
+        "range_degrees": [
+          -45.0,
+          20.0
+        ],
+        "step": 5.0,
+        "samples": 14,
+        "pairs_moving": 174,
+        "pairs_culled": 165,
+        "contacts": []
+      },
+      {
+        "joint": "knee_rf",
+        "status": "complete",
+        "range_degrees": [
+          -60.0,
+          45.0
+        ],
+        "step": 5.0,
+        "samples": 22,
+        "pairs_moving": 96,
+        "pairs_culled": 92,
+        "contacts": []
+      },
+      {
+        "joint": "hip_lh",
+        "status": "complete",
+        "range_degrees": [
+          -35.0,
+          45.0
+        ],
+        "step": 5.0,
+        "samples": 17,
+        "pairs_moving": 174,
+        "pairs_culled": 164,
+        "contacts": []
+      },
+      {
+        "joint": "knee_lh",
+        "status": "complete",
+        "range_degrees": [
+          -60.0,
+          45.0
+        ],
+        "step": 5.0,
+        "samples": 22,
+        "pairs_moving": 96,
+        "pairs_culled": 92,
+        "contacts": []
+      },
+      {
+        "joint": "hip_rh",
+        "status": "complete",
+        "range_degrees": [
+          -35.0,
+          45.0
+        ],
+        "step": 5.0,
+        "samples": 17,
+        "pairs_moving": 174,
+        "pairs_culled": 164,
+        "contacts": []
+      },
+      {
+        "joint": "knee_rh",
+        "status": "complete",
+        "range_degrees": [
+          -60.0,
+          45.0
+        ],
+        "step": 5.0,
+        "samples": 22,
+        "pairs_moving": 96,
+        "pairs_culled": 92,
+        "contacts": []
+      }
+    ],
+    "self_collision_free": true
+  },
+  "printability": {
+    "bed_mm": [
+      220.0,
+      220.0,
+      250.0
+    ],
+    "parts": {
+      "chassis": {
+        "material": "PLA",
+        "bbox_mm": [
+          110.0,
+          64.0,
+          8.6
+        ],
+        "solid_volume_cm3": 22.3,
+        "fits_bed": true,
+        "triangles": 2084
+      },
+      "cover": {
+        "material": "PLA",
+        "bbox_mm": [
+          110.0,
+          64.0,
+          15.4
+        ],
+        "solid_volume_cm3": 48.97,
+        "fits_bed": true,
+        "triangles": 3952
+      },
+      "foot_lf": {
+        "material": "TPU",
+        "bbox_mm": [
+          11.998,
+          11.998,
+          12.0
+        ],
+        "solid_volume_cm3": 0.9,
+        "fits_bed": true,
+        "triangles": 26718
+      },
+      "foot_lh": {
+        "material": "TPU",
+        "bbox_mm": [
+          11.998,
+          11.998,
+          12.0
+        ],
+        "solid_volume_cm3": 0.9,
+        "fits_bed": true,
+        "triangles": 26718
+      },
+      "foot_rf": {
+        "material": "TPU",
+        "bbox_mm": [
+          11.998,
+          11.998,
+          12.0
+        ],
+        "solid_volume_cm3": 0.9,
+        "fits_bed": true,
+        "triangles": 26718
+      },
+      "foot_rh": {
+        "material": "TPU",
+        "bbox_mm": [
+          11.998,
+          11.998,
+          12.0
+        ],
+        "solid_volume_cm3": 0.9,
+        "fits_bed": true,
+        "triangles": 26718
+      },
+      "shin_lf": {
+        "material": "PLA",
+        "bbox_mm": [
+          39.167,
+          6.5,
+          58.811
+        ],
+        "solid_volume_cm3": 5.0,
+        "fits_bed": true,
+        "triangles": 22675
+      },
+      "shin_lh": {
+        "material": "PLA",
+        "bbox_mm": [
+          39.167,
+          6.5,
+          58.811
+        ],
+        "solid_volume_cm3": 5.0,
+        "fits_bed": true,
+        "triangles": 22675
+      },
+      "shin_rf": {
+        "material": "PLA",
+        "bbox_mm": [
+          39.167,
+          6.5,
+          58.811
+        ],
+        "solid_volume_cm3": 5.0,
+        "fits_bed": true,
+        "triangles": 22675
+      },
+      "shin_rh": {
+        "material": "PLA",
+        "bbox_mm": [
+          39.167,
+          6.5,
+          58.811
+        ],
+        "solid_volume_cm3": 5.0,
+        "fits_bed": true,
+        "triangles": 22675
+      },
+      "thigh_lf": {
+        "material": "PLA",
+        "bbox_mm": [
+          53.723,
+          30.9,
+          75.3
+        ],
+        "solid_volume_cm3": 14.68,
+        "fits_bed": true,
+        "triangles": 14616
+      },
+      "thigh_lh": {
+        "material": "PLA",
+        "bbox_mm": [
+          53.723,
+          30.9,
+          75.3
+        ],
+        "solid_volume_cm3": 14.68,
+        "fits_bed": true,
+        "triangles": 14616
+      },
+      "thigh_rf": {
+        "material": "PLA",
+        "bbox_mm": [
+          53.723,
+          30.9,
+          75.3
+        ],
+        "solid_volume_cm3": 14.68,
+        "fits_bed": true,
+        "triangles": 14616
+      },
+      "thigh_rh": {
+        "material": "PLA",
+        "bbox_mm": [
+          53.723,
+          30.9,
+          75.3
+        ],
+        "solid_volume_cm3": 14.68,
+        "fits_bed": true,
+        "triangles": 14616
+      }
+    },
+    "checks": {
+      "all_parts_fit_bed": true,
+      "wall_at_least_4_perimeters": true,
+      "link_plate_at_least_5mm": true,
+      "servo_pocket_clearance_mm": 0.5
+    },
+    "assumptions": [
+      "肉厚は設計パラメータの値で判定（形状全体の最小肉厚を計測したものではない）",
+      "張り出し（オーバーハング）は未計測。印刷向き: シャーシは底面、カバーは上面を下、脚リンクは板面を下",
+      "サーボ収納部のすきま 0.5 mm は一般的なFDMの目安。実機の試し刷りで要調整"
+    ]
+  },
+  "joints": {
+    "hip_lf": [
+      -45.0,
+      20.0
+    ],
+    "knee_lf": [
+      -60.0,
+      45.0
+    ],
+    "hip_rf": [
+      -45.0,
+      20.0
+    ],
+    "knee_rf": [
+      -60.0,
+      45.0
+    ],
+    "hip_lh": [
+      -35.0,
+      45.0
+    ],
+    "knee_lh": [
+      -60.0,
+      45.0
+    ],
+    "hip_rh": [
+      -35.0,
+      45.0
+    ],
+    "knee_rh": [
+      -60.0,
+      45.0
+    ]
+  },
+  "timings_s": {
+    "build_s": 5.3,
+    "clearance_s": 23.1
+  },
+  "files": {
+    "meshes": "robot/meshes/base",
+    "mjcf": "robot/mjcf/base/model-model.xml",
+    "visual_mjcf": "robot/mjcf/base/visual.xml",
+    "task": []
+  },
+  "bom": {
+    "purchased": [
+      {
+        "item": "bolt/m2x10-socket",
+        "name": "M2x10 六角穴付きボルト",
+        "qty": 2,
+        "unit_price_jpy": 10,
+        "cost_jpy": 20,
+        "price_status": "推定",
+        "components": [
+          "c_body_bolt_0",
+          "c_body_bolt_1"
+        ]
+      },
+      {
+        "item": "extra/self_tap_m2x6",
+        "name": "M2x6 タッピングネジ（ホーンと脚リンクの固定、1関節2本）",
+        "qty": 16,
+        "unit_price_jpy": 5,
+        "cost_jpy": 80,
+        "price_status": "推定",
+        "components": []
+      },
+      {
+        "item": "extra/wiring",
+        "name": "ジャンパー線・ピンヘッダ・ユニバーサル基板",
+        "qty": 1,
+        "unit_price_jpy": 500,
+        "cost_jpy": 500,
+        "price_status": "推定",
+        "components": []
+      },
+      {
+        "item": "servo/mg90s",
+        "name": "TowerPro MG90S（金属ギア・マイクロサーボ、180度）",
+        "qty": 8,
+        "unit_price_jpy": 450,
+        "cost_jpy": 3600,
+        "price_status": "推定",
+        "components": [
+          "c_hip_servo_lf",
+          "c_knee_servo_lf",
+          "c_hip_servo_rf",
+          "c_knee_servo_rf",
+          "c_hip_servo_lh",
+          "c_knee_servo_lh",
+          "c_hip_servo_rh",
+          "c_knee_servo_rh"
+        ]
+      },
+      {
+        "item": "servo_horn/mg90s-cross",
+        "name": "十字ホーン（サーボ付属品）",
+        "qty": 8,
+        "unit_price_jpy": 0,
+        "cost_jpy": 0,
+        "price_status": "付属",
+        "components": [
+          "c_hip_horn_lf",
+          "c_knee_horn_lf",
+          "c_hip_horn_rf",
+          "c_knee_horn_rf",
+          "c_hip_horn_lh",
+          "c_knee_horn_lh",
+          "c_hip_horn_rh",
+          "c_knee_horn_rh"
+        ]
+      },
+      {
+        "item": "standin/battery",
+        "name": "電池（未定。仮置きの質量のみ）",
+        "qty": 1,
+        "unit_price_jpy": 0,
+        "cost_jpy": 0,
+        "price_status": "未定",
+        "components": [
+          "c_bat"
+        ]
+      },
+      {
+        "item": "standin/esp32s3",
+        "name": "ESP32-S3-DevKitC-1 互換ボード（N8R2 など）",
+        "qty": 1,
+        "unit_price_jpy": 1800,
+        "cost_jpy": 1800,
+        "price_status": "推定",
+        "components": [
+          "c_esp"
+        ]
+      },
+      {
+        "item": "standin/imu",
+        "name": "IMU（MPU-6050 GY-521 / ICM-42688 などのブレークアウト）",
+        "qty": 1,
+        "unit_price_jpy": 500,
+        "cost_jpy": 500,
+        "price_status": "推定",
+        "components": [
+          "c_imu"
+        ]
+      },
+      {
+        "item": "filament/pla",
+        "name": "PLAフィラメント（1 kg 約2,500円）",
+        "qty": "120.0 g",
+        "unit_price_jpy": 2.5,
+        "cost_jpy": 300,
+        "price_status": "推定",
+        "components": []
+      },
+      {
+        "item": "filament/tpu",
+        "name": "TPU 95A フィラメント（1 kg 約4,000円）",
+        "qty": "4.3 g",
+        "unit_price_jpy": 4.0,
+        "cost_jpy": 17,
+        "price_status": "推定",
+        "components": []
+      }
+    ],
+    "printed": [
+      {
+        "part": "chassis",
+        "material": "PLA",
+        "qty": 1
+      },
+      {
+        "part": "cover",
+        "material": "PLA",
+        "qty": 1
+      },
+      {
+        "part": "foot_lf",
+        "material": "TPU",
+        "qty": 1
+      },
+      {
+        "part": "foot_lh",
+        "material": "TPU",
+        "qty": 1
+      },
+      {
+        "part": "foot_rf",
+        "material": "TPU",
+        "qty": 1
+      },
+      {
+        "part": "foot_rh",
+        "material": "TPU",
+        "qty": 1
+      },
+      {
+        "part": "shin_lf",
+        "material": "PLA",
+        "qty": 1
+      },
+      {
+        "part": "shin_lh",
+        "material": "PLA",
+        "qty": 1
+      },
+      {
+        "part": "shin_rf",
+        "material": "PLA",
+        "qty": 1
+      },
+      {
+        "part": "shin_rh",
+        "material": "PLA",
+        "qty": 1
+      },
+      {
+        "part": "thigh_lf",
+        "material": "PLA",
+        "qty": 1
+      },
+      {
+        "part": "thigh_lh",
+        "material": "PLA",
+        "qty": 1
+      },
+      {
+        "part": "thigh_rf",
+        "material": "PLA",
+        "qty": 1
+      },
+      {
+        "part": "thigh_rh",
+        "material": "PLA",
+        "qty": 1
+      }
+    ],
+    "estimated_total_jpy": 6817,
+    "budget_jpy": 10000,
+    "within_budget": true,
+    "note": "価格は推定。電池・充電・降圧電源は未計上（後回しの指定）"
+  },
+  "verdict": {
+    "self_collision_free_over_ranges": true,
+    "printable_on_home_fdm": true,
+    "com_inside_support_polygon": true,
+    "stands_in_sim": true,
+    "trot_static_torque_within_rated": true,
+    "within_budget_jpy_10000": true
+  }
+}
