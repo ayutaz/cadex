@@ -1,0 +1,77 @@
+{
+  "_comment": "本番用。学習用カットモデル（robot/mjcf/base/cut、CPUで約9倍速い）で、ESP32-S3向けの128-64ネットワークを学習する。PPOのその他の値は Cadex training/RECIPE.md §A の既定（8192 envs, unroll 20, 4 epochs x 32 minibatches, gamma 0.97, lr 3e-4）。seconds_per_iteration は仮の値。smoke の実測で置き換える（docs/training-vastai.md）。",
+  "name": "full",
+  "bundle": "robot/mjcf/base/cut/walk-task.json",
+  "policy_name": "walk",
+  "device": "gpu",
+  "env": {
+    "CADEX_JAX_CACHE": "/workspace/cache/jax"
+  },
+  "trainer": {
+    "seed": 0,
+    "iterations": 1000,
+    "envs": 8192,
+    "unroll": 20,
+    "epochs": 4,
+    "minibatches": 32,
+    "hidden": [
+      128,
+      64
+    ],
+    "activation": "swish",
+    "learning_rate": 0.0003,
+    "discount": 0.97,
+    "gae_lambda": 0.95,
+    "clip": 0.3,
+    "entropy": 0.01,
+    "max_grad_norm": 1.0,
+    "reward_floor": 0.0,
+    "checkpoint_every": 100,
+    "stop_on_collapse": true,
+    "label": "q8 vast.ai full",
+    "action_filter_alpha": 0.6,
+    "no_load_speed": 10.47
+  },
+  "device_overrides": {
+    "cpu": {
+      "trainer": {
+        "envs": 512,
+        "minibatches": 32,
+        "iterations": 300
+      }
+    }
+  },
+  "resume": {
+    "critic_warmup": 10,
+    "actor_ramp": 10
+  },
+  "offer": {
+    "gpu_name": [
+      "RTX 4090",
+      "RTX 5090"
+    ],
+    "num_gpus": 1,
+    "min_reliability": 0.98,
+    "min_cuda": 12.4,
+    "min_disk_gb": 40,
+    "min_inet_down_mbps": 200,
+    "max_dph": 1.2,
+    "verified": true,
+    "limit": 10
+  },
+  "instance": {
+    "image": "<your-registry>/cadex-train:<tag>",
+    "disk_gb": 40,
+    "label": "q8-full"
+  },
+  "estimate": {
+    "seconds_per_iteration": 2.0,
+    "setup_minutes": 15,
+    "margin": 1.3
+  },
+  "remote": {
+    "work_dir": "/workspace/runs",
+    "trainer_root": "/opt/cadex",
+    "python": "/opt/venv/bin/python"
+  }
+}

@@ -1,0 +1,883 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="quadruped8">
+  <!-- model-model.xml から q8/urdf.py が生成。手で編集しない（scripts/mjcf_to_urdf.py で作り直す）。 capsule は cylinder + 両端の sphere で近似。アクチュエータ・センサ・接触パラメータ・armature は入らない。 -->
+  <mujoco>
+    <compiler discardvisual="false" fusestatic="false" strippath="false" />
+  </mujoco>
+  <material name="vis_accent">
+    <color rgba="0.95 0.45 0.10 1" />
+  </material>
+  <material name="vis_mechanism">
+    <color rgba="0.18 0.19 0.21 1" />
+  </material>
+  <material name="vis_shell">
+    <color rgba="0.86 0.86 0.84 1" />
+  </material>
+  <link name="base_link">
+    <!-- MJCF のボディ c_chassis（浮遊ベース） -->
+    <inertial>
+      <origin xyz="0 0 0.0836078" />
+      <mass value="0.0178434" />
+      <inertia ixx="6.50951e-06" ixy="0" ixz="0" iyy="2.15667e-05" iyz="0" izz="2.78674e-05" />
+    </inertial>
+    <visual name="vis/chassis">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/chassis.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+    <collision name="c_chassis/collision0">
+      <origin xyz="0 0 0.0930226" />
+      <geometry>
+        <box size="0.11 0.064 0.024" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_cover">
+    <inertial>
+      <origin xyz="0 0 0.0994601" />
+      <mass value="0.0391774" />
+      <inertia ixx="1.56945e-05" ixy="0" ixz="0" iyy="5.71988e-05" iyz="0" izz="7.17394e-05" />
+    </inertial>
+    <visual name="vis/cover">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/cover.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+  </link>
+  <link name="c_esp">
+    <inertial>
+      <origin xyz="0 0 0.105023" />
+      <mass value="0.009" />
+      <inertia ixx="4.99688e-07" ixy="0" ixz="0" iyy="2.98875e-06" iyz="0" izz="3.46444e-06" />
+    </inertial>
+    <visual name="vis/esp32">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/esp32.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_body_bolt_0">
+    <inertial>
+      <origin xyz="0.03935 0 0.0921383" />
+      <mass value="0.000424671" />
+      <inertia ixx="6.05925e-09" ixy="0" ixz="0" iyy="6.05925e-09" iyz="0" izz="4.44699e-10" />
+    </inertial>
+    <visual name="vis/body_bolt_0">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/body_bolt_0.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+  </link>
+  <link name="c_body_bolt_1">
+    <inertial>
+      <origin xyz="-0.03935 0 0.0921383" />
+      <mass value="0.000424671" />
+      <inertia ixx="6.05925e-09" ixy="0" ixz="0" iyy="6.05925e-09" iyz="0" izz="4.44699e-10" />
+    </inertial>
+    <visual name="vis/body_bolt_1">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/body_bolt_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+  </link>
+  <link name="c_imu">
+    <inertial>
+      <origin xyz="0 0.0215 0.0845226" />
+      <mass value="0.002" />
+      <inertia ixx="4.41667e-08" ixy="0" ixz="0" iyy="7.5e-08" iyz="0" izz="1.16167e-07" />
+    </inertial>
+    <visual name="vis/imu">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/imu.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_accent" />
+    </visual>
+  </link>
+  <link name="c_bat">
+    <inertial>
+      <origin xyz="0 0 0.0870226" />
+      <mass value="0.03" />
+      <inertia ixx="1.85e-06" ixy="0" ixz="0" iyy="4.16e-06" iyz="0" izz="5.69e-06" />
+    </inertial>
+    <visual name="vis/battery">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/battery.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_hip_servo_lf">
+    <inertial>
+      <origin xyz="0.0393743 0.0181257 0.0896226" />
+      <mass value="0.0134" />
+      <inertia ixx="1.072810397e-06" ixy="-5.159499086e-09" ixz="0" iyy="8.056436026e-07" iyz="0" izz="1.548e-06" />
+    </inertial>
+    <visual name="vis/hip_servo_lf">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/hip_servo_lf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_thigh_lf">
+    <inertial>
+      <origin xyz="-0.0171882 0.027694 -0.0297709" />
+      <mass value="0.0117465" />
+      <inertia ixx="5.651084817e-06" ixy="-5.947084123e-07" ixz="-2.355736982e-06" iyy="6.27623192e-06" iyz="-1.030065577e-06" izz="2.930913262e-06" />
+    </inertial>
+    <visual name="vis/thigh_lf">
+      <origin xyz="-0.042 0 -0.0896226" />
+      <geometry>
+        <mesh filename="../../meshes/base/thigh_lf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+    <!-- c_thigh_lf/collision0: capsule（半径 0.0065, 半長 0.0225）を cylinder + 両端の sphere で近似 -->
+    <collision name="c_thigh_lf/collision0">
+      <origin xyz="-0.01125 0.03625 -0.0194856" rpy="0 0.5235985985 0" />
+      <geometry>
+        <cylinder radius="0.0065" length="0.045" />
+      </geometry>
+    </collision>
+    <collision name="c_thigh_lf/collision0/cap_a">
+      <origin xyz="-0.02249999655 0.03625 -0.03897117358" />
+      <geometry>
+        <sphere radius="0.0065" />
+      </geometry>
+    </collision>
+    <collision name="c_thigh_lf/collision0/cap_b">
+      <origin xyz="-3.449935178e-09 0.03625 -2.642302954e-08" />
+      <geometry>
+        <sphere radius="0.0065" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_hip_horn_lf">
+    <inertial>
+      <origin xyz="0.042 0.0376336 0.0896226" />
+      <mass value="0.000228973" />
+      <inertia ixx="4.8479e-09" ixy="0" ixz="0" iyy="9.55396e-09" iyz="0" izz="4.8479e-09" />
+    </inertial>
+    <visual name="vis/hip_horn_lf">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/hip_horn_lf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_knee_servo_lf">
+    <inertial>
+      <origin xyz="0.0181871 0.0256257 0.0483775" />
+      <mass value="0.0134" />
+      <inertia ixx="1.429202839e-06" ixy="-2.579249456e-09" ixz="-2.05762997e-07" iyy="8.056436075e-07" iyz="-4.468691244e-09" izz="1.191607554e-06" />
+    </inertial>
+    <visual name="vis/knee_servo_lf">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/knee_servo_lf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_shin_lf">
+    <inertial>
+      <origin xyz="0.0055416 0.0437079 -0.0109974" />
+      <mass value="0.00399758" />
+      <inertia ixx="8.808708999e-07" ixy="-9.323454348e-10" ixz="3.807455327e-07" iyy="1.169305889e-06" iyz="1.850091641e-09" izz="3.171382112e-07" />
+    </inertial>
+    <visual name="vis/shin_lf">
+      <origin xyz="-0.0195 0 -0.0506514" />
+      <geometry>
+        <mesh filename="../../meshes/base/shin_lf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+    <!-- c_shin_lf/collision0: capsule（半径 0.004, 半長 0.019）を cylinder + 両端の sphere で近似 -->
+    <collision name="c_shin_lf/collision0">
+      <origin xyz="0.01125 0.04375 -0.0223257" rpy="0 -0.4667655589 0" />
+      <geometry>
+        <cylinder radius="0.004" length="0.038" />
+      </geometry>
+    </collision>
+    <collision name="c_shin_lf/collision0/cap_a">
+      <origin xyz="0.01980000373 0.04375 -0.03929324066" />
+      <geometry>
+        <sphere radius="0.004" />
+      </geometry>
+    </collision>
+    <collision name="c_shin_lf/collision0/cap_b">
+      <origin xyz="0.002699996269 0.04375 -0.005358159335" />
+      <geometry>
+        <sphere radius="0.004" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_knee_horn_lf">
+    <inertial>
+      <origin xyz="0.0195 0.0451336 0.0506514" />
+      <mass value="0.000228973" />
+      <inertia ixx="4.8479e-09" ixy="0" ixz="0" iyy="9.55396e-09" iyz="0" izz="4.8479e-09" />
+    </inertial>
+    <visual name="vis/knee_horn_lf">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/knee_horn_lf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_foot_lf">
+    <inertial>
+      <origin xyz="0.042 0.04375 0.006" />
+      <mass value="0.00108573" />
+      <inertia ixx="1.56346e-08" ixy="0" ixz="0" iyy="1.56346e-08" iyz="0" izz="1.56346e-08" />
+    </inertial>
+    <visual name="vis/foot_lf">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/foot_lf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_accent" />
+    </visual>
+    <collision name="c_foot_lf/collision0">
+      <origin xyz="0.042 0.04375 0.006" />
+      <geometry>
+        <sphere radius="0.006" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_hip_servo_rf">
+    <inertial>
+      <origin xyz="0.0393743 -0.0181257 0.0896226" />
+      <mass value="0.0134" />
+      <inertia ixx="1.072810397e-06" ixy="5.159499086e-09" ixz="0" iyy="8.056436026e-07" iyz="0" izz="1.548e-06" />
+    </inertial>
+    <visual name="vis/hip_servo_rf">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/hip_servo_rf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_thigh_rf">
+    <inertial>
+      <origin xyz="-0.0171882 -0.027694 -0.0297709" />
+      <mass value="0.0117465" />
+      <inertia ixx="5.651084817e-06" ixy="5.947084123e-07" ixz="-2.355736982e-06" iyy="6.27623192e-06" iyz="1.030065577e-06" izz="2.930913262e-06" />
+    </inertial>
+    <visual name="vis/thigh_rf">
+      <origin xyz="-0.042 0 -0.0896226" />
+      <geometry>
+        <mesh filename="../../meshes/base/thigh_rf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+    <!-- c_thigh_rf/collision0: capsule（半径 0.0065, 半長 0.0225）を cylinder + 両端の sphere で近似 -->
+    <collision name="c_thigh_rf/collision0">
+      <origin xyz="-0.01125 -0.03625 -0.0194856" rpy="0 0.5235985985 0" />
+      <geometry>
+        <cylinder radius="0.0065" length="0.045" />
+      </geometry>
+    </collision>
+    <collision name="c_thigh_rf/collision0/cap_a">
+      <origin xyz="-0.02249999655 -0.03625 -0.03897117358" />
+      <geometry>
+        <sphere radius="0.0065" />
+      </geometry>
+    </collision>
+    <collision name="c_thigh_rf/collision0/cap_b">
+      <origin xyz="-3.449935178e-09 -0.03625 -2.642302954e-08" />
+      <geometry>
+        <sphere radius="0.0065" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_hip_horn_rf">
+    <inertial>
+      <origin xyz="0.042 -0.0376336 0.0896226" />
+      <mass value="0.000228973" />
+      <inertia ixx="4.8479e-09" ixy="0" ixz="0" iyy="9.55396e-09" iyz="0" izz="4.8479e-09" />
+    </inertial>
+    <visual name="vis/hip_horn_rf">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/hip_horn_rf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_knee_servo_rf">
+    <inertial>
+      <origin xyz="0.0181871 -0.0256257 0.0483775" />
+      <mass value="0.0134" />
+      <inertia ixx="1.429202839e-06" ixy="2.579249456e-09" ixz="-2.05762997e-07" iyy="8.056436075e-07" iyz="4.468691244e-09" izz="1.191607554e-06" />
+    </inertial>
+    <visual name="vis/knee_servo_rf">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/knee_servo_rf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_shin_rf">
+    <inertial>
+      <origin xyz="0.0055416 -0.0437079 -0.0109974" />
+      <mass value="0.00399758" />
+      <inertia ixx="8.808708999e-07" ixy="9.323454348e-10" ixz="3.807455327e-07" iyy="1.169305889e-06" iyz="-1.850091641e-09" izz="3.171382112e-07" />
+    </inertial>
+    <visual name="vis/shin_rf">
+      <origin xyz="-0.0195 0 -0.0506514" />
+      <geometry>
+        <mesh filename="../../meshes/base/shin_rf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+    <!-- c_shin_rf/collision0: capsule（半径 0.004, 半長 0.019）を cylinder + 両端の sphere で近似 -->
+    <collision name="c_shin_rf/collision0">
+      <origin xyz="0.01125 -0.04375 -0.0223257" rpy="0 -0.4667655589 0" />
+      <geometry>
+        <cylinder radius="0.004" length="0.038" />
+      </geometry>
+    </collision>
+    <collision name="c_shin_rf/collision0/cap_a">
+      <origin xyz="0.01980000373 -0.04375 -0.03929324066" />
+      <geometry>
+        <sphere radius="0.004" />
+      </geometry>
+    </collision>
+    <collision name="c_shin_rf/collision0/cap_b">
+      <origin xyz="0.002699996269 -0.04375 -0.005358159335" />
+      <geometry>
+        <sphere radius="0.004" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_knee_horn_rf">
+    <inertial>
+      <origin xyz="0.0195 -0.0451336 0.0506514" />
+      <mass value="0.000228973" />
+      <inertia ixx="4.8479e-09" ixy="0" ixz="0" iyy="9.55396e-09" iyz="0" izz="4.8479e-09" />
+    </inertial>
+    <visual name="vis/knee_horn_rf">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/knee_horn_rf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_foot_rf">
+    <inertial>
+      <origin xyz="0.042 -0.04375 0.006" />
+      <mass value="0.00108573" />
+      <inertia ixx="1.56346e-08" ixy="0" ixz="0" iyy="1.56346e-08" iyz="0" izz="1.56346e-08" />
+    </inertial>
+    <visual name="vis/foot_rf">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/foot_rf.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_accent" />
+    </visual>
+    <collision name="c_foot_rf/collision0">
+      <origin xyz="0.042 -0.04375 0.006" />
+      <geometry>
+        <sphere radius="0.006" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_hip_servo_lh">
+    <inertial>
+      <origin xyz="-0.0393743 0.0181257 0.0896226" />
+      <mass value="0.0134" />
+      <inertia ixx="1.072810397e-06" ixy="5.159499086e-09" ixz="0" iyy="8.056436026e-07" iyz="0" izz="1.548e-06" />
+    </inertial>
+    <visual name="vis/hip_servo_lh">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/hip_servo_lh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_thigh_lh">
+    <inertial>
+      <origin xyz="-0.0171882 0.027694 -0.0297709" />
+      <mass value="0.0117465" />
+      <inertia ixx="5.651084817e-06" ixy="-5.947084123e-07" ixz="-2.355736982e-06" iyy="6.27623192e-06" iyz="-1.030065577e-06" izz="2.930913262e-06" />
+    </inertial>
+    <visual name="vis/thigh_lh">
+      <origin xyz="0.042 0 -0.0896226" />
+      <geometry>
+        <mesh filename="../../meshes/base/thigh_lh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+    <!-- c_thigh_lh/collision0: capsule（半径 0.0065, 半長 0.0225）を cylinder + 両端の sphere で近似 -->
+    <collision name="c_thigh_lh/collision0">
+      <origin xyz="-0.01125 0.03625 -0.0194856" rpy="0 0.5235985985 0" />
+      <geometry>
+        <cylinder radius="0.0065" length="0.045" />
+      </geometry>
+    </collision>
+    <collision name="c_thigh_lh/collision0/cap_a">
+      <origin xyz="-0.02249999655 0.03625 -0.03897117358" />
+      <geometry>
+        <sphere radius="0.0065" />
+      </geometry>
+    </collision>
+    <collision name="c_thigh_lh/collision0/cap_b">
+      <origin xyz="-3.449935171e-09 0.03625 -2.642302954e-08" />
+      <geometry>
+        <sphere radius="0.0065" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_hip_horn_lh">
+    <inertial>
+      <origin xyz="-0.042 0.0376336 0.0896226" />
+      <mass value="0.000228973" />
+      <inertia ixx="4.8479e-09" ixy="0" ixz="0" iyy="9.55396e-09" iyz="0" izz="4.8479e-09" />
+    </inertial>
+    <visual name="vis/hip_horn_lh">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/hip_horn_lh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_knee_servo_lh">
+    <inertial>
+      <origin xyz="-0.0658129 0.0256257 0.0483775" />
+      <mass value="0.0134" />
+      <inertia ixx="1.429202839e-06" ixy="-2.579249456e-09" ixz="-2.05762997e-07" iyy="8.056436075e-07" iyz="-4.468691244e-09" izz="1.191607554e-06" />
+    </inertial>
+    <visual name="vis/knee_servo_lh">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/knee_servo_lh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_shin_lh">
+    <inertial>
+      <origin xyz="0.0055416 0.0437079 -0.0109974" />
+      <mass value="0.00399758" />
+      <inertia ixx="8.808708999e-07" ixy="-9.323454348e-10" ixz="3.807455327e-07" iyy="1.169305889e-06" iyz="1.850091641e-09" izz="3.171382112e-07" />
+    </inertial>
+    <visual name="vis/shin_lh">
+      <origin xyz="0.0645 0 -0.0506514" />
+      <geometry>
+        <mesh filename="../../meshes/base/shin_lh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+    <!-- c_shin_lh/collision0: capsule（半径 0.004, 半長 0.019）を cylinder + 両端の sphere で近似 -->
+    <collision name="c_shin_lh/collision0">
+      <origin xyz="0.01125 0.04375 -0.0223257" rpy="0 -0.4667655589 0" />
+      <geometry>
+        <cylinder radius="0.004" length="0.038" />
+      </geometry>
+    </collision>
+    <collision name="c_shin_lh/collision0/cap_a">
+      <origin xyz="0.01980000373 0.04375 -0.03929324066" />
+      <geometry>
+        <sphere radius="0.004" />
+      </geometry>
+    </collision>
+    <collision name="c_shin_lh/collision0/cap_b">
+      <origin xyz="0.002699996269 0.04375 -0.005358159335" />
+      <geometry>
+        <sphere radius="0.004" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_knee_horn_lh">
+    <inertial>
+      <origin xyz="-0.0645 0.0451336 0.0506514" />
+      <mass value="0.000228973" />
+      <inertia ixx="4.8479e-09" ixy="0" ixz="0" iyy="9.55396e-09" iyz="0" izz="4.8479e-09" />
+    </inertial>
+    <visual name="vis/knee_horn_lh">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/knee_horn_lh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_foot_lh">
+    <inertial>
+      <origin xyz="-0.042 0.04375 0.006" />
+      <mass value="0.00108573" />
+      <inertia ixx="1.56346e-08" ixy="0" ixz="0" iyy="1.56346e-08" iyz="0" izz="1.56346e-08" />
+    </inertial>
+    <visual name="vis/foot_lh">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/foot_lh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_accent" />
+    </visual>
+    <collision name="c_foot_lh/collision0">
+      <origin xyz="-0.042 0.04375 0.006" />
+      <geometry>
+        <sphere radius="0.006" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_hip_servo_rh">
+    <inertial>
+      <origin xyz="-0.0393743 -0.0181257 0.0896226" />
+      <mass value="0.0134" />
+      <inertia ixx="1.072810397e-06" ixy="-5.159499086e-09" ixz="0" iyy="8.056436026e-07" iyz="0" izz="1.548e-06" />
+    </inertial>
+    <visual name="vis/hip_servo_rh">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/hip_servo_rh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_thigh_rh">
+    <inertial>
+      <origin xyz="-0.0171882 -0.027694 -0.0297709" />
+      <mass value="0.0117465" />
+      <inertia ixx="5.651084817e-06" ixy="5.947084123e-07" ixz="-2.355736982e-06" iyy="6.27623192e-06" iyz="1.030065577e-06" izz="2.930913262e-06" />
+    </inertial>
+    <visual name="vis/thigh_rh">
+      <origin xyz="0.042 0 -0.0896226" />
+      <geometry>
+        <mesh filename="../../meshes/base/thigh_rh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+    <!-- c_thigh_rh/collision0: capsule（半径 0.0065, 半長 0.0225）を cylinder + 両端の sphere で近似 -->
+    <collision name="c_thigh_rh/collision0">
+      <origin xyz="-0.01125 -0.03625 -0.0194856" rpy="0 0.5235985985 0" />
+      <geometry>
+        <cylinder radius="0.0065" length="0.045" />
+      </geometry>
+    </collision>
+    <collision name="c_thigh_rh/collision0/cap_a">
+      <origin xyz="-0.02249999655 -0.03625 -0.03897117358" />
+      <geometry>
+        <sphere radius="0.0065" />
+      </geometry>
+    </collision>
+    <collision name="c_thigh_rh/collision0/cap_b">
+      <origin xyz="-3.449935171e-09 -0.03625 -2.642302954e-08" />
+      <geometry>
+        <sphere radius="0.0065" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_hip_horn_rh">
+    <inertial>
+      <origin xyz="-0.042 -0.0376336 0.0896226" />
+      <mass value="0.000228973" />
+      <inertia ixx="4.8479e-09" ixy="0" ixz="0" iyy="9.55396e-09" iyz="0" izz="4.8479e-09" />
+    </inertial>
+    <visual name="vis/hip_horn_rh">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/hip_horn_rh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_knee_servo_rh">
+    <inertial>
+      <origin xyz="-0.0658129 -0.0256257 0.0483775" />
+      <mass value="0.0134" />
+      <inertia ixx="1.429202839e-06" ixy="2.579249456e-09" ixz="-2.05762997e-07" iyy="8.056436075e-07" iyz="4.468691244e-09" izz="1.191607554e-06" />
+    </inertial>
+    <visual name="vis/knee_servo_rh">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/knee_servo_rh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_shin_rh">
+    <inertial>
+      <origin xyz="0.0055416 -0.0437079 -0.0109974" />
+      <mass value="0.00399758" />
+      <inertia ixx="8.808708999e-07" ixy="9.323454348e-10" ixz="3.807455327e-07" iyy="1.169305889e-06" iyz="-1.850091641e-09" izz="3.171382112e-07" />
+    </inertial>
+    <visual name="vis/shin_rh">
+      <origin xyz="0.0645 0 -0.0506514" />
+      <geometry>
+        <mesh filename="../../meshes/base/shin_rh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_shell" />
+    </visual>
+    <!-- c_shin_rh/collision0: capsule（半径 0.004, 半長 0.019）を cylinder + 両端の sphere で近似 -->
+    <collision name="c_shin_rh/collision0">
+      <origin xyz="0.01125 -0.04375 -0.0223257" rpy="0 -0.4667655589 0" />
+      <geometry>
+        <cylinder radius="0.004" length="0.038" />
+      </geometry>
+    </collision>
+    <collision name="c_shin_rh/collision0/cap_a">
+      <origin xyz="0.01980000373 -0.04375 -0.03929324066" />
+      <geometry>
+        <sphere radius="0.004" />
+      </geometry>
+    </collision>
+    <collision name="c_shin_rh/collision0/cap_b">
+      <origin xyz="0.002699996269 -0.04375 -0.005358159335" />
+      <geometry>
+        <sphere radius="0.004" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="c_knee_horn_rh">
+    <inertial>
+      <origin xyz="-0.0645 -0.0451336 0.0506514" />
+      <mass value="0.000228973" />
+      <inertia ixx="4.8479e-09" ixy="0" ixz="0" iyy="9.55396e-09" iyz="0" izz="4.8479e-09" />
+    </inertial>
+    <visual name="vis/knee_horn_rh">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/knee_horn_rh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_mechanism" />
+    </visual>
+  </link>
+  <link name="c_foot_rh">
+    <inertial>
+      <origin xyz="-0.042 -0.04375 0.006" />
+      <mass value="0.00108573" />
+      <inertia ixx="1.56346e-08" ixy="0" ixz="0" iyy="1.56346e-08" iyz="0" izz="1.56346e-08" />
+    </inertial>
+    <visual name="vis/foot_rh">
+      <origin xyz="0 0 0" />
+      <geometry>
+        <mesh filename="../../meshes/base/foot_rh.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="vis_accent" />
+    </visual>
+    <collision name="c_foot_rh/collision0">
+      <origin xyz="-0.042 -0.04375 0.006" />
+      <geometry>
+        <sphere radius="0.006" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="c_cover_fixed" type="fixed">
+    <origin xyz="0 0 0" />
+    <parent link="base_link" />
+    <child link="c_cover" />
+  </joint>
+  <joint name="c_esp_fixed" type="fixed">
+    <origin xyz="0 0 0" />
+    <parent link="c_cover" />
+    <child link="c_esp" />
+  </joint>
+  <joint name="c_body_bolt_0_fixed" type="fixed">
+    <origin xyz="0 0 0" />
+    <parent link="c_cover" />
+    <child link="c_body_bolt_0" />
+  </joint>
+  <joint name="c_body_bolt_1_fixed" type="fixed">
+    <origin xyz="0 0 0" />
+    <parent link="c_cover" />
+    <child link="c_body_bolt_1" />
+  </joint>
+  <joint name="c_imu_fixed" type="fixed">
+    <origin xyz="0 0 0" />
+    <parent link="base_link" />
+    <child link="c_imu" />
+  </joint>
+  <joint name="c_bat_fixed" type="fixed">
+    <origin xyz="0 0 0" />
+    <parent link="base_link" />
+    <child link="c_bat" />
+  </joint>
+  <joint name="c_hip_servo_lf_fixed" type="fixed">
+    <origin xyz="0 0 0" />
+    <parent link="base_link" />
+    <child link="c_hip_servo_lf" />
+  </joint>
+  <joint name="hip_lf" type="revolute">
+    <origin xyz="0.042 0 0.0896226" />
+    <parent link="base_link" />
+    <child link="c_thigh_lf" />
+    <axis xyz="0 1 0" />
+    <limit lower="-0.785398" upper="0.349066" effort="0.17652" velocity="10.47197551" />
+    <dynamics damping="0.0168564" friction="0.002" />
+  </joint>
+  <joint name="c_hip_horn_lf_fixed" type="fixed">
+    <origin xyz="-0.042 0 -0.0896226" />
+    <parent link="c_thigh_lf" />
+    <child link="c_hip_horn_lf" />
+  </joint>
+  <joint name="c_knee_servo_lf_fixed" type="fixed">
+    <origin xyz="-0.042 0 -0.0896226" />
+    <parent link="c_thigh_lf" />
+    <child link="c_knee_servo_lf" />
+  </joint>
+  <joint name="knee_lf" type="revolute">
+    <origin xyz="-0.0225 0 -0.0389712" />
+    <parent link="c_thigh_lf" />
+    <child link="c_shin_lf" />
+    <axis xyz="0 1 0" />
+    <limit lower="-1.0472" upper="0.785398" effort="0.17652" velocity="10.47197551" />
+    <dynamics damping="0.0168564" friction="0.002" />
+  </joint>
+  <joint name="c_knee_horn_lf_fixed" type="fixed">
+    <origin xyz="-0.0195 0 -0.0506514" />
+    <parent link="c_shin_lf" />
+    <child link="c_knee_horn_lf" />
+  </joint>
+  <joint name="c_foot_lf_fixed" type="fixed">
+    <origin xyz="-0.0195 0 -0.0506514" />
+    <parent link="c_shin_lf" />
+    <child link="c_foot_lf" />
+  </joint>
+  <joint name="c_hip_servo_rf_fixed" type="fixed">
+    <origin xyz="0 0 0" />
+    <parent link="base_link" />
+    <child link="c_hip_servo_rf" />
+  </joint>
+  <joint name="hip_rf" type="revolute">
+    <origin xyz="0.042 0 0.0896226" />
+    <parent link="base_link" />
+    <child link="c_thigh_rf" />
+    <axis xyz="0 1 0" />
+    <limit lower="-0.785398" upper="0.349066" effort="0.17652" velocity="10.47197551" />
+    <dynamics damping="0.0168564" friction="0.002" />
+  </joint>
+  <joint name="c_hip_horn_rf_fixed" type="fixed">
+    <origin xyz="-0.042 0 -0.0896226" />
+    <parent link="c_thigh_rf" />
+    <child link="c_hip_horn_rf" />
+  </joint>
+  <joint name="c_knee_servo_rf_fixed" type="fixed">
+    <origin xyz="-0.042 0 -0.0896226" />
+    <parent link="c_thigh_rf" />
+    <child link="c_knee_servo_rf" />
+  </joint>
+  <joint name="knee_rf" type="revolute">
+    <origin xyz="-0.0225 0 -0.0389712" />
+    <parent link="c_thigh_rf" />
+    <child link="c_shin_rf" />
+    <axis xyz="0 1 0" />
+    <limit lower="-1.0472" upper="0.785398" effort="0.17652" velocity="10.47197551" />
+    <dynamics damping="0.0168564" friction="0.002" />
+  </joint>
+  <joint name="c_knee_horn_rf_fixed" type="fixed">
+    <origin xyz="-0.0195 0 -0.0506514" />
+    <parent link="c_shin_rf" />
+    <child link="c_knee_horn_rf" />
+  </joint>
+  <joint name="c_foot_rf_fixed" type="fixed">
+    <origin xyz="-0.0195 0 -0.0506514" />
+    <parent link="c_shin_rf" />
+    <child link="c_foot_rf" />
+  </joint>
+  <joint name="c_hip_servo_lh_fixed" type="fixed">
+    <origin xyz="0 0 0" />
+    <parent link="base_link" />
+    <child link="c_hip_servo_lh" />
+  </joint>
+  <joint name="hip_lh" type="revolute">
+    <origin xyz="-0.042 0 0.0896226" />
+    <parent link="base_link" />
+    <child link="c_thigh_lh" />
+    <axis xyz="0 1 0" />
+    <limit lower="-0.610865" upper="0.785398" effort="0.17652" velocity="10.47197551" />
+    <dynamics damping="0.0168564" friction="0.002" />
+  </joint>
+  <joint name="c_hip_horn_lh_fixed" type="fixed">
+    <origin xyz="0.042 0 -0.0896226" />
+    <parent link="c_thigh_lh" />
+    <child link="c_hip_horn_lh" />
+  </joint>
+  <joint name="c_knee_servo_lh_fixed" type="fixed">
+    <origin xyz="0.042 0 -0.0896226" />
+    <parent link="c_thigh_lh" />
+    <child link="c_knee_servo_lh" />
+  </joint>
+  <joint name="knee_lh" type="revolute">
+    <origin xyz="-0.0225 0 -0.0389712" />
+    <parent link="c_thigh_lh" />
+    <child link="c_shin_lh" />
+    <axis xyz="0 1 0" />
+    <limit lower="-1.0472" upper="0.785398" effort="0.17652" velocity="10.47197551" />
+    <dynamics damping="0.0168564" friction="0.002" />
+  </joint>
+  <joint name="c_knee_horn_lh_fixed" type="fixed">
+    <origin xyz="0.0645 0 -0.0506514" />
+    <parent link="c_shin_lh" />
+    <child link="c_knee_horn_lh" />
+  </joint>
+  <joint name="c_foot_lh_fixed" type="fixed">
+    <origin xyz="0.0645 0 -0.0506514" />
+    <parent link="c_shin_lh" />
+    <child link="c_foot_lh" />
+  </joint>
+  <joint name="c_hip_servo_rh_fixed" type="fixed">
+    <origin xyz="0 0 0" />
+    <parent link="base_link" />
+    <child link="c_hip_servo_rh" />
+  </joint>
+  <joint name="hip_rh" type="revolute">
+    <origin xyz="-0.042 0 0.0896226" />
+    <parent link="base_link" />
+    <child link="c_thigh_rh" />
+    <axis xyz="0 1 0" />
+    <limit lower="-0.610865" upper="0.785398" effort="0.17652" velocity="10.47197551" />
+    <dynamics damping="0.0168564" friction="0.002" />
+  </joint>
+  <joint name="c_hip_horn_rh_fixed" type="fixed">
+    <origin xyz="0.042 0 -0.0896226" />
+    <parent link="c_thigh_rh" />
+    <child link="c_hip_horn_rh" />
+  </joint>
+  <joint name="c_knee_servo_rh_fixed" type="fixed">
+    <origin xyz="0.042 0 -0.0896226" />
+    <parent link="c_thigh_rh" />
+    <child link="c_knee_servo_rh" />
+  </joint>
+  <joint name="knee_rh" type="revolute">
+    <origin xyz="-0.0225 0 -0.0389712" />
+    <parent link="c_thigh_rh" />
+    <child link="c_shin_rh" />
+    <axis xyz="0 1 0" />
+    <limit lower="-1.0472" upper="0.785398" effort="0.17652" velocity="10.47197551" />
+    <dynamics damping="0.0168564" friction="0.002" />
+  </joint>
+  <joint name="c_knee_horn_rh_fixed" type="fixed">
+    <origin xyz="0.0645 0 -0.0506514" />
+    <parent link="c_shin_rh" />
+    <child link="c_knee_horn_rh" />
+  </joint>
+  <joint name="c_foot_rh_fixed" type="fixed">
+    <origin xyz="0.0645 0 -0.0506514" />
+    <parent link="c_shin_rh" />
+    <child link="c_foot_rh" />
+  </joint>
+</robot>
