@@ -135,8 +135,8 @@ def test_起動コマンドは_nohup_setsid_で切り離し_pid_を自分で書�
         out_name="walk.cxpolicy", argv=["--iterations", "10", "--label", "a b"],
         env={"JAX_PLATFORMS": "cuda"})
     assert command.startswith("mkdir -p /workspace/runs/smoke-1 && cd /workspace/runs/smoke-1 && ")
-    assert "nohup setsid sh -c " in command
-    assert command.rstrip().endswith("< /dev/null > /dev/null 2>&1 &")
+    assert "(nohup setsid sh -c " in command
+    assert command.rstrip().endswith("< /dev/null > /dev/null 2>&1 &)")
     inner = shlex.split(command.split("sh -c ", 1)[1])[0]
     assert inner.startswith("echo $$ > train.pid; exec env ")
     assert "JAX_PLATFORMS=cuda" in inner
@@ -148,6 +148,40 @@ def test_起動コマンドは_nohup_setsid_で切り離し_pid_を自分で書�
     assert words[words.index("--progress") + 1] == "/workspace/runs/smoke-1/progress.json"
     assert "a b" in words  # 空白を含む値も崩れない
     assert words[-4:] == [">", "stdout.log", "2>", "train.log"]
+
+
+def test_起動コマンドは学習の終わりを待たずに戻る(tmp_path):
+    # ssh は、リモートのシェルとその子が出力をつかんでいるあいだ戻らない。
+    # `a && b && c &` だと & が && の全体にかかり、全体を包むサブシェルが学習の終わりまで
+    # ssh の出力をつかむ（vast.ai で launch が戻らなかった）。パイプで ssh の出力に見立てて確かめる。
+    import sys
+    import time
+
+    trainer = tmp_path / "slow_trainer.py"
+    trainer.write_text("import time\ntime.sleep(8)\n")
+    command = remote.launch_command(
+        run_dir=str(tmp_path / "run"), python=sys.executable, trainer=str(trainer),
+        task_name="walk-task.json", out_name="walk.cxpolicy", argv=[], env={})
+    # macOS には setsid が無い。Linux の setsid は、プロセスグループの長でなければ fork せずに
+    # exec する（今回の不具合はこの場合に起きる）。同じ動きの代用品を PATH の先頭に置く。
+    import os
+    import shutil
+
+    env = dict(os.environ)
+    if shutil.which("setsid") is None:
+        shim = tmp_path / "bin"
+        shim.mkdir()
+        (shim / "setsid").write_text('#!/bin/sh\nexec "$@"\n')
+        (shim / "setsid").chmod(0o755)
+        env["PATH"] = f"{shim}:{env['PATH']}"
+    start = time.monotonic()
+    subprocess.run(["bash", "-c", command], capture_output=True, timeout=30, env=env)
+    assert time.monotonic() - start < 4
+    for _ in range(50):
+        if (tmp_path / "run" / "train.pid").exists():
+            break
+        time.sleep(0.1)
+    assert (tmp_path / "run" / "train.pid").read_text().strip().isdigit()
 
 
 # --- 起動 -------------------------------------------------------------------

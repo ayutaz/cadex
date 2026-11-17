@@ -128,7 +128,7 @@ def launch_command(*, run_dir: str, python: str, trainer: str, task_name: str,
     inner = ("echo $$ > train.pid; exec " + " ".join(q(w) for w in words)
              + " > stdout.log 2> train.log")
     return (f"mkdir -p {q(run_dir)} && cd {q(run_dir)} && "
-            f"nohup setsid sh -c {q(inner)} < /dev/null > /dev/null 2>&1 &")
+            f"(nohup setsid sh -c {q(inner)} < /dev/null > /dev/null 2>&1 &)")
 
 
 def parse_receipt(text: str) -> dict[str, Any] | None:
