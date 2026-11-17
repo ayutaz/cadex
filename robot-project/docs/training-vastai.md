@@ -29,7 +29,7 @@
 | `vastai/metrics.py` | `progress.json` → CSV / TensorBoard イベントファイル（依存なし） |
 | `vastai/config.py` | 学習設定と接続設定の読み込み・検証 |
 | `configs/train_smoke.json` | 小規模のパイプライン検証用（10 反復） |
-| `configs/train_full.json` | 本番用（Cadex `training/RECIPE.md` §A の既定、1260 反復） |
+| `configs/train_full.json` | 本番用（1000 反復、8192 envs。環境数などは Cadex `training/RECIPE.md` §A の既定） |
 
 コマンドはすべて `robot-project/` で実行する:
 
@@ -41,6 +41,14 @@ cd robot-project
 **課金が始まる操作は `create` だけ**、インスタンスを消すのは `destroy` だけで、
 どちらも `--yes` と `VAST_API_KEY` の両方が揃った時しか送らない。それ以外は
 送るはずの内容を表示して終わる（dry-run が既定）。`offers` と `instances` は読むだけ。
+
+**vast.ai のアカウントは他の作業と共有している。このプロジェクトが作ったインスタンスにしか触らない。**
+
+- `create` は、作成時に label（タグ）`cadex-q8-<種類>-<YYYYMMDD-HHMM>` を自動で付ける。
+  種類は設定の `instance.label` から取る（`q8-smoke` → `smoke`）。
+- `destroy` は、送る前に一覧で label を確かめ、`cadex-q8-` で始まらなければ送らない。
+- `instances` は、他の作業のインスタンスに `[他の作業：触らない]` と付け、SSH の接続先を出さない。
+  `.env` に書けるのは、このプロジェクトのインスタンスの接続先だけになる。
 
 ## 1. 準備
 
@@ -151,6 +159,9 @@ RTX 5090 で Go1 の 1260 反復が 333 秒＝約 0.26 秒/反復、別の機体
 
 作成要求がタイムアウトしたら、再送する前にコンソールで作られていないか確かめる
 （応答が無くても作られていることがある）。
+
+作ったインスタンスには label `cadex-q8-<種類>-<日時>` が付く（dry-run でも送る label が見える）。
+コンソールでもこの label で、このプロジェクトのものと見分けられる。
 
 ## 5. 接続先を設定し、箱を確かめる
 
@@ -321,7 +332,7 @@ destroy を推奨する**。この道具に自動停止（時間上限で落と�
   "device_overrides": {"cpu": {"trainer": {"envs": 64}}},
   "resume": {"critic_warmup": 2, "actor_ramp": 0},
   "offer": { "gpu_name": ["RTX 3090", "RTX 4090"], "max_dph": 0.6, ... },
-  "instance": {"image": "<registry>/cadex-train:<tag>", "disk_gb": 30, "label": "q8-smoke"},
+  "instance": {"image": "ghcr.io/ayutaz/cadex-train:sha-e7f4d9d", "disk_gb": 30, "label": "q8-smoke"},
   "estimate": {"seconds_per_iteration": 3.0, "setup_minutes": 15, "margin": 1.3},
   "remote": {"work_dir": "/workspace/runs", "trainer_root": "/opt/cadex", "python": "/opt/venv/bin/python"}
 }

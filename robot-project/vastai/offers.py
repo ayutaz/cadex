@@ -22,6 +22,8 @@ API の仕様（2026-11-17 時点の公式ドキュメントの調査による�
 from __future__ import annotations
 
 import json
+import re
+from datetime import datetime
 import urllib.error
 import urllib.request
 from typing import Any, Callable, Mapping
@@ -191,6 +193,26 @@ def format_offers(found: list[Mapping[str, Any]], *, hours: float, disk_gb: floa
 
 # --- 作成・一覧・破棄 -------------------------------------------------------
 
+#: このプロジェクトが作ったインスタンスの label の接頭辞。アカウントは他の作業と共有しているので、
+#: 破棄などはこの label のインスタンスにだけ送る（他の作業のインスタンスには触らない）。
+OWNER_PREFIX = "cadex-q8"
+
+
+def run_label(kind: str, now: datetime) -> str:
+    """作成時に付ける label（タグ）: ``cadex-q8-<種類>-<YYYYMMDD-HHMM>``。"""
+    kind = str(kind or "").strip()
+    for prefix in (OWNER_PREFIX + "-", "q8-"):
+        if kind.startswith(prefix):
+            kind = kind[len(prefix):]
+    kind = re.sub(r"[^A-Za-z0-9_.-]+", "-", kind).strip("-") or "run"
+    return f"{OWNER_PREFIX}-{kind}-{now:%Y%m%d-%H%M}"
+
+
+def is_owned(instance: Mapping[str, Any]) -> bool:
+    """label がこのプロジェクトのもの（``cadex-q8-…``）か。"""
+    label = str(instance.get("label") or "")
+    return label.startswith(OWNER_PREFIX + "-") and len(label) > len(OWNER_PREFIX) + 1
+
 def instance_request(instance: Mapping[str, Any]) -> dict[str, Any]:
     body: dict[str, Any] = {
         "image": instance.get("image", ""),
@@ -220,10 +242,15 @@ def _guard(*, yes: bool, api_key: str, what: str) -> str:
 
 
 def create_instance(offer_id: int, instance: Mapping[str, Any], *, api_key: str,
-                    yes: bool, opener: Opener | None = None) -> dict[str, Any]:
-    """オファーを借りる（**課金が始まる**）。``yes`` と ``api_key`` が揃わなければ送らない。"""
+                    yes: bool, opener: Opener | None = None,
+                    now: datetime | None = None) -> dict[str, Any]:
+    """オファーを借りる（**課金が始まる**）。``yes`` と ``api_key`` が揃わなければ送らない。
+
+    label は設定の値を種類として、``run_label`` で作成時刻つきのものに付け替える。
+    """
 
     body = instance_request(instance)
+    body["label"] = run_label(str(instance.get("label", "")), now or datetime.now())
     reason = _guard(yes=yes, api_key=api_key, what="インスタンスの作成（課金開始）")
     image = str(body["image"])
     if not reason and (not image or "<" in image):
@@ -248,6 +275,14 @@ def destroy_instance(instance_id: int, *, api_key: str, yes: bool,
     plan = {"executed": False, "reason": reason, "instance_id": int(instance_id),
             "method": "DELETE", "url": f"{API_V0}/instances/{int(instance_id)}"}
     if reason:
+        return plan
+    found = [row for row in list_instances(api_key=api_key, opener=opener)
+             if str(row.get("id")) == str(int(instance_id))]
+    if not found or not is_owned(found[0]):
+        label = found[0].get("label") if found else None
+        plan["reason"] = (f"インスタンス {int(instance_id)}（label: {label or 'なし'}）は"
+                          f"このプロジェクトのもの（label が {OWNER_PREFIX}- で始まる）ではないので、"
+                          "破棄しません。他の作業のインスタンスには触りません")
         return plan
     _request("DELETE", f"/instances/{int(instance_id)}", api_key=api_key, opener=opener)
     return {**plan, "executed": True}

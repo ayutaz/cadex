@@ -51,7 +51,7 @@
     "limit": 10
   },
   "instance": {
-    "image": "<your-registry>/cadex-train:<tag>",
+    "image": "ghcr.io/ayutaz/cadex-train:sha-e7f4d9d",
     "disk_gb": 30,
     "label": "q8-smoke"
   },

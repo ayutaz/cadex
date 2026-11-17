@@ -148,7 +148,8 @@ def test_作成は_yes_と_API_キーの両方で初めて_PUT_する():
     assert body["image"] == INSTANCE_CFG["image"]
     assert body["disk"] == 40
     assert body["runtype"] == "ssh_direc ssh_proxy"
-    assert body["label"] == "q8-smoke"
+    # 設定の label は種類として使い、作成時刻つきの「このプロジェクトの label」に付け替える
+    assert body["label"].startswith("cadex-q8-smoke-")
 
 
 def test_runtype_は設定で差し替えられる():
@@ -159,13 +160,15 @@ def test_runtype_は設定で差し替えられる():
 
 
 def test_破棄も_yes_と_API_キーが揃うまで送らない():
-    opener = FakeOpener({"success": True})
+    # 破棄の前に一覧で「このプロジェクトのインスタンスか」を確かめる（test_vastai_owner.py）
+    opener = FakeOpener({"success": True,
+                         "instances": [{"id": 9876, "label": "cadex-q8-smoke-20261117-1930"}]})
     assert offers.destroy_instance(9876, api_key="k", yes=False, opener=opener)["executed"] is False
     assert offers.destroy_instance(9876, api_key="", yes=True, opener=opener)["executed"] is False
     assert opener.requests == []
     assert offers.destroy_instance(9876, api_key="k", yes=True, opener=opener)["executed"] is True
-    (request,) = opener.requests
-    assert request.get_method() == "DELETE"
+    assert [r.get_method() for r in opener.requests] == ["GET", "DELETE"]
+    request = opener.requests[-1]
     assert request.full_url == "https://console.vast.ai/api/v0/instances/9876"
 
 

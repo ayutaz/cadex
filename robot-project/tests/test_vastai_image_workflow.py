@@ -91,3 +91,12 @@ def test_every_action_is_pinned_to_a_major_version(wf):
     for s in _steps(wf):
         if "uses" in s:
             assert re.fullmatch(r"[\w.-]+/[\w.-]+@v\d+", s["uses"]), s["uses"]
+
+
+@pytest.mark.parametrize("name", ["train_smoke.json", "train_full.json"])
+def test_configs_use_a_commit_tag_of_the_published_image(name):
+    import json
+
+    image = json.loads((ROOT / "configs" / name).read_text())["instance"]["image"]
+    # 再現できるよう sha タグ（latest や仮の値ではない）
+    assert re.fullmatch(r"ghcr\.io/ayutaz/cadex-train:sha-[0-9a-f]{7}", image), image
