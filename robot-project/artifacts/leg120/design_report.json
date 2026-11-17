@@ -448,9 +448,20 @@
       45.0
     ]
   },
-  "timings_s": {
-    "build_s": 6.9,
-    "clearance_s": 25.4
+  "timings_s": {},
+  "training_cut": {
+    "fidelity_pass": true,
+    "options": {
+      "timestep": 0.002,
+      "iterations": 2,
+      "ls_iterations": 3,
+      "integrator": "implicitfast",
+      "fall_condim": 1
+    },
+    "dropped_randomisation": [
+      "randomisation dropped: ['task.randomisation: rand_cover_mass on c_cover', 'task.randomisation: rand_battery_mass on c_bat', 'task.success.randomisation: rand_cover_mass on c_cover', 'task.success.randomisation: rand_battery_mass on c_bat']"
+    ],
+    "task": "<robot-project>/robot/mjcf/leg120/cut/walk-task.json"
   },
   "files": {
     "meshes": "robot/meshes/leg120",

@@ -56,13 +56,20 @@ def plan_steps(variant: str, *, train: str, policy_base: Path | None) -> list[tu
 def train_local(variant: str, iterations: int, envs: int, hidden: list[int]) -> Path:
     from q8.paths import ARTIFACTS, MJCF_DIR, PROJECT, TRAINER
 
-    task = next((MJCF_DIR / variant).glob("*-task.json"))
+    from q8.training import cut_task_path
+
+    export_task = next((MJCF_DIR / variant).glob("*-task.json"))
+    cut = cut_task_path(MJCF_DIR / variant)
+    task = cut if cut.exists() else export_task  # カットモデルがあればそれで学習（約9倍速い）
     out = ARTIFACTS / "runs" / f"{variant}-local"
     out.mkdir(parents=True, exist_ok=True)
     policy = out / "walk.cxpolicy"
     cmd = [str(PROJECT / ".venv" / "bin" / "python"), str(TRAINER), str(task), "--out", str(policy),
            "--envs", str(envs), "--iterations", str(iterations), "--seed", "0", "--hidden", *map(str, hidden),
-           "--checkpoint-every", "50", "--progress", str(out / "progress.json")]
+           "--checkpoint-every", "50", "--progress", str(out / "progress.json"),
+           "--action-filter-alpha", "0.6", "--no-load-speed", "10.47"]
+    if task == cut:
+        cmd += ["--cad-model", str(next((MJCF_DIR / variant).glob("*-model.xml")))]
     with (out / "receipt.json").open("w") as receipt, (out / "stderr.log").open("w") as err:
         subprocess.run(cmd, check=True, stdout=receipt, stderr=err, env={**__import__("os").environ, "JAX_PLATFORMS": "cpu"})
     return policy

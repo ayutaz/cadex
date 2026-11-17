@@ -16,3 +16,6 @@ dependencies = [
 dev = [
     "pytest>=9.2.0",
 ]
+
+[tool.pytest.ini_options]
+markers = ["slow: Cadexエンジンや学習器を呼ぶ遅いテスト"]

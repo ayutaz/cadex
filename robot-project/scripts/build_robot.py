@@ -31,6 +31,7 @@ from q8.paths import ARTIFACTS, DESIGN_SCRIPT, MESHES, MJCF_DIR, PROJECT, cadex_
 from q8.physics import static_report  # noqa: E402
 from q8.render import render_views  # noqa: E402
 from q8.stl import read_stl, write_binary_stl  # noqa: E402
+from q8.training import make_training_cut  # noqa: E402
 from q8.visual import add_visual_meshes  # noqa: E402
 
 LEGS = ("lf", "rf", "lh", "rh")
@@ -99,6 +100,10 @@ def main() -> int:
         if f.suffix in (".xml", ".json"):
             shutil.copy2(f, mjcf_out / f.name)
     model_xml = next(mjcf_out.glob("*-model.xml"))
+    # 学習用カットモデル（CPUで約9倍速い。評価はエンジンのモデルで行う）
+    cut_info = None
+    for task_json in mjcf_out.glob("*-task.json"):
+        cut_info = make_training_cut(project, task_json, mjcf_out)
     visual_xml = add_visual_meshes(model_xml, mesh_out, mjcf_out / "visual.xml",
                                    mesh_prefix=f"../../meshes/{args.variant}")
 
@@ -121,6 +126,7 @@ def main() -> int:
         "joints": {mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, j): [round(float(v) * 57.29578, 2) for v in model.jnt_range[j]]
                    for j in range(1, model.njnt)},
         "timings_s": timings,
+        "training_cut": cut_info,
         "files": {"meshes": str(mesh_out.relative_to(PROJECT)), "mjcf": str(model_xml.relative_to(PROJECT)),
                   "visual_mjcf": str(visual_xml.relative_to(PROJECT)),
                   "task": [str(p.relative_to(PROJECT)) for p in mjcf_out.glob("*-task.json")]},
