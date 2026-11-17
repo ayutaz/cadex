@@ -5,7 +5,9 @@ __pycache__/
 .pytest_cache/
 # 大きな生成物（再生成できるもの）
 artifacts/runs/
-artifacts/videos/*.mp4
+# 評価トレース（1評価 約29 MB）は evaluation/evaluate_variant.py で再生成できる
+artifacts/**/seed-*-trace.json
+artifacts/**/*.webm
 artifacts/tmp/
 # 認証情報
 .env

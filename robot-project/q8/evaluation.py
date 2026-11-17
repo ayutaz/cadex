@@ -124,6 +124,8 @@ def record_episode(model: mujoco.MjModel, target_fn: Callable[[float], dict], *,
         commands = [math.degrees(v) for v in cmd_rad]
         for _ in range(substeps):
             mujoco.mj_step(model, data)
+        # mj_step の直後の xpos は積分前の値なので、記録の前に位置を計算し直す（qpos と揃える）
+        mujoco.mj_kinematics(model, data)
         frames.append(frame(k + 1))
         done = k + 1
         up = 1.0 - 2.0 * (data.qpos[4] ** 2 + data.qpos[5] ** 2)

@@ -1046,6 +1046,16 @@
    "expression": "((tau_hip_lf / 176.520)**2 + (tau_knee_lf / 176.520)**2 + (tau_hip_rf / 176.520)**2 + (tau_knee_rf / 176.520)**2 + (tau_hip_lh / 176.520)**2 + (tau_knee_lh / 176.520)**2 + (tau_hip_rh / 176.520)**2 + (tau_knee_rh / 176.520)**2) / 8",
    "label": "effort",
    "weight": -0.5
+  },
+  {
+   "expression": "((tau_hip_lf / 70.608)**4 + (tau_knee_lf / 70.608)**4 + (tau_hip_rf / 70.608)**4 + (tau_knee_rf / 70.608)**4 + (tau_hip_lh / 70.608)**4 + (tau_knee_lh / 70.608)**4 + (tau_hip_rh / 70.608)**4 + (tau_knee_rh / 70.608)**4) / 8",
+   "label": "effort_rated",
+   "weight": -0.3
+  },
+  {
+   "expression": "(rot_qx**2 + rot_qy**2) / 0.0019",
+   "label": "tilt",
+   "weight": -0.1
   }
  ],
  "schema": "cadex-training-task-v1",

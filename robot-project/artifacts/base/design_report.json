@@ -1,7 +1,7 @@
 {
   "variant": "base",
   "cadex_project": "~/cadex-projects/quadruped8",
-  "accepted_revision": "190d676ccdc6b1cc6a9b049f15633f05ae4832d5bb3124ea458d2e8676adb3b6",
+  "accepted_revision": "3819e2db9e1d937c19bdd5f94ea61cf4a649f27ad43b66012066e81eee2b0e0b",
   "design_script": "robot/design/quadruped8.py",
   "params": {
     "body_length": 110.0,
@@ -34,6 +34,8 @@
     "cmd_min": 40.0,
     "cmd_max": 160.0,
     "gait_period": 0.5,
+    "w_trot": 0.5,
+    "w_swing": 0.5,
     "gait_lift": 10.0,
     "armature": 20.0
   },
@@ -449,8 +451,22 @@
     ]
   },
   "timings_s": {
-    "build_s": 3.0,
-    "clearance_s": 20.0
+    "build_s": 3.2,
+    "clearance_s": 20.2
+  },
+  "training_cut": {
+    "fidelity_pass": true,
+    "options": {
+      "timestep": 0.002,
+      "iterations": 2,
+      "ls_iterations": 3,
+      "integrator": "implicitfast",
+      "fall_condim": 1
+    },
+    "dropped_randomisation": [
+      "randomisation dropped: ['task.randomisation: rand_cover_mass on c_cover', 'task.randomisation: rand_battery_mass on c_bat', 'task.success.randomisation: rand_cover_mass on c_cover', 'task.success.randomisation: rand_battery_mass on c_bat']"
+    ],
+    "task": "<robot-project>/robot/mjcf/base/cut/walk-task.json"
   },
   "files": {
     "meshes": "robot/meshes/base",
