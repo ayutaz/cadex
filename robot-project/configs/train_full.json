@@ -65,7 +65,7 @@
     "label": "q8-full"
   },
   "estimate": {
-    "seconds_per_iteration": 2.0,
+    "seconds_per_iteration": 4.1,
     "setup_minutes": 15,
     "margin": 1.3
   },

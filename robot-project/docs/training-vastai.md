@@ -149,6 +149,11 @@ RTX 5090 で Go1 の 1260 反復が 333 秒＝約 0.26 秒/反復、別の機体
 3. 手で数を入れるなら `--seconds-per-iteration 0.5 --dph 0.45`。
 4. 納得したら `configs/train_full.json` の `estimate.seconds_per_iteration` を実測値に直す。
 
+   実測（2026-11-17、RTX 4090 1台、8192 envs、学習用カットモデル、128-64）:
+   1回目の smoke は 10 反復で 183 秒（ほとんどが JIT コンパイル）、コンパイルのキャッシュが効いた
+   2回目は 40.8 秒＝**約 4.1 秒/反復**。学習中の GPU 使用率は 96%。本番 1000 反復は約 70 分。
+   設定の `seconds_per_iteration` はこの値（4.1）にしてある。
+
 ## 4. 借りる（課金開始）
 
 ```bash
@@ -203,6 +208,15 @@ sha256 を一度に見る。`backend gpu` が出ない、または学習器が�
    書くので、ssh が切れても、Mac を閉じても学習は続く。
 5. 手元の `artifacts/runs/vastai/<run_id>/run.json` に記録を残す（以後の
    `status`/`pull`/`resume`/`stop` はこれを読む。消さないこと）。
+
+複数のインスタンスで並べるときは、起動のたびに接続先を環境変数で渡す（環境変数は `.env` に勝つ）。
+`status`・`pull`・`stop` は、その回を起動した接続先（`run.json` の `host` と `port`）に送るので、
+`.env` がどの台を指していても取り違えない。
+
+```bash
+VAST_SSH_HOST=<[このプロジェクト] の行のホスト> VAST_SSH_PORT=<ポート> \
+  .venv/bin/python -m vastai launch --config configs/train_full.json --seed 1 --run-id full-base-s1
+```
 
 同じ設定を学習の乱数だけ変えて複数回回すときは `--seed` を付ける（設定の `trainer.seed` を
 上書きする。run_id は区別できる名前を `--run-id` で付ける）。

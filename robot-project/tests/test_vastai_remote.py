@@ -451,3 +451,66 @@ def test_stop_は_TERM_を送り止まったことを確かめる(tmp_path):
     assert session.stop("smoke-1") == "stopped"
     assert any("kill -TERM" in c and "/workspace/runs/smoke-1/train.pid" in c
                for c in runner.remote_commands())
+
+
+# --- 複数のインスタンス -----------------------------------------------------
+# 学習を複数のインスタンスで並べると、.env（や環境変数）の接続先は1つしか指せない。既にある回の
+# status / pull / stop は、その回を起動した接続先（run.json の host と port）に送る。
+
+
+def _recorded(tmp_path, host="ssh9.vast.ai", port=50001):
+    directory = tmp_path / "runs" / "full-s1"
+    directory.mkdir(parents=True)
+    (directory / "run.json").write_text(json.dumps({
+        "run_id": "full-s1", "remote_dir": "/workspace/runs/full-s1", "pid": 7,
+        "host": host, "port": port, "device": "gpu", "policy_name": "walk"}), encoding="utf-8")
+    return directory
+
+
+def _addresses(runner):
+    return {(call[call.index("-p") + 1] if "-p" in call else None,
+             next(item for item in call if "@" in item).split("@")[1].split(":")[0])
+            for call in runner.calls if call[0] == "ssh"}
+
+
+def test_status_は記録された接続先に送る(tmp_path):
+    _recorded(tmp_path)
+    runner = FakeRunner(lambda argv: ok(argv, json.dumps({"state": "training", "iteration": 3})))
+    session = remote.Session(TARGET, runner=runner, local_root=tmp_path / "runs")
+    session.progress("full-s1")
+    session.alive("full-s1")
+    assert _addresses(runner) == {("50001", "ssh9.vast.ai")}
+
+
+def test_stop_は記録された接続先に送る(tmp_path):
+    _recorded(tmp_path)
+    runner = FakeRunner(lambda argv: ok(argv, "gone"))
+    session = remote.Session(TARGET, runner=runner, local_root=tmp_path / "runs", sleep=lambda s: None)
+    assert session.stop("full-s1") == "gone"
+    assert _addresses(runner) == {("50001", "ssh9.vast.ai")}
+
+
+def test_pull_は記録された接続先から受け取る(tmp_path):
+    _recorded(tmp_path)
+    runner = FakeRunner()
+    session = remote.Session(TARGET, runner=runner, local_root=tmp_path / "runs")
+    with pytest.raises(remote.VerificationError):
+        session.pull("full-s1")  # 中身が無いので検証は落ちる。送り先だけを見る
+    rsync = [call for call in runner.calls if call[0] == "rsync"]
+    assert rsync and all("root@ssh9.vast.ai:/workspace/runs/full-s1/" in call for call in rsync)
+    assert all("-p 50001" in call[call.index("-e") + 1] for call in rsync)
+    assert _addresses(runner) <= {("50001", "ssh9.vast.ai")}
+
+
+def test_接続先の記録が無い古い回は設定の接続先を使う(tmp_path):
+    directory = tmp_path / "runs" / "old"
+    directory.mkdir(parents=True)
+    (directory / "run.json").write_text(json.dumps({"run_id": "old", "remote_dir": "/w/old"}))
+    runner = FakeRunner(lambda argv: ok(argv, json.dumps({"state": "done"})))
+    remote.Session(TARGET, runner=runner, local_root=tmp_path / "runs").progress("old")
+    assert _addresses(runner) == {("41234", "ssh5.vast.ai")}
+
+
+def test_回収した方策が一つも無ければ成功と報告しない(tmp_path):
+    with pytest.raises(remote.VerificationError):
+        remote.verify_run(tmp_path, None, None, {}, policy_name="walk")

@@ -22,6 +22,7 @@
 from __future__ import annotations
 
 import hashlib
+import dataclasses
 import json
 import re
 import shlex
@@ -177,6 +178,8 @@ def verify_run(directory: str | Path, progress: Mapping[str, Any] | None,
 
     report, problems = [], []
     names = sorted(set(claimed) | {p.name for p in directory.glob("*.cxpolicy")})
+    if not names:
+        raise VerificationError(f"{directory} に回収した方策（*.cxpolicy）が一つもありません")
     for name in names:
         path = directory / name
         local = sha256_file(path) if path.exists() else None
@@ -298,8 +301,20 @@ class Session:
                               + (f": {detail[-1]}" if detail else ""))
         return result
 
-    def ssh(self, command: str, *, what: str = "ssh") -> str:
-        return self._run(self.target.ssh_argv(command), what=what).stdout
+    def ssh(self, command: str, *, what: str = "ssh", target: cfg.SSHTarget | None = None) -> str:
+        return self._run((target or self.target).ssh_argv(command), what=what).stdout
+
+    def target_of(self, record: Mapping[str, Any]) -> cfg.SSHTarget:
+        """既にある回の接続先。起動した接続先（run.json の host と port）を使う。
+
+        学習を複数のインスタンスで並べると、.env の接続先は1つしか指せないため。
+        記録に接続先が無い古い回だけ、設定の接続先を使う。
+        """
+
+        if record.get("host"):
+            return dataclasses.replace(self.target, host=str(record["host"]),
+                                       port=int(record.get("port") or 22))
+        return self.target
 
     def record_dir(self, run_id: str) -> Path:
         return self.local_root / run_id
@@ -411,7 +426,7 @@ class Session:
     def progress(self, run_id: str) -> dict[str, Any]:
         record = self.load_record(run_id)
         text = self.ssh(f"cat {shlex.quote(record['remote_dir'] + '/progress.json')}",
-                        what="progress.json の取得")
+                        what="progress.json の取得", target=self.target_of(record))
         progress = json.loads(text)
         directory = self.record_dir(run_id)
         directory.mkdir(parents=True, exist_ok=True)
@@ -421,13 +436,13 @@ class Session:
     def alive(self, run_id: str) -> bool:
         record = self.load_record(run_id)
         pid_file = shlex.quote(record["remote_dir"] + "/train.pid")
-        answer = self.runner(self.target.ssh_argv(
+        answer = self.runner(self.target_of(record).ssh_argv(
             f"kill -0 $(cat {pid_file}) 2>/dev/null && echo yes || echo no")).stdout.strip()
         return answer == "yes"
 
     # 回収
-    def remote_sums(self, remote_dir: str) -> dict[str, str]:
-        text = self.runner(self.target.ssh_argv(
+    def remote_sums(self, remote_dir: str, target: cfg.SSHTarget | None = None) -> dict[str, str]:
+        text = self.runner((target or self.target).ssh_argv(
             f"cd {shlex.quote(remote_dir)} && sha256sum *.cxpolicy 2>/dev/null")).stdout
         return parse_sha256sum(text)
 
@@ -435,8 +450,9 @@ class Session:
         """チェックポイント・最終ポリシー・進捗・ログを回収し、sha256 で検証する。"""
 
         record = self.load_record(run_id)
+        target = self.target_of(record)
         directory = self.record_dir(run_id)
-        self._run(self.target.rsync_down(record["remote_dir"] + "/", str(directory) + "/",
+        self._run(target.rsync_down(record["remote_dir"] + "/", str(directory) + "/",
                                          includes=PULL_INCLUDES), what="回収（rsync）")
         progress_path = directory / "progress.json"
         progress = metrics.load_progress(progress_path) if progress_path.exists() else None
@@ -445,7 +461,7 @@ class Session:
         if progress:
             metrics.write_csv(progress, directory / "metrics.csv")
         expect = None if allow_cpu else ("gpu" if record.get("device", "gpu") == "gpu" else None)
-        return verify_run(directory, progress, receipt, self.remote_sums(record["remote_dir"]),
+        return verify_run(directory, progress, receipt, self.remote_sums(record["remote_dir"], target),
                           policy_name=record.get("policy_name", "policy"), expect_device=expect)
 
     # 再開
@@ -496,7 +512,8 @@ class Session:
         pid_file = shlex.quote(record["remote_dir"] + "/train.pid")
         answer = self.ssh(
             f"if [ -f {pid_file} ]; then kill -TERM $(cat {pid_file}) 2>/dev/null "
-            "&& echo stopped || echo gone; else echo nopid; fi", what="停止").strip()
+            "&& echo stopped || echo gone; else echo nopid; fi", what="停止",
+            target=self.target_of(record)).strip()
         if answer == "stopped":
             self.sleep(2.0)
             if self.alive(run_id):
