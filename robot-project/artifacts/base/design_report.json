@@ -1,7 +1,7 @@
 {
   "variant": "base",
   "cadex_project": "~/cadex-projects/quadruped8",
-  "accepted_revision": "cc4c18a2dc216204984dfa4ccc3891ef957bc43d0de44a2251375ce3bc63f072",
+  "accepted_revision": "190d676ccdc6b1cc6a9b049f15633f05ae4832d5bb3124ea458d2e8676adb3b6",
   "design_script": "robot/design/quadruped8.py",
   "params": {
     "body_length": 110.0,
@@ -29,6 +29,12 @@
     "knee_max": 45.0,
     "servo_sg90": 0.0,
     "rated_fraction": 0.4,
+    "friction_loss": 2.0,
+    "policy_on": 0.0,
+    "cmd_min": 40.0,
+    "cmd_max": 160.0,
+    "gait_period": 0.5,
+    "gait_lift": 10.0,
     "armature": 20.0
   },
   "units": "mm, deg, g, N*mm（表記のないものはSI）",
@@ -443,14 +449,16 @@
     ]
   },
   "timings_s": {
-    "build_s": 5.3,
-    "clearance_s": 23.1
+    "build_s": 3.0,
+    "clearance_s": 20.0
   },
   "files": {
     "meshes": "robot/meshes/base",
     "mjcf": "robot/mjcf/base/model-model.xml",
     "visual_mjcf": "robot/mjcf/base/visual.xml",
-    "task": []
+    "task": [
+      "robot/mjcf/base/walk-task.json"
+    ]
   },
   "bom": {
     "purchased": [

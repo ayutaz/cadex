@@ -1,0 +1,125 @@
+{
+  "labels": [
+    "base",
+    "leg120"
+  ],
+  "design": {
+    "bom_jpy": {
+      "base": 6817,
+      "leg120": 6831,
+      "change": 0.0020536893061463986
+    },
+    "com_height_mm": {
+      "base": 73.4,
+      "leg120": 86.3,
+      "change": 0.1757493188010898
+    },
+    "hold_rated_ratio": {
+      "base": 0.264,
+      "leg120": 0.338,
+      "change": 0.28030303030303033
+    },
+    "shin_mm": {
+      "base": 50.0,
+      "leg120": 60.0,
+      "change": 0.2
+    },
+    "support_margin_mm": {
+      "base": 33.4,
+      "leg120": 31.7,
+      "change": -0.05089820359281435
+    },
+    "thigh_mm": {
+      "base": 45.0,
+      "leg120": 54.0,
+      "change": 0.2
+    },
+    "total_mass_g": {
+      "base": 275.2,
+      "leg120": 280.5,
+      "change": 0.0192587209302326
+    },
+    "trot_rated_ratio": {
+      "base": 0.43,
+      "leg120": 0.526,
+      "change": 0.22325581395348845
+    }
+  },
+  "fixed_gait": {
+    "pass_rate": {
+      "base": 0.0,
+      "leg120": 0.0,
+      "change": null
+    },
+    "completed": {
+      "base": 1.0,
+      "leg120": 1.0,
+      "change": 0.0
+    },
+    "falls": {
+      "base": 0.0,
+      "leg120": 0.0,
+      "change": null
+    },
+    "mean_forward_speed_mm_s": {
+      "base": 53.64101299153532,
+      "leg120": 41.60019366127904,
+      "change": -0.22447039417686512
+    },
+    "speed_ratio": {
+      "base": 0.33525633119709575,
+      "leg120": 0.26000121038299406,
+      "change": -0.22447039417686498
+    },
+    "speed_error_rms_mm_s": {
+      "base": 109.05573062693158,
+      "leg120": 123.69484346650152,
+      "change": 0.13423515440604258
+    },
+    "max_tilt_deg": {
+      "base": 5.65757424061691,
+      "leg120": 5.24212725617568,
+      "change": -0.07343199872812083
+    },
+    "max_heading_deg": {
+      "base": 23.55346238609177,
+      "leg120": 47.83719946896235,
+      "change": 1.0310049828262209
+    },
+    "steps_min": {
+      "base": 0.0,
+      "leg120": 0.0,
+      "change": null
+    },
+    "slip_share_max": {
+      "base": 1.0836722317820793,
+      "leg120": 1.0607344004432524,
+      "change": -0.02116676119042566
+    },
+    "effort_rms_rated_ratio_max": {
+      "base": 0.7789047192028807,
+      "leg120": 0.8650503086117143,
+      "change": 0.11059836625074455
+    },
+    "effort_peak_ratio_max": {
+      "base": 1.0,
+      "leg120": 0.6951526328809143,
+      "change": -0.30484736711908567
+    },
+    "cost_of_transport": {
+      "base": 2.612331739498922,
+      "leg120": 2.47697485459602,
+      "change": -0.05181458497643375
+    },
+    "command_rate_rms": {
+      "base": 1.732470209641713,
+      "leg120": 1.4117662023476583,
+      "change": -0.1851137211533228
+    }
+  },
+  "policy": null,
+  "set": {
+    "thigh_length": 54.0,
+    "shin_length": 60.0
+  }
+}

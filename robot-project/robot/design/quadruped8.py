@@ -39,6 +39,13 @@ p = params(
     servo_sg90=num(0.0, min=0.0, max=1.0, step=1.0, label="1ならSG90、0ならMG90S"),
     rated_fraction=num(0.4, min=0.2, max=1.0, step=0.05,
                        label="連続定格トルク / 失速トルク（推定値、ADR-099の判断に倣う）"),
+    friction_loss=num(2.0, unit="N*mm", min=0.0, max=20.0, step=0.5,
+                      label="関節の静止摩擦（ギア列、推定値。ランダム化の対象）"),
+    policy_on=num(0.0, min=0.0, max=1.0, step=1.0, label="1で学習済みポリシーを宣言して再生する"),
+    cmd_min=num(40.0, unit="mm/s", min=0.0, max=300.0, step=5.0, label="指令する前進速度の下限"),
+    cmd_max=num(160.0, unit="mm/s", min=10.0, max=400.0, step=5.0, label="指令する前進速度の上限"),
+    gait_period=num(0.5, unit="s", min=0.25, max=1.0, step=0.05, label="トロットの周期（位相クロック）"),
+    gait_lift=num(10.0, unit="mm", min=3.0, max=30.0, step=1.0, label="遊脚で払う足上げ高さ"),
     armature=num(20.0, unit="kg*mm2", min=0.0, max=200.0, step=1.0,
                  label="サーボのロータ慣性（出力軸換算、推定値）"),
 )
@@ -261,6 +268,7 @@ bodies += [
 ] + [assembly.body(cb, density_kg_m3=dens) for cb, dens in bolt_comps]
 
 drives = []
+drive_by = {}
 dynamics = []
 hip_joints = {}
 knee_joints = {}
@@ -330,9 +338,11 @@ for name in ("lf", "rf", "lh", "rh"):
                               torque_limit_nmm=STALL, rated_torque_nmm=STALL * p.rated_fraction,
                               command_limits_degrees=[lo, hi], label=kind + "_drive_" + name)
         drives.append(a)
+        drive_by[kind + "_" + name] = a
         # 失速トルク / 無負荷速度 の粘性: 全力時にデータシートの速度で飽和する（ADR-409）。
         dynamics.append(assembly.joint_dynamics(j, damping_nmms_per_deg=STALL / (60.0 / SPEED),
-                                                armature_kgmm2=p.armature, label=kind + "_dyn_" + name))
+                                                armature_kgmm2=p.armature, friction_loss_nmm=p.friction_loss,
+                                                label=kind + "_dyn_" + name))
 
 asm = assembly.assembly(comps, joints, sweep_step_degrees=5.0, contacts=contacts, label="quadruped8")
 diag = assembly.solve(asm)
@@ -350,6 +360,86 @@ for name in ("lf", "rf", "lh", "rh"):
     obs.append(assembly.observation(hip_joints[name], "position", name="q_hip_" + name, role="privileged"))
     obs.append(assembly.observation(knee_joints[name], "position", name="q_knee_" + name, role="privileged"))
     obs.append(assembly.observation(feet[name], "contact", name="ft_" + name, role="privileged"))
+    obs.append(assembly.observation(feet[name], "centre_of_mass", name="fc_" + name, role="privileged"))
+for key, a in drive_by.items():
+    # 前回の関節指令（コントローラ自身が知っている値なのでセンサ不要）と、サーボの出力トルク（実機では測れない）
+    obs.append(assembly.observation(a, "command", name="c_" + key))
+    obs.append(assembly.observation(a, "actuator_force", name="tau_" + key, role="privileged"))
 model = assembly.mjcf(asm, bodies, actuators=drives, joint_dynamics=dynamics, observations=obs,
                       solver_step_s=0.002, label="quadruped8")
 result["model"] = model
+
+# --- 強化学習タスク（docs/XSCRIPT.md: assembly.task） ---
+# 方策（policy）が読むのは実機で得られるものだけ:
+#   IMUの姿勢 rot_q* と角速度 gyro_*、前回の関節指令 c_*（8）、目標速度 cmd、歩容の位相 ref_sin/ref_cos。
+# 関節角・胴体の速度と位置・足の接地・トルクは privileged（報酬・終了条件・critic だけが読む）。
+KEYS = list(drive_by)
+UP = "(1 - 2*(rot_qx^2 + rot_qy^2))"
+cmd = assembly.goal("cmd", kind="speed", between=[p.cmd_min, p.cmd_max], resample_seconds=4.0)
+FEET = [feet["lf"], feet["rf"], feet["lh"], feet["rh"]]
+# Cadex の歩容リファレンス（assembly.gait）は1脚3関節以上が前提で、2自由度の脚には使えない。
+# 代わりに位相クロック（コントローラ自身のタイマー。実機でも同じものを使える）を方策に与え、
+# トロットのリズムは報酬で教える: 対角ペア (LF,RH) は clock_sin > 0 で立脚、(RF,LH) は < 0 で立脚。
+clock = assembly.goal("clock", kind="phase", period_seconds=p.gait_period)
+STANCE_A = "(0.5 + 0.5*tanh(5*clock_sin))"   # LF, RH が立脚である度合い
+STANCE_B = "(0.5 - 0.5*tanh(5*clock_sin))"   # RF, LH
+FOOT_R = p.foot_radius
+
+
+def total(fmt):
+    return " + ".join(fmt.format(k=k) for k in KEYS)
+
+
+rewards = [
+    assembly.reward("1", weight=1.0, label="alive"),
+    assembly.reward(UP, weight=1.0, label="upright"),
+    # 目標速度への追従。転倒中は払わない（UP を掛ける）。速度はワールドX（mm/s）。
+    assembly.reward(UP + " * exp(-((vel_x - cmd) / 40)^2)", weight=3.0, label="track_speed"),
+    assembly.reward("(vel_y / 100)^2", weight=-1.0, label="lateral"),
+    assembly.reward("(gyro_z / 60)^2", weight=-0.5, label="yaw_rate"),
+    assembly.reward("(gyro_x / 100)^2 + (gyro_y / 100)^2", weight=-0.2, label="body_rock"),
+    assembly.reward("(pos_z / 15)^2", weight=-0.5, label="height"),
+    # トロットのリズム: 正しい組が接地していれば +、逆の組が接地していれば −（最大 2）
+    assembly.reward("tanh(5*clock_sin) * ((ft_lf_down + ft_rh_down) - (ft_rf_down + ft_lh_down))",
+                    weight=0.5, label="trot_contact"),
+    # 遊脚の足上げ（足先の中心の高さ。立位で足の半径）。gait_lift まで払う。
+    assembly.reward(" + ".join(
+        "%s * tanh((fc_%s_z - %.2f) / %.2f)" % (STANCE_B if leg in ("lf", "rh") else STANCE_A, leg, FOOT_R, p.gait_lift)
+        for leg in ("lf", "rf", "lh", "rh")), weight=0.5, label="swing_lift"),
+    # 滑らかさ: 指令の変化率（deg/s）とトルク（失速トルクで正規化）
+    assembly.reward("(" + total("(c_{k}_rate / 600)^2") + ") / 8", weight=-0.5, label="action_rate"),
+    assembly.reward("(" + total("(tau_{k} / %.3f)^2" % STALL) + ") / 8", weight=-0.5, label="effort"),
+]
+terminations = [
+    assembly.termination(UP, below=0.7, label="fell"),          # 約45度以上傾いた
+    assembly.termination("pos_z", below=-30.0, label="sank"),   # 胴体が立位から30 mm以上下がった
+]
+randomisation = [
+    assembly.randomise(c_chassis, "mass", scale=[0.85, 1.15], label="rand_chassis_mass"),
+    assembly.randomise(c_cover, "mass", scale=[0.85, 1.15], label="rand_cover_mass"),
+    assembly.randomise(c_bat, "mass", scale=[0.6, 1.4], label="rand_battery_mass"),   # 重心位置も動く
+]
+for name in ("lf", "rf", "lh", "rh"):
+    for j in (hip_joints[name], knee_joints[name]):
+        randomisation.append(assembly.randomise(j, "damping", scale=[0.7, 1.3]))      # サーボ速度のばらつき
+        randomisation.append(assembly.randomise(j, "friction_loss", scale=[0.5, 2.0]))
+reset = [assembly.reset_variation(c_chassis, tilt_degrees=[0.0, 3.0], height_mm=[4.0, 6.0])]  # 3度傾けると足が3.2 mm沈むため持ち上げる
+spec = assembly.success(
+    [
+        {"id": "completes", "metric": "completed", "min": 1},
+        {"id": "upright", "metric": "max_tilt_deg", "max": 25},
+        {"id": "walks", "metric": "steps_min", "min": 4},
+        {"id": "speed", "metric": "speed_ratio", "min": 0.5, "max": 1.5},
+        {"id": "rated", "metric": "effort_rms_rated_ratio_max", "max": 1.0},
+    ],
+    seeds=[2101, 2102, 2103, 2104, 2105, 2106, 2107, 2108, 2109, 2110],
+    feet=FEET, episode_seconds=8.0,
+)
+task = assembly.task(model, actions=[drive_by[k] for k in KEYS], reward=rewards, termination=terminations,
+                     randomisation=randomisation, reset_variation=reset, goals=[cmd, clock], success=spec,
+                     episode_seconds=8.0, control_hz=50, label="walk")
+result["walk"] = task
+if p.policy_on >= 0.5:
+    policy = assembly.policy(task, weights="walk.cxpolicy", sha256="0" * 64)
+    result["policy"] = policy
+    result["run"] = assembly.rollout(policy, frames_per_second=50, seed=2101)
