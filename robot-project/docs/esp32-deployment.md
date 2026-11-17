@@ -301,7 +301,7 @@ cd robot-project
 
 ## 10. リスク
 
-- 小さい actor で歩けるかは未検証（§3）。
+- 小さい actor（26-128-64-8）は、シミュレーションでは歩けた（§12）。実機では未確認。
 - ヨーの漂流（§7）。
 - 角速度の座標系。実物のタスク（`base/walk-task.json`）は `frame` が無く、世界座標で学習している。
   `OBS_GYRO_WORLD` で再現できるが、ヨー推定の誤差が角速度の x と y 成分にも入る。学習側で `frame` を
@@ -310,19 +310,43 @@ cd robot-project
   シミュレーションのアクチュエータモデル（`--no-load-speed` などのトルク・速度曲線）が実機と合わなければ、
   方針が実機で通用しない。
 - 制御周期の揺らぎ。`vTaskDelayUntil` と FreeRTOS 1 kHz tick を前提にしている。I2C の読み取り時間は未測定。
-- 起動時の指令（keyframe）は `.cxpolicy` にもタスクバンドルにも入っていない。モデルの keyframe から
-  読んで `--initial-command` で渡す必要がある。
+- 起動時の指令は `.cxpolicy` に入っていない。`export_c --task` を渡すと、学習のリセットと同じ値
+  （リセットのキーフレームの ctrl、`CadexDynamics.reset_command` と同じ式）が自動で入る。この機体では全関節 0°。
 - `main.c` は ESP-IDF でビルドしていない。スタブヘッダでの構文・型検査だけを行った。
-- int8 の誤差は合成ポリシーでの値。実物では、較正標本の分布しだいで変わる。
+- int8 の誤差は、実物の方策で合成ポリシーより大きく出た（最大 4.6°、§12）。float32 を使う。
 
 ## 11. 次の手順
 
-1. 学習: `--hidden 128 64 --value-hidden 512 256 128` と `--hidden 64 64 ...` を、既定（512-256-128）と
-   並べて学習し、報酬と歩容を比べる。足りなければ、大きい方針からの蒸留（`--teacher`）を試す。
-2. 実物の `.cxpolicy` が `artifacts/` に出たら、`check` → `quantize` → `export_c` を通す。
-   ロールアウトの観測を `.npy` に記録し、較正と評価に使う。
+1. （済、§12）26-128-64-8 を GPU で学習し、`check` → `quantize` → `export_c` を通した。
+   残り: `--hidden 64 64` との比較。ロールアウトの観測を `.npy` に記録し、int8 の較正と評価に使う（float32 なら不要）。
+2. サーボを較正して `servo.json` を作り、`exports/full-base-s0/policy_weights.h` を作り直して
+   `firmware/main/` に置く（置いた時点で `POLICY_SYNTHETIC` が 0 になり、サーボに出力する）。
 3. ESP-IDF でビルドし、推論サイクル数を実測して §4 の表を置き換える。
 4. IMU ドライバと姿勢推定を実装し、§7 の手順で軸を合わせる。
 5. サーボを較正し、`servo.json` を作る。
 6. HIL（hardware-in-the-loop）: シミュレーションの観測列を UART で基板に送り、基板の出力が
    参照実装と一致することを確かめる。そのあとで吊り下げ試験、接地試験の順に進める。
+
+## 12. GPU で学習した方策の書き出し（2026-11-17）
+
+基準機体の GPU 学習（[experiment-results.md](experiment-results.md) §5、学習シード5回）から
+`artifacts/training/full-base-s0/walk.cxpolicy` を選んだ。選び方: 合格 10/10 かつ全脚 14 歩以上の回
+（シード 0 と 4）のうち、向きのずれの小さい方（4.1° と 6.9°）。
+
+- 層構成 26-128-64-8（swish）。`cadex evaluate` で 10/10、平均前進速度 99.6 mm/s、追従誤差 RMS 4.3 mm/s。
+- witness の照合: 最大相対誤差 1.1e-7（許容 1e-4）。
+- 書き出し: `deploy/esp32/exports/full-base-s0/policy_weights.h`（`export_c --task robot/mjcf/base/cut/walk-task.json`）。
+  初期指令は学習のリセットと同じ全関節 0°。サーボの換算は既定値のまま（`servo.json` が無い）なので、
+  `firmware/main/` には置いていない。
+- ホストの C での照合: GPU 学習の10個の方策すべてで、float32 版は参照との差が行動範囲の 1e-5 未満、
+  int8 版は tanh 手前の値がビット一致（`tests/test_esp32_export_c.py::test_real_policy_end_to_end`）。
+- 量子化の誤差（`exports/full-base-s0/quantize-report.json`、標本は正規化統計からの合成 4096 個。単位は度）:
+
+| 方式 | 最大 | 平均 | 99%点 |
+|---|---|---|---|
+| float32（C の float 版） | 0.000 | 0.000 | 0.000 |
+| 重みだけ int8 | 1.24 | 0.11 | 0.50 |
+| 重み・活性値 int8 + LUT（C の int8 版） | 4.65 | 0.52 | 2.23 |
+
+  合成ポリシー（§5）より誤差が大きい。重みは float32 で 47.8 KB と内部 SRAM に載るので、**float32 を使う**。
+- 未確認: ESP-IDF でのビルドと推論時間の実測、IMU とサーボの較正、実機での歩行。

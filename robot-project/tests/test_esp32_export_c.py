@@ -280,15 +280,29 @@ def test_c_matches_python_with_task_layout(tmp_path, real_like):
     assert "#define POLICY_CLOCK_PERIOD_S 0.5f" in header
 
 
-REAL_POLICY = ROOT / "artifacts" / "runs" / "cpu-a" / "walk.000050.cxpolicy"
-REAL_TASK = ROOT / "artifacts" / "tmp" / "export-base" / "walk-task.json"
+def _real_cases() -> list[tuple[Path, Path]]:
+    """実物の方策と、それを学習したタスクの組。
+
+    手元の CPU 学習の1つ（Git の追跡外、無ければ飛ばす）と、``artifacts/training/full-*/`` に残した
+    GPU 学習の最終の方策すべて。タスクは各回の run.json の記録（``<robot-project>/...``）から取る。
+    """
+
+    cases = [(ROOT / "artifacts" / "runs" / "cpu-a" / "walk.000050.cxpolicy",
+              ROOT / "artifacts" / "tmp" / "export-base" / "walk-task.json")]
+    for record in sorted((ROOT / "artifacts" / "training").glob("full-*/run.json")):
+        task = json.loads(record.read_text(encoding="utf-8"))["task"].replace("<robot-project>", str(ROOT))
+        cases.append((record.parent / "walk.cxpolicy", Path(task)))
+    return cases
 
 
-@pytest.mark.skipif(not (REAL_POLICY.exists() and REAL_TASK.exists()),
-                    reason="実物の .cxpolicy / walk-task.json が無い")
-def test_real_policy_end_to_end(tmp_path):
+@pytest.mark.parametrize("real_policy,real_task", _real_cases(),
+                         ids=lambda p: p.parent.name if p.suffix == ".cxpolicy" else "")
+def test_real_policy_end_to_end(tmp_path, real_policy, real_task):
+    if not (real_policy.exists() and real_task.exists()):
+        pytest.skip("実物の .cxpolicy / walk-task.json が無い")
     if CC is None:
         pytest.skip("C コンパイラが無い")
+    REAL_POLICY, REAL_TASK = real_policy, real_task
     policy = cx.load_policy(REAL_POLICY)
     assert cx.witness_error(policy)[0] < cx.WITNESS_TOLERANCE
     task = json.loads(REAL_TASK.read_text(encoding="utf-8"))
