@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence, TextIO
 
 from . import config as cfg
-from . import metrics, offers, remote
+from . import metrics, offers, remote, sweep
 
 ROOT = Path(__file__).resolve().parents[1]           # robot-project/
 TRAINER = ROOT.parent / "training" / "cadex_train.py"  # Cadex 本体の学習器
@@ -97,6 +97,19 @@ def _parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("stop", help="学習プロセスに TERM を送って止める（インスタンスは止めない）")
     p.add_argument("run_id")
+
+    p = sub.add_parser("sweep", help="複数のインスタンスで学習の待ち行列を回す（起動待ち・GPU 確認・"
+                                      "起動・監視・回収・失敗の再投入・終わった台の破棄）")
+    p.add_argument("--config", action="append", required=True, help="configs/train_*.json（繰り返し可）")
+    p.add_argument("--seeds", required=True, help="学習の乱数（0-4、0,2,5 など）")
+    p.add_argument("--instance", type=int, action="append", required=True,
+                   help="使うインスタンスの id（label が cadex-q8- のもの。繰り返し可）")
+    p.add_argument("--destroy-when-done", action="store_true",
+                   help="退いた台（列が空、GPU が使えない、起動しない、学習に失敗）を破棄する")
+    p.add_argument("--boot-timeout", type=float, default=20.0, help="起動を待つ分数（既定 20）")
+    p.add_argument("--interval", type=float, default=30.0, help="一覧と進捗を見る間隔の秒数")
+    p.add_argument("--max-attempts", type=int, default=2, help="1回あたりの試行の上限")
+    p.add_argument("--dry-run", action="store_true", help="計画を出すだけ（何も送らない）")
 
     p = sub.add_parser("metrics", help="progress.json を CSV（と TensorBoard）に変換")
     p.add_argument("progress")
@@ -292,6 +305,35 @@ def _dispatch(args, *, environ, opener, runner, out, env_file) -> int:
             event = metrics.write_tensorboard(progress, args.tensorboard)
             print(f"TensorBoard: {event}（tensorboard --logdir {args.tensorboard}）", file=out)
         return 0
+
+    if command == "sweep":
+        items = sweep.plan(args.config, sweep.parse_seeds(args.seeds))
+        print(f"{len(items)} 回 × {len(args.instance)} 台"
+              f"（台: {', '.join(map(str, args.instance))}）", file=out)
+        for item in items:
+            print(f"    {item.run_id:<24} {item.config}  乱数 {item.seed}", file=out)
+        if args.dry_run:
+            print("dry-run: 何も送っていません", file=out)
+            return 0
+        file_values = cfg.read_env_file(env_file)
+        user = (environ.get("VAST_SSH_USER") or file_values.get("VAST_SSH_USER") or "root").strip()
+        ssh_key = (environ.get("VAST_SSH_KEY") or file_values.get("VAST_SSH_KEY") or "").strip()
+        job = sweep.Sweep(
+            items, api=sweep.VastApi(key, opener),
+            session_factory=lambda target: remote.Session(
+                target, runner=runner or remote.run_subprocess, local_root=LOCAL_RUNS),
+            log=lambda *parts: print(time.strftime("%H:%M:%S"), *parts, file=out, flush=True),
+            destroy=args.destroy_when_done, boot_timeout_s=args.boot_timeout * 60.0,
+            poll_s=args.interval, max_attempts=args.max_attempts, ssh_user=user or "root", ssh_key=ssh_key)
+        result = job.run(args.instance)
+        print(f"完了 {len(result['done'])}: {', '.join(result['done']) or '-'}", file=out)
+        print(f"失敗 {len(result['failed'])}: {', '.join(result['failed']) or '-'}", file=out)
+        print(f"未着手 {len(result['left'])}: {', '.join(result['left']) or '-'}", file=out)
+        for iid, reason in result["instances"].items():
+            print(f"    台 {iid}: {reason}", file=out)
+        if not args.destroy_when_done:
+            print("台は残っています（課金中）。python -m vastai instances で確かめて destroy してください", file=out)
+        return 0 if not result["failed"] and not result["left"] else 1
 
     # ここから下は SSH を使う
     session = _session(environ, env_file, runner)

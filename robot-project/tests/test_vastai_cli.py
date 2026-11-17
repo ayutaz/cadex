@@ -237,3 +237,48 @@ def test_create_は_offer_か_count_のどちらか一方():
     with pytest.raises(SystemExit):
         run(["create", "--config", FULL, "--offer", "1", "--count", "2"], environ={"VAST_API_KEY": "k"},
             opener=BundlesAndAsks())
+
+
+LEG = str(ROOT / "configs" / "train_full_leg120.json")
+
+
+def test_sweep_の_dry_run_は計画を出すだけで何も送らない():
+    opener = FakeOpener({})
+    code, out = run(["sweep", "--config", FULL, "--config", LEG, "--seeds", "0-1",
+                     "--instance", "11", "--instance", "12", "--dry-run"],
+                    environ={"VAST_API_KEY": "k"}, opener=opener, runner=ForbiddenRunner())
+    assert code == 0, out
+    for run_id in ("full-s0", "full-s1", "full-leg120-s0", "full-leg120-s1"):
+        assert run_id in out
+    assert "11" in out and "12" in out
+    assert opener.requests == []
+
+
+def test_sweep_は計画と台と破棄の指定を渡し結果を出す(monkeypatch):
+    from vastai import sweep
+
+    seen = {}
+
+    def fake_run(self, ids):
+        seen.update(ids=list(ids), destroy=self.destroy, boot=self.boot_timeout_s,
+                    runs=[i.run_id for i in self.queue])
+        return {"done": ["full-s0"], "failed": [], "left": [], "instances": {11: "列が空"}}
+
+    monkeypatch.setattr(sweep.Sweep, "run", fake_run)
+    code, out = run(["sweep", "--config", FULL, "--seeds", "0", "--instance", "11",
+                     "--destroy-when-done", "--boot-timeout", "25"],
+                    environ={"VAST_API_KEY": "k"}, opener=FakeOpener({}))
+    assert code == 0, out
+    assert seen == {"ids": [11], "destroy": True, "boot": 1500.0, "runs": ["full-s0"]}
+    assert "full-s0" in out and "列が空" in out
+
+
+def test_sweep_は失敗や残りがあれば失敗の終了コード(monkeypatch):
+    from vastai import sweep
+
+    monkeypatch.setattr(sweep.Sweep, "run", lambda self, ids: {
+        "done": [], "failed": ["full-s0"], "left": [], "instances": {}})
+    code, out = run(["sweep", "--config", FULL, "--seeds", "0", "--instance", "11"],
+                    environ={"VAST_API_KEY": "k"}, opener=FakeOpener({}))
+    assert code == 1
+    assert "full-s0" in out
