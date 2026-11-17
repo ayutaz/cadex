@@ -45,6 +45,8 @@ p = params(
     cmd_min=num(40.0, unit="mm/s", min=0.0, max=300.0, step=5.0, label="指令する前進速度の下限"),
     cmd_max=num(160.0, unit="mm/s", min=10.0, max=400.0, step=5.0, label="指令する前進速度の上限"),
     gait_period=num(0.5, unit="s", min=0.25, max=1.0, step=0.05, label="トロットの周期（位相クロック）"),
+    w_trot=num(0.5, min=0.0, max=5.0, step=0.1, label="報酬の重み: 対角ペアの接地位相（v3で1.0）"),
+    w_swing=num(0.5, min=0.0, max=5.0, step=0.1, label="報酬の重み: 遊脚の足上げ（v3で1.5）"),
     gait_lift=num(10.0, unit="mm", min=3.0, max=30.0, step=1.0, label="遊脚で払う足上げ高さ"),
     armature=num(20.0, unit="kg*mm2", min=0.0, max=200.0, step=1.0,
                  label="サーボのロータ慣性（出力軸換算、推定値）"),
@@ -401,14 +403,19 @@ rewards = [
     assembly.reward("(pos_z / 15)^2", weight=-0.5, label="height"),
     # トロットのリズム: 正しい組が接地していれば +、逆の組が接地していれば −（最大 2）
     assembly.reward("tanh(5*clock_sin) * ((ft_lf_down + ft_rh_down) - (ft_rf_down + ft_lh_down))",
-                    weight=0.5, label="trot_contact"),
+                    weight=p.w_trot, label="trot_contact"),
     # 遊脚の足上げ（足先の中心の高さ。立位で足の半径）。gait_lift まで払う。
     assembly.reward(" + ".join(
         "%s * tanh((fc_%s_z - %.2f) / %.2f)" % (STANCE_B if leg in ("lf", "rh") else STANCE_A, leg, FOOT_R, p.gait_lift)
-        for leg in ("lf", "rf", "lh", "rh")), weight=0.5, label="swing_lift"),
+        for leg in ("lf", "rf", "lh", "rh")), weight=p.w_swing, label="swing_lift"),
     # 滑らかさ: 指令の変化率（deg/s）とトルク（失速トルクで正規化）
     assembly.reward("(" + total("(c_{k}_rate / 600)^2") + ") / 8", weight=-0.5, label="action_rate"),
     assembly.reward("(" + total("(tau_{k} / %.3f)^2" % STALL) + ") / 8", weight=-0.5, label="effort"),
+    # v2: 推定連続定格で正規化したトルクの4乗。定格を超える区間だけを強く罰する（v1は左前脚が定格の1.4〜1.5倍）。
+    assembly.reward("(" + total("(tau_{k} / %.3f)^4" % (STALL * p.rated_fraction)) + ") / 8",
+                    weight=-0.3, label="effort_rated"),
+    # v2: 胴体の傾き（5度で1）。v1 は最大傾斜が約20度だった。
+    assembly.reward("(rot_qx^2 + rot_qy^2) / 0.0019", weight=-0.1, label="tilt"),
 ]
 terminations = [
     assembly.termination(UP, below=0.7, label="fell"),          # 約45度以上傾いた

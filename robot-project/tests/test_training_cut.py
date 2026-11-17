@@ -22,3 +22,20 @@ def test_make_cut_for_the_base_project(base_model_xml, tmp_path):
     assert task["model"]["path"].endswith("cut.xml") if isinstance(task["model"], dict) else "cut.xml" in str(task["model"])
     assert info["fidelity_pass"] is True
     assert info["dropped_randomisation"]  # 統合されたボディのランダム化は落ちる（記録として返す）
+
+
+def test_archive_run_keeps_only_small_reproducibility_files(tmp_path):
+    from q8.training import archive_run
+
+    run = tmp_path / "run"
+    (run / "eval-100").mkdir(parents=True)
+    (run / "eval-100" / "seed-1-trace.json").write_text("x" * 1000)
+    for name in ("walk.cxpolicy", "walk.000100.cxpolicy", "walk.best.cxpolicy", "progress.json", "receipt.json",
+                 "checkpoints.json", "checkpoints.csv", "stderr.log", "walk.000100.rollout-trace.json"):
+        (run / name).write_text("{}")
+    (run / "eval-final").mkdir()
+    (run / "eval-final" / "evaluation.json").write_text("{}")
+    dest = archive_run(run, tmp_path / "keep")
+    kept = sorted(p.relative_to(dest).as_posix() for p in dest.rglob("*") if p.is_file())
+    assert kept == ["checkpoints.csv", "checkpoints.json", "eval-final/evaluation.json", "progress.json",
+                    "receipt.json", "stderr.log", "walk.000100.cxpolicy", "walk.best.cxpolicy", "walk.cxpolicy"]

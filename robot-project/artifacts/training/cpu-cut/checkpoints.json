@@ -1,0 +1,172 @@
+[
+  {
+    "checkpoint": "100",
+    "pass_rate": 0.0,
+    "failing": {
+      "rated": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 101.03802807173798,
+    "speed_ratio": 1.038081178499255,
+    "speed_error_rms_mm_s": 10.4688776259987,
+    "max_tilt_deg": 20.57746112205988,
+    "steps_min": 14.8,
+    "slip_share_max": 0.4603067389020282,
+    "effort_rms_rated_ratio_max": 1.436751451737673,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 4.702107980474599
+  },
+  {
+    "checkpoint": "200",
+    "pass_rate": 0.0,
+    "failing": {
+      "rated": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 111.26389322872026,
+    "speed_ratio": 1.140686638205693,
+    "speed_error_rms_mm_s": 14.223513267012885,
+    "max_tilt_deg": 16.590498698520495,
+    "steps_min": 14.8,
+    "slip_share_max": 0.3828067870260284,
+    "effort_rms_rated_ratio_max": 1.4199331362796173,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 3.6371541189449816
+  },
+  {
+    "checkpoint": "300",
+    "pass_rate": 0.0,
+    "failing": {
+      "rated": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 105.4530297234775,
+    "speed_ratio": 1.0722355823134984,
+    "speed_error_rms_mm_s": 9.740021822379699,
+    "max_tilt_deg": 16.398575259864014,
+    "steps_min": 15.0,
+    "slip_share_max": 0.34200346911231233,
+    "effort_rms_rated_ratio_max": 1.4242532172357953,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 3.885356263911537
+  },
+  {
+    "checkpoint": "400",
+    "pass_rate": 0.0,
+    "failing": {
+      "rated": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 113.38651319495087,
+    "speed_ratio": 1.1548099803280512,
+    "speed_error_rms_mm_s": 15.765509127224576,
+    "max_tilt_deg": 15.305492454532867,
+    "steps_min": 15.0,
+    "slip_share_max": 0.3745176459637861,
+    "effort_rms_rated_ratio_max": 1.4329103325846706,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 3.5463603312837764
+  },
+  {
+    "checkpoint": "500",
+    "pass_rate": 0.0,
+    "failing": {
+      "rated": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 112.17402063960176,
+    "speed_ratio": 1.1451740086868152,
+    "speed_error_rms_mm_s": 14.535342597778499,
+    "max_tilt_deg": 14.959099726605041,
+    "steps_min": 15.0,
+    "slip_share_max": 0.381915203054373,
+    "effort_rms_rated_ratio_max": 1.440552723120798,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 3.6381973279191717
+  },
+  {
+    "checkpoint": "600",
+    "pass_rate": 0.0,
+    "failing": {
+      "rated": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 108.15938459622858,
+    "speed_ratio": 1.1017714241318248,
+    "speed_error_rms_mm_s": 11.606818120344029,
+    "max_tilt_deg": 15.813923966517692,
+    "steps_min": 15.0,
+    "slip_share_max": 0.37689278177301866,
+    "effort_rms_rated_ratio_max": 1.4341850863230658,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 3.7959787570695473
+  },
+  {
+    "checkpoint": "700",
+    "pass_rate": 0.0,
+    "failing": {
+      "rated": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 106.68376939695845,
+    "speed_ratio": 1.088504427649359,
+    "speed_error_rms_mm_s": 9.671695394752374,
+    "max_tilt_deg": 14.866876300601191,
+    "steps_min": 14.6,
+    "slip_share_max": 0.420052791891926,
+    "effort_rms_rated_ratio_max": 1.4110281046956963,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 3.548495438792071
+  },
+  {
+    "checkpoint": "800",
+    "pass_rate": 0.0,
+    "failing": {
+      "rated": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 105.459927815469,
+    "speed_ratio": 1.073848889497423,
+    "speed_error_rms_mm_s": 8.936947077059676,
+    "max_tilt_deg": 14.354162120512513,
+    "steps_min": 15.0,
+    "slip_share_max": 0.416994413133564,
+    "effort_rms_rated_ratio_max": 1.3838481432115879,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 3.53248624551195
+  },
+  {
+    "checkpoint": "900",
+    "pass_rate": 0.0,
+    "failing": {
+      "rated": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 105.13270864295946,
+    "speed_ratio": 1.0717509190050216,
+    "speed_error_rms_mm_s": 7.981082038140606,
+    "max_tilt_deg": 14.042196529399641,
+    "steps_min": 15.0,
+    "slip_share_max": 0.37922417782920004,
+    "effort_rms_rated_ratio_max": 1.3882084519401066,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 3.7793429438131425
+  },
+  {
+    "checkpoint": "final",
+    "pass_rate": 0.0,
+    "failing": {
+      "rated": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 102.28252900541051,
+    "speed_ratio": 1.0423673744074582,
+    "speed_error_rms_mm_s": 7.320497636055672,
+    "max_tilt_deg": 15.32456325443295,
+    "steps_min": 14.9,
+    "slip_share_max": 0.3567288446095991,
+    "effort_rms_rated_ratio_max": 1.3925025132307827,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 3.8399831626599634
+  }
+]

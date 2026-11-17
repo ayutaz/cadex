@@ -1,0 +1,124 @@
+# 強化学習環境（Phase 5）
+
+最終確認日: 2026-11-17
+
+学習器は Cadex 同梱の `training/cadex_train.py`（Brax PPO、MuJoCo MJX、JAX）をそのまま使う。
+新しく書いたのは、タスクの定義（設計スクリプトの `assembly.task`）と、それを回す周辺スクリプトだけ。
+GPU（vast.ai）での実行手順は [training-vastai.md](training-vastai.md)。
+
+## 1. タスクの在りか
+
+タスクは CAD と同じ設計スクリプト `robot/design/quadruped8.py` の末尾に書いてある。
+`cadex export` がモデル（`model-model.xml`）とタスク（`walk-task.json`）を対で書き出す。
+タスクはモデルを相対パスと sha256 で参照するので、2つは同じ場所に置く（`robot/mjcf/<variant>/`）。
+
+## 2. 観測（Observation）
+
+| チャンネル | 由来 | 方策が読むか | 実機での取得方法 |
+|---|---|---|---|
+| `rot_qw..qz` | IMUの姿勢（クォータニオン） | 読む | IMU（MPU-6050のDMP、ICM-42688+姿勢推定など） |
+| `gyro_x..z` | IMUの角速度 | 読む | 同上（※Cadexはワールド座標で出す。実機ではジャイロ値を姿勢で回して合わせる） |
+| `c_<関節>`（8） | 前回の関節指令 | 読む | コントローラ自身が持つ値 |
+| `cmd` | 目標前進速度 [mm/s] | 読む | 上位の指令 |
+| `clock_sin`, `clock_cos` | 歩行位相（周期0.5 s） | 読む | コントローラのタイマー |
+| `vel_*`, `pos_*` | 胴体の速度・位置 | 読まない（報酬・終了のみ） | 実機に無い |
+| `q_<関節>` | 関節角 | 読まない | PWMサーボは角度を返さない |
+| `ft_*`, `fc_*` | 足の接地・足先の高さ | 読まない | 実機に無い |
+| `tau_*` | サーボの出力トルク | 読まない | 実機に無い |
+
+実機に無い値を方策に入れると、`cadex train` がそのチャンネルを「接地されていない」として拒否する（ADR-408）。
+
+## 3. 行動（Action）
+
+8関節の目標角（度）。各関節の可動域（`command_limits_degrees`）に収まるよう、`tanh` で写像される。
+シミュレーション上のサーボは位置アクチュエータで、次のように与えた。
+
+- 剛性: 失速トルク / 5°
+- トルク制限: 失速トルク 176.5 N·mm（MG90S、4.8 V）
+- 関節の粘性: 失速トルク / 無負荷速度。全力で回したとき、データシートの速度 600°/s で頭打ちになる
+
+学習時は次のトレーナーフラグも付ける。
+
+- `--no-load-speed 10.47`（rad/s）: トルク–速度の直線
+- `--action-filter-alpha 0.6`: 指令の一次遅れで、応答遅延の近似
+
+## 4. 報酬（Reward）
+
+| ラベル | 式（要約） | 重み | ねらい |
+|---|---|---|---|
+| alive | 1 | +1.0 | 転倒せず続けること |
+| upright | 1−2(qx²+qy²) | +1.0 | 胴体を水平に保つ |
+| track_speed | upright × exp(−((vel_x−cmd)/40)²) | +3.0 | 目標速度への追従（転倒中は払わない） |
+| lateral | (vel_y/100)² | −1.0 | 横すべり |
+| yaw_rate | (gyro_z/60)² | −0.5 | 向きの変化 |
+| body_rock | (gyro_x/100)²+(gyro_y/100)² | −0.2 | 胴体の揺れ |
+| height | (pos_z/15)² | −0.5 | 胴体の高さの変化 |
+| trot_contact | tanh(5·clock_sin)·((LF+RH接地)−(RF+LH接地)) | +0.5 | 対角ペアを交互に接地させる |
+| swing_lift | 遊脚の足先の高さ（tanh、10 mmまで） | +0.5 | すり足を防ぐ |
+| action_rate | Σ(指令の変化率/600)²/8 | −0.5 | 滑らかさ |
+| effort | Σ(トルク/失速トルク)²/8 | −0.5 | サーボの負荷 |
+
+**Cadexの歩容リファレンス（`assembly.gait`）は使えなかった。** 1脚に3関節以上が必要で、「leg LF has 2 joints of its own; placing a foot in space takes at least 3」として拒否された。
+代わりに位相クロックを方策に与え、トロットのリズムを報酬で教えている。
+
+終了条件は2つ。
+
+- 傾きが約45°を超えた（upright < 0.7）
+- 胴体が立位より30 mm以上下がった
+
+## 5. ドメインランダム化
+
+| 対象 | どこで | 範囲 |
+|---|---|---|
+| 胴体・カバーの質量 | タスク（`assembly.randomise`） | ×0.85〜1.15 |
+| 電池の質量（重心位置も動く） | タスク | ×0.6〜1.4 |
+| 関節の粘性（サーボ速度のばらつき） | タスク | ×0.7〜1.3 |
+| 関節の静止摩擦 | タスク | ×0.5〜2.0 |
+| 初期姿勢の傾き・持ち上げ | タスク（`reset_variation`） | 0〜3°、4〜6 mm |
+| 床の摩擦 | トレーナー `--randomise-friction` | 段階2で使う |
+| サーボトルク | トレーナー `--randomise-drive-torque` | 段階2で使う |
+| 接触の硬さ | トレーナー `--randomise-contact-timeconst` | 段階2で使う |
+| 応答遅延 | `--action-filter-alpha`（一次遅れ）で近似 | 固定0.6 |
+| IMUノイズ | **Cadexのトレーナーに機能が無い**（未対応） | — |
+| 関節のガタ（バックラッシュ） | **未対応**（静止摩擦のランダム化で一部だけ近似） | — |
+
+学習用カットモデルでは、胴体に統合されたカバーと電池の質量ランダム化が落ちる（`cadex_relay.py` が報告する）。
+胴体の質量ランダム化は残る。
+
+段階的に難しくする方針は次のとおり。
+
+1. 段階1: 上の「タスク」欄のランダム化だけ（実施済み、CPU）
+2. 段階2: トレーナーの摩擦・トルク・接触のランダム化を追加
+3. 段階3: `assembly.disturbance`（押し）と旋回指令（`yaw_rate` ゴール）を追加
+
+## 6. 学習用カットモデル
+
+`training/cadex_training_model.py cut` は、溶接部品を1つのボディに統合し、床接触だけを残したモデルを作る。
+エンジンのモデルとの軌道差が5 mm以内で、立てることを自ら検査する。本機では1.4 mmで合格した。
+`cadex_relay.py` がタスクをこのモデルへ名前で付け替える。
+
+CPU（M4 Max、256環境）での速度は次のとおり。
+
+| モデル | env steps/s |
+|---|---|
+| エンジンのモデル | 1,032 |
+| カットモデル | 9,180（約8.9倍） |
+
+`scripts/build_robot.py` が、どの機体についてもカットモデルを `robot/mjcf/<variant>/cut/` に作る。
+学習はカットモデルで行い、`--cad-model` にエンジンのモデルを渡す。評価は必ずエンジンのモデルで、`cadex evaluate` を使う。
+
+## 7. 実行
+
+```bash
+cd robot-project
+# CPU（パイプラインの検証用）
+JAX_PLATFORMS=cpu uv run python ../training/cadex_train.py robot/mjcf/base/cut/walk-task.json \
+  --cad-model robot/mjcf/base/model-model.xml --out artifacts/runs/cpu-cut/walk.cxpolicy \
+  --envs 512 --iterations 1000 --hidden 128 64 --checkpoint-every 100 \
+  --action-filter-alpha 0.6 --no-load-speed 10.47 --progress artifacts/runs/cpu-cut/progress.json
+# 評価（固定歩容と同じシード・同じ成功条件・同じ指標）
+uv run python evaluation/evaluate_variant.py --variant base --policy artifacts/runs/cpu-cut/walk.cxpolicy
+```
+
+隠れ層は既定の 512-256-128 ではなく 128-64 にしている。ESP32-S3 で推論するため（[esp32-deployment.md](esp32-deployment.md)）。
+学習の結果は [experiment-results.md](experiment-results.md) にまとめる。

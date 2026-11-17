@@ -54,3 +54,20 @@ def make_training_cut(cadex_project: Path, export_task: Path, mjcf_dir: Path) ->
                if line.startswith("randomisation dropped")]
     return {"fidelity_pass": bool(report.get("ok")) and not report.get("problems"),
             "options": report.get("options"), "dropped_randomisation": dropped, "task": str(cut_task_path(mjcf_dir))}
+
+
+ARCHIVE_SUFFIXES = (".cxpolicy",)
+ARCHIVE_NAMES = ("progress.json", "receipt.json", "checkpoints.json", "checkpoints.csv", "stderr.log")
+
+
+def archive_run(run_dir: Path, dest: Path) -> Path:
+    """学習結果のうち、再現と比較に必要な小さいファイルだけを dest に写す（トレースや動画は除く）。"""
+    dest.mkdir(parents=True, exist_ok=True)
+    for p in run_dir.iterdir():
+        if p.is_file() and (p.suffix in ARCHIVE_SUFFIXES or p.name in ARCHIVE_NAMES):
+            shutil.copy2(p, dest / p.name)
+    final_eval = run_dir / "eval-final" / "evaluation.json"
+    if final_eval.exists():
+        (dest / "eval-final").mkdir(exist_ok=True)
+        shutil.copy2(final_eval, dest / "eval-final" / "evaluation.json")
+    return dest
