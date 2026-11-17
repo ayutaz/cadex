@@ -144,6 +144,7 @@ uv run python -m pytest tests -q
 | [docs/architecture.md](docs/architecture.md) | 全体構成とデータの流れ | あり |
 | [docs/hardware-spec.md](docs/hardware-spec.md) | 機体仕様、座標系、関節、サーボ、確認済みの値と推定値 | あり |
 | [docs/manufacturing.md](docs/manufacturing.md) | 印刷部品・購入部品・BOM・組立手順の案・未検証事項 | あり |
+| [docs/shopping-list.md](docs/shopping-list.md) | 初心者向けの購入部品の一覧（最小構成・後で買う物・注意・工具・価格の出典） | あり |
 | [docs/simulation.md](docs/simulation.md) | MuJoCo モデルの中身、固定モーションの結果、Sim2Real の差 | あり |
 | [docs/training.md](docs/training.md) | 強化学習の設定と手順 | あり |
 | [docs/training-vastai.md](docs/training-vastai.md) | vast.ai の GPU での学習 | あり |
