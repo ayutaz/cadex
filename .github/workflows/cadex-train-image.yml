@@ -1,0 +1,68 @@
+name: cadex-train image
+
+# vast.ai で training/cadex_train.py を回すイメージ（robot-project/vastai/Dockerfile）を
+# ビルドし、GHCR の ghcr.io/<owner>/cadex-train に公開で置く。
+#
+# 手元（Apple Silicon）では linux/amd64 の CUDA 版 JAX を含むイメージの作成が重いので、
+# GitHub の x86 ランナーで作る。認証はこのリポジトリの GITHUB_TOKEN だけ。
+# イメージに入る Cadex のファイルは LGPL-2.1-or-later なので、ソースの場所をラベルに残す。
+# 詳しくは robot-project/docs/training-vastai.md。
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - robot-project/vastai/Dockerfile
+      - .github/workflows/cadex-train-image.yml
+      - training/requirements.txt
+      - training/cadex_train.py
+      - training/cadex_goto.py
+      - src/Mod/cadex/CadexDynamics.py
+      - src/Mod/cadex/CadexGait.py
+      - src/Mod/cadex/CadexEvaluation.py
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: cadex-train-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/cadex-train
+          tags: |
+            type=sha
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.licenses=LGPL-2.1-or-later
+            org.opencontainers.image.description=Cadex training/cadex_train.py (Brax PPO on MJX, CUDA 12) for vast.ai
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: robot-project/vastai/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -68,26 +68,31 @@ vast.ai のコンソール（Account → SSH Keys）に公開鍵を登録して�
 
 ### イメージを作る
 
-`vastai/Dockerfile` は **Cadex リポジトリの根** をビルドのコンテキストにする:
+イメージは **GitHub Actions がビルドし、GHCR に公開で置く**
+（`.github/workflows/cadex-train-image.yml`）。名前は `ghcr.io/<owner>/cadex-train` で、
+fork（ayutaz/cadex）では `ghcr.io/ayutaz/cadex-train`。
 
-```bash
-cd <cadex の根>
-docker build --platform linux/amd64 -f robot-project/vastai/Dockerfile \
-    -t <registry>/cadex-train:<tag> .
-docker push <registry>/cadex-train:<tag>
-```
-
-- リポジトリ全体を clone せず、`training/cadex_train.py`・`cadex_goto.py`・
-  `requirements.txt` と、地形で読む `src/Mod/cadex/` の純 Python 3 ファイルだけを
-  COPY する。理由は Dockerfile 冒頭のコメントにある（学習器は標準ライブラリ以外を
-  最上位で import せず、FreeCAD もビルドも要らない）。
+- 次のどれかが変わったブランチを push すると、自動で作り直す。手で走らせるなら
+  Actions の画面か `gh workflow run cadex-train-image.yml --ref <ブランチ>`。
+  - `vastai/Dockerfile`、このワークフロー
+  - Dockerfile が COPY するファイル（`training/cadex_train.py`・`cadex_goto.py`・
+    `requirements.txt`、`src/Mod/cadex/` の純 Python 3 ファイル）
+- タグは `sha-<コミットの先頭7桁>` と `latest`。学習の設定には、再現できるよう
+  `sha-…` のほうを書く。
+- 手元（Apple Silicon）では作らない。linux/amd64 の CUDA 版 JAX を含むイメージを
+  エミュレーションで作るのは重い。どうしても手元で作るなら、Cadex リポジトリの根で
+  `docker build --platform linux/amd64 -f robot-project/vastai/Dockerfile -t <名前> .`。
+- 公開イメージなので、vast.ai から取ってくるときにログイン情報は要らない。
+  中身は学習器の5ファイルと公開ライブラリだけで、秘密情報は入らない。
+- COPY するファイルは LGPL-2.1-or-later。ソースの場所はイメージのラベル
+  `org.opencontainers.image.source` に残し、ソースはこの公開リポジトリにある。
+- リポジトリ全体を clone せず必要なファイルだけを COPY する理由は、Dockerfile 冒頭の
+  コメントにある（学習器は標準ライブラリ以外を最上位で import せず、FreeCAD もビルドも要らない）。
 - **学習器を変えたらイメージを作り直す。** 走った学習器の sha256 はイメージの
   `/opt/cadex/TRAINER_SHA256` とポリシーの `trainer_sha256` に残り、
   `python -m vastai check` が手元の `training/cadex_train.py` と比べる。
 - 設定の `instance.image` にイメージ名を書く（`<your-registry>/…` のままだと
-  `create` は送らない）。非公開レジストリなら vast.ai 側にログイン情報の設定が要る
-  （未確認。コンソールのテンプレート設定で行う）。
-- COPY するファイルは LGPL-2.1-or-later。公開レジストリに置くならその条件に従う。
+  `create` は送らない）。
 
 ## 2. 料金の目安を出し、オファーを選ぶ
 
