@@ -41,6 +41,22 @@ class VastError(RuntimeError):
     """vast.ai とのやり取りの失敗。キーやリクエスト本体は含めない。"""
 
 
+def _error_detail(error: urllib.error.HTTPError) -> str:
+    """vast.ai が返した理由（error と msg）。キーなどが混ざらないよう長い英数字は伏せる。"""
+
+    try:
+        data = json.loads(error.read() or b"{}")
+    except (ValueError, OSError):
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    parts = [str(data[k]) for k in ("error", "msg") if data.get(k)]
+    if not parts:
+        return ""
+    text = re.sub(r"[A-Za-z0-9_\-]{32,}", "<伏せ>", " / ".join(parts))
+    return f"（{text[:300]}）"
+
+
 def _request(method: str, path: str, *, api_key: str, payload: Any = None,
              opener: Opener | None = None, timeout: float = 30.0, base: str = API_V0) -> Any:
     opener = opener or urllib.request.urlopen
@@ -56,7 +72,7 @@ def _request(method: str, path: str, *, api_key: str, payload: Any = None,
         with opener(request, timeout=timeout) as response:
             body = response.read()
     except urllib.error.HTTPError as error:
-        raise VastError(f"vast.ai {method} {path}: HTTP {error.code}") from None
+        raise VastError(f"vast.ai {method} {path}: HTTP {error.code}{_error_detail(error)}") from None
     except (urllib.error.URLError, OSError) as error:
         raise VastError(f"vast.ai {method} {path}: {type(error).__name__}"
                         "（作成を再送する前に、コンソールで作られていないか確かめる）") from None

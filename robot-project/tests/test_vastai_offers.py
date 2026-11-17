@@ -190,3 +190,22 @@ def test_インスタンス一覧から_SSH_接続先を取り出す():
 def test_一覧は_API_キーが無ければ説明つきで失敗する():
     with pytest.raises(offers.VastError, match="VAST_API_KEY"):
         offers.list_instances(api_key="", opener=FakeOpener({}))
+
+
+def test_HTTP_エラーは_vast_ai_が返した理由を見せ_長い英数字は伏せる():
+    import urllib.error
+
+    import pytest
+
+    body = json.dumps({"success": False, "error": "invalid_args",
+                       "msg": "disk too small for image abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGH"})
+
+    def opener(request, timeout=None):
+        raise urllib.error.HTTPError(request.full_url, 400, "Bad Request", {}, io.BytesIO(body.encode()))
+
+    with pytest.raises(offers.VastError) as caught:
+        offers.create_instance(5, {"image": "img", "label": "q8-smoke"}, api_key="k", yes=True,
+                               opener=opener)
+    text = str(caught.value)
+    assert "HTTP 400" in text and "invalid_args" in text and "disk too small" in text
+    assert "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGH" not in text
