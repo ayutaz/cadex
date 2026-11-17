@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -216,3 +217,77 @@ def test_イメージを速く取れるよう回線の速い台だけを探す(p
     # 学習イメージは数 GB。200 Mbps 級の台では取得に 30 分以上かかり、終わらない台もあった（2026-11-17）
     offer = json.loads(path.read_text(encoding="utf-8"))["offer"]
     assert offer["min_inet_down_mbps"] >= 1000
+
+
+#: 小型機（mini）の再調整の案。機体の形は mini と同じで、タスクの指令速度と報酬の値だけを変える
+#: （docs/experiment-results.md §7）。値は設計スクリプトの params（cmd_min/cmd_max/w_trot/w_swing/gait_lift）。
+MINI_TUNING = {
+    "mini-cmd": {"cmd": (30.0, 120.0), "w_trot": 0.5, "w_swing": 0.5, "gait_lift": 10.0},
+    "mini-v3": {"cmd": (30.0, 120.0), "w_trot": 1.0, "w_swing": 1.5, "gait_lift": 10.0},
+    "mini-lift": {"cmd": (30.0, 120.0), "w_trot": 1.0, "w_swing": 1.5, "gait_lift": 7.5},
+}
+#: 意図して変える項目を持つ報酬の label
+TUNED_REWARDS = ("trot_contact", "swing_lift")
+
+
+def _task(name: str) -> dict:
+    return json.loads((ROOT / "robot" / "mjcf" / name / "cut" / "walk-task.json").read_text(encoding="utf-8"))
+
+
+def _cmd_goal(goals: list[dict]) -> dict:
+    return next(g for g in goals if g["name"] == "cmd")
+
+
+def _lift_mm(task: dict) -> set[float]:
+    expr = next(r for r in task["reward"] if r["label"] == "swing_lift")["expression"]
+    return {float(v) for v in re.findall(r"tanh\(\(fc_\w+_z - [\d.]+\) / ([\d.]+)\)", expr)}
+
+
+def _without_tuning(task: dict) -> dict:
+    """意図して変えた項目（指令速度の範囲、二つの報酬の重みと足上げ高さ）を除いたタスク。"""
+    out = json.loads(json.dumps({k: task[k] for k in
+                                 ("model", "reward", "success", "commands", "episode", "termination",
+                                  "randomisation", "reset_variation", "observations", "actions", "goal")}))
+    out["success"].pop("scale", None)
+    for goals in (out["goal"], out["success"]["goal"]):
+        for key in ("low", "high", "nominal"):
+            _cmd_goal(goals)[key] = None
+    for reward in out["reward"]:
+        if reward["label"] in TUNED_REWARDS:
+            reward["weight"] = None
+        if reward["label"] == "swing_lift":
+            reward["expression"] = re.sub(r"/ [\d.]+\)", "/ LIFT)", reward["expression"])
+    return out
+
+
+@pytest.mark.parametrize("variant", sorted(MINI_TUNING))
+def test_小型機の再調整の本番設定は_mini_と機体だけが違う(variant):
+    mini = json.loads((ROOT / "configs" / "train_full_mini.json").read_text(encoding="utf-8"))
+    other = json.loads((ROOT / "configs" / f"train_full_{variant}.json").read_text(encoding="utf-8"))
+    assert other["bundle"] == f"robot/mjcf/{variant}/cut/walk-task.json"
+    assert (ROOT / other["bundle"]).exists()
+    assert other["name"] == f"full-{variant}"
+    ignore = {"_comment", "name", "bundle", "trainer", "instance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == \
+        {k: v for k, v in mini.items() if k not in ignore}
+    assert {k: v for k, v in other["trainer"].items() if k != "label"} == \
+        {k: v for k, v in mini["trainer"].items() if k != "label"}
+    assert {k: v for k, v in other["instance"].items() if k != "label"} == \
+        {k: v for k, v in mini["instance"].items() if k != "label"}
+    assert other["instance"]["label"] == f"q8-full-{variant}"
+
+
+@pytest.mark.parametrize("variant", sorted(MINI_TUNING))
+def test_小型機の再調整のタスクは意図した項目だけが_mini_と違う(variant):
+    mini, other = _task("mini"), _task(variant)
+    # 機体のモデルは同じ（sha256 まで）。意図した項目を除けば、報酬・成功条件・観測も同じ。
+    assert _without_tuning(other) == _without_tuning(mini)
+    want = MINI_TUNING[variant]
+    for goals in (other["goal"], other["success"]["goal"]):
+        assert (_cmd_goal(goals)["low"], _cmd_goal(goals)["high"]) == want["cmd"]
+    weights = {r["label"]: r["weight"] for r in other["reward"]}
+    assert (weights["trot_contact"], weights["swing_lift"]) == (want["w_trot"], want["w_swing"])
+    assert _lift_mm(other) == {want["gait_lift"]}
+    # 元の mini は大きい機体と同じ値（指令 40〜160 mm/s、重み 0.5・0.5、足上げ 10 mm）
+    assert (_cmd_goal(mini["goal"])["low"], _cmd_goal(mini["goal"])["high"]) == (40.0, 160.0)
+    assert _lift_mm(mini) == {10.0}
