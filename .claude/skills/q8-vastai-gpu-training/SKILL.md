@@ -98,10 +98,10 @@ curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" \
 | 段階 | コマンド | 確かめること |
 |---|---|---|
 | 一覧（読むだけ） | `instances` | `[このプロジェクト]` の行だけを扱う |
-| 探して借りる | `create --config configs/train_full.json --count N`（dry-run）→ `--yes` | 検索の直後に安い順に借りる。label が `cadex-q8-…`、ID を控える |
-| 回す（複数回） | `sweep --config A --config B --seeds 0-4 --instance <ID> …`（`--dry-run` で計画）→ `--destroy-when-done` | 起動待ち・GPU 確認・起動・監視・回収・失敗の再投入・破棄まで行う。数十分かかるので、ログをファイルに出して裏で回す |
+| 探して借りる | `create --config configs/train_full_<機体>.json --count N`（dry-run）→ `--yes` | 検索の直後に安い順に借りる。label が `cadex-q8-…`、ID を控える |
+| 回す（複数回） | `sweep --config configs/train_full_<機体>.json [--config …] --seeds 0-4 --instance <ID1> --instance <ID2> …`（`--dry-run` で計画）→ `--destroy-when-done` | 起動待ち・GPU 確認・起動・監視・回収・失敗の再投入・破棄まで行う。回の名前は `<設定の name>-s<シード>`（例 `full-mini-s0`）。数十分かかるので、ログをファイルに出して裏で回す |
 | 1回だけ | `VAST_SSH_HOST=… VAST_SSH_PORT=… check` → `launch [--seed N --run-id …]` → `status <run_id> --watch` → `pull <run_id>` | `backend gpu`、学習器の sha256、受領書の device=gpu、sha256 の三者一致 |
-| 残す | `q8.training.archive_run(artifacts/runs/vastai/<run>, artifacts/training/<run>)` | 接続先と pid は落ちる。比べるなら `scripts/compare_seeds.py` |
+| 残す | `q8.training.archive_run(artifacts/runs/vastai/<run>, artifacts/training/<run>)` | 接続先と pid は落ちる。比べるなら `scripts/compare_seeds.py`（評価も行う） |
 | 片付け | `instances` で自分の ID が消えたか。残っていれば `destroy <自分のID>` → `--yes` | stop ではなく destroy |
 
 借りるときの注意（2026-11-17 に実際に起きたこと）:
@@ -138,7 +138,8 @@ curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" \
   終わるまで待ってから破棄される。そのぶん課金が少し増えるが、設計どおりなので手で消さない。
 - 実測: 小型機（mini）の1回は 476〜514 秒（RTX 4090）。5回を6台で約23分（作成から最後の破棄まで）。
 
-回収した結果を Git に残す方法は `q8-artifacts-and-publishing` を参照（`artifacts/runs/` は Git の追跡外）。
+学習設定は機体ごとに `configs/train_full_<機体>.json`（base は `train_full.json`）。新しい機体の設定の作り方、
+回収した結果を Git に残す方法と比べ方は `q8-artifacts-and-publishing` を参照（`artifacts/runs/` は Git の追跡外）。
 
 ## 言い訳と現実
 

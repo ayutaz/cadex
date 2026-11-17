@@ -15,11 +15,14 @@ description: robot-project（8自由度四足）の学習結果・評価結果�
 
 | 成果物 | 残し方 | 置き場所（コミットされる） |
 |---|---|---|
-| 学習の実行（`artifacts/runs/<run>/`、Git の追跡外） | **`archive_run` で写す**（下のコマンド） | `artifacts/training/<run>/` |
-| 方策の評価（`cadex evaluate`） | `evaluation/evaluate_variant.py`、または `scripts/redesign.py` | `artifacts/<variant>/evaluation/` |
-| 設計レポート | `scripts/build_robot.py` | `artifacts/<variant>/design_report.json` |
-| 比較表 | `scripts/redesign.py` | `artifacts/compare/` |
+| 学習の実行（vast.ai は `artifacts/runs/vastai/<run>/`、手元は `artifacts/runs/<run>/`。Git の追跡外） | **`archive_run` で写す**（下のコマンド） | `artifacts/training/<run>/` |
+| 学習シード違いの各回の評価 | `scripts/compare_seeds.py`（評価もこれが行う） | `artifacts/<variant>/evaluation-seeds/<run>/` |
+| 学習シード違いの比較表 | `scripts/compare_seeds.py` | `artifacts/compare/seeds_<a>_vs_<b>.{md,json}` |
+| 1つの方策の評価（`cadex evaluate`） | `evaluation/evaluate_variant.py`、または `scripts/redesign.py` | `artifacts/<variant>/evaluation/` |
+| 設計レポート・レンダー | `scripts/build_robot.py` | `artifacts/<variant>/design_report.json`、`renders/` |
+| 機体の比較表（1回ずつ） | `scripts/redesign.py` | `artifacts/compare/<a>_vs_<b>.{md,json}` |
 | STEP・MJCF・学習タスク・カットモデル | `scripts/build_robot.py` | `robot/meshes/<v>/*.step`、`robot/mjcf/<v>/` |
+| 学習設定 | 手で作る（下の「新しい派生機体」） | `configs/train_full_<variant>.json` |
 | 動画 | 再生スクリプトの出力 | `artifacts/videos/*.mp4` |
 
 追跡外のもの（コミットしない）:
@@ -37,9 +40,48 @@ description: robot-project（8自由度四足）の学習結果・評価結果�
 
 ```bash
 cd robot-project
+# vast.ai の回（sweep の run は <設定の name>-s<シード>、例 full-mini-s0）
 uv run python -c "from pathlib import Path; from q8.training import archive_run; \
-print(archive_run(Path('artifacts/runs/<run>'), Path('artifacts/training/<run>')))"
+print(archive_run(Path('artifacts/runs/vastai/<run>'), Path('artifacts/training/<run>')))"
 ```
+
+## 新しい派生機体を作って、学習シード違いで比べるまで
+
+例: mini を少し変えた `mini-x` を5回学習し、mini と比べる（cwd は `robot-project`）。
+
+1. **機体を作る**。`build_robot.py` は base の値に `--set` を重ねるので、**元の機体の値を全部渡す**
+   （mini の値は `artifacts/mini/design_report.json` の `params`、または `docs/experiment-results.md`）。
+   出力は `artifacts/mini-x/`、`robot/meshes/mini-x/`、`robot/mjcf/mini-x/`、
+   Cadex プロジェクト `~/cadex-projects/quadruped8-mini-x`。
+   ```bash
+   uv run python scripts/build_robot.py --variant mini-x --set body_length=96 --set body_width=62 \
+     --set battery_mass_g=0 --set hip_x=40 --set thigh_length=40 --set shin_length=44 --set <変える値>
+   ```
+   **`--set` は1つずつ書き下す。** zsh では `$args` が単語に分かれないので、ループで文字列に
+   組み立てると1つの引数で渡り、名前に空白の入ったフォルダが `~/cadex-projects` や `artifacts/` に
+   できた（2026-11-17）。できたら消して作り直す。
+2. **学習設定を作る**。比べる相手の設定（`configs/train_full_mini.json`）を写して
+   `configs/train_full_mini-x.json` にし、`name`=`full-mini-x`、`bundle`=`robot/mjcf/mini-x/cut/walk-task.json`、
+   `trainer.label`、`instance.label`=`q8-full-mini-x`、`_comment` だけを変える。
+   `tests/test_vastai_config.py` で、差が意図した項目だけであることをテストで固定する。
+   base と比べる形状違いは `VARIANT_CONFIGS`、mini と形が同じでタスクだけ違うものは `MINI_TUNING` に足す。
+   どちらにも当てはまらない（例: mini の形を変える）なら、同じ形のテストを1つ足す（TDD: 先にテストを書く）。
+3. **学習する**: `q8-vastai-gpu-training` の `create --count 6`（5回＋予備1〜2台）→
+   `sweep --config configs/train_full_mini-x.json --seeds 0-4 --instance …`。
+   回は `artifacts/runs/vastai/full-mini-x-s0` … `-s4` に回収される。
+4. **残す**: 5回とも `archive_run` で `artifacts/training/full-mini-x-s<N>/` に写す。
+5. **比べる**: 評価もこのスクリプトが行う（評価済みの回は飛ばす）。最初に書いた機体が `<a>` になる。
+   ```bash
+   uv run python scripts/compare_seeds.py \
+     mini=artifacts/training/full-mini-s0 ... mini=artifacts/training/full-mini-s4 \
+     mini-x=artifacts/training/full-mini-x-s0 ... mini-x=artifacts/training/full-mini-x-s4
+   ```
+   → `artifacts/mini-x/evaluation-seeds/full-mini-x-s<N>/`、`artifacts/compare/seeds_mini_vs_mini-x.{md,json}`
+6. **コミットする**（下の確認のあと）: `robot-project/` の `configs/train_full_mini-x.json`、
+   `tests/test_vastai_config.py`、`artifacts/mini-x/`、`robot/meshes/mini-x/*.step`、`robot/mjcf/mini-x/`、
+   `artifacts/training/full-mini-x-s*/`、`artifacts/compare/seeds_mini_vs_mini-x.*`。
+   機体と設定（学習前）と、学習結果と比較（学習後）は、別のコミットにしてよい。
+   Cadex プロジェクトは作者を確かめてから `gh repo create ayutaz/quadruped8-mini-x --private …`。
 
 ## 絶対パス
 
@@ -101,6 +143,9 @@ git log --format='%h %an <%ae>' origin/quadruped-8dof..HEAD    # push するコ�
 |---|---|
 | `artifacts/runs/<run>/` を「まるごとコミット」しようとする | `archive_run` で `artifacts/training/<run>/` に写す |
 | 「方策の置き場所は別に決める」と保留する | 置き場所は `artifacts/training/<run>/` と決まっている |
+| 派生機体を、変える値の `--set` だけで作る | base に重なるので、元の機体の値を全部渡す |
+| `--set` をシェルのループで組み立てる | 1つずつ書き下す（zsh では渡らない） |
+| 学習シード違いの評価を `artifacts/<variant>/evaluation/` に置く | `compare_seeds.py` に任せ、`evaluation-seeds/<run>/` に置く |
 | 絶対パスを grep だけで探す | `uv run pytest -q`（ホームのパスの検査）を回す |
 | 手で写した JSON をそのままコミットする | `scrub_tree` を通してからコミットする |
 | 新しい Cadex プロジェクトを、作者を確かめずに push する | `git log` で全コミットの作者が ayutaz か確かめてから push する |
