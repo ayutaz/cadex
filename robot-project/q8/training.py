@@ -59,7 +59,10 @@ def make_training_cut(cadex_project: Path, export_task: Path, mjcf_dir: Path) ->
 
 
 ARCHIVE_SUFFIXES = (".cxpolicy",)
-ARCHIVE_NAMES = ("progress.json", "receipt.json", "checkpoints.json", "checkpoints.csv", "stderr.log")
+ARCHIVE_NAMES = ("progress.json", "receipt.json", "checkpoints.json", "checkpoints.csv", "stderr.log",
+                 "train.log", "metrics.csv")
+#: vast.ai の起動記録（run.json）から落とす項目。インスタンスの接続先と pid は、公開しないうえ再現にも要らない。
+RUN_RECORD_DROP = ("host", "port", "pid")
 
 
 def save_receipt(stdout: str, path: Path, roots: Roots | None = None) -> Path:
@@ -79,6 +82,15 @@ def archive_run(run_dir: Path, dest: Path, roots: Roots | None = None) -> Path:
                 save_receipt(p.read_text(), dest / p.name, roots)
             else:
                 shutil.copy2(p, dest / p.name)
+    # vast.ai から pull した回: 受領書は stdout.log、起動の記録は run.json
+    stdout = run_dir / "stdout.log"
+    if stdout.exists() and not (run_dir / "receipt.json").exists():
+        save_receipt(stdout.read_text(), dest / "receipt.json", roots)
+    record = run_dir / "run.json"
+    if record.exists():
+        data = json.loads(record.read_text(encoding="utf-8"))
+        write_json(dest / "run.json", {k: v for k, v in data.items() if k not in RUN_RECORD_DROP},
+                   roots=roots, indent=2)
     final_eval = run_dir / "eval-final" / "evaluation.json"
     if final_eval.exists():
         (dest / "eval-final").mkdir(exist_ok=True)

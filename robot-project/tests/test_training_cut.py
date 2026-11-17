@@ -39,3 +39,29 @@ def test_archive_run_keeps_only_small_reproducibility_files(tmp_path):
     kept = sorted(p.relative_to(dest).as_posix() for p in dest.rglob("*") if p.is_file())
     assert kept == ["checkpoints.csv", "checkpoints.json", "eval-final/evaluation.json", "progress.json",
                     "receipt.json", "stderr.log", "walk.000100.cxpolicy", "walk.best.cxpolicy", "walk.cxpolicy"]
+
+
+def test_archive_run_also_keeps_a_vastai_run_without_its_address(tmp_path):
+    # vast.ai から pull した回: 受領書は stdout.log（警告の行が混ざる）、ログは train.log、
+    # 起動の記録は run.json（インスタンスの接続先と pid を含むので、それだけ落とす）
+    from q8.training import archive_run
+
+    run = tmp_path / "run"
+    run.mkdir()
+    for name in ("walk.cxpolicy", "walk.000100.cxpolicy", "progress.json", "metrics.csv", "train.log",
+                 "walk.000100.rollout-trace.json"):
+        (run / name).write_text("{}")
+    (run / "stdout.log").write_text("Failed to import warp: No module named 'warp'\n"
+                                    '{"sha256": "ab", "device": "gpu"}\n')
+    (run / "run.json").write_text(json.dumps({
+        "run_id": "full-s1", "remote_dir": "/workspace/runs/full-s1", "pid": 42, "host": "203.0.113.7",
+        "port": 40022, "argv": ["--seed", "1"], "task_sha256": "cd", "device": "gpu"}))
+    dest = archive_run(run, tmp_path / "keep")
+    kept = sorted(p.relative_to(dest).as_posix() for p in dest.rglob("*") if p.is_file())
+    assert kept == ["metrics.csv", "progress.json", "receipt.json", "run.json", "train.log",
+                    "walk.000100.cxpolicy", "walk.cxpolicy"]
+    assert json.loads((dest / "receipt.json").read_text()) == {"sha256": "ab", "device": "gpu"}
+    record = json.loads((dest / "run.json").read_text())
+    assert record["argv"] == ["--seed", "1"] and record["task_sha256"] == "cd"
+    assert not {"host", "port", "pid"} & set(record)
+    assert "203.0.113.7" not in (dest / "run.json").read_text()
