@@ -1,7 +1,7 @@
 {
   "variant": "leg120",
   "cadex_project": "~/cadex-projects/quadruped8-leg120",
-  "accepted_revision": "89bca6e66e0e67a85b6fb64d871177b00169d7adfad1646523b9c1eba0c45f06",
+  "accepted_revision": "2a0260728cc6fc1eacd2d61f47db6db34a474b1cbe1cc1ab16f0689a705fbfb8",
   "design_script": "robot/design/quadruped8.py",
   "params": {
     "body_length": 110.0,
@@ -34,6 +34,8 @@
     "cmd_min": 40.0,
     "cmd_max": 160.0,
     "gait_period": 0.5,
+    "w_trot": 0.5,
+    "w_swing": 0.5,
     "gait_lift": 10.0,
     "armature": 20.0
   },
@@ -448,7 +450,10 @@
       45.0
     ]
   },
-  "timings_s": {},
+  "timings_s": {
+    "build_s": 6.3,
+    "clearance_s": 20.5
+  },
   "training_cut": {
     "fidelity_pass": true,
     "options": {

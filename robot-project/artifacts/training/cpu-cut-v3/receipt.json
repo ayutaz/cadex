@@ -1,0 +1,7 @@
+Failed to import warp: No module named 'warp'
+Failed to import mujoco_warp: No module named 'warp'
+normaliser  the actor's statistics carry the source's 6144000 samples
+init-from  walk.000600.cxpolicy  iterations=600  sha256=956a5d439bc26d8c…
+curriculum  the task changed in ['reward'] — swing_lift 0.5->1.5, trot_contact 0.5->1.0
+action_std  0.0585  (from init_from)
+{"action_std": 0.04578767344355583, "best_iteration": 13, "best_reward_per_step": 6.755276679992676, "bytes": 145794, "cadex_importable": false, "checkpoints": ["walk.000100.cxpolicy", "walk.best.cxpolicy", "walk.000200.cxpolicy", "walk.000300.cxpolicy", "walk.000400.cxpolicy"], "device": "cpu", "episode_steps": 20.0, "model_sha256": "06a7ba636fe31da1ae577a6d21bdd8f0a03f3be99aaf80d64727750530fab7f6", "out": "artifacts/runs/cpu-cut-v3/walk.cxpolicy", "parameters": 12232, "progress": "artifacts/runs/cpu-cut-v3/progress.json", "reward_per_step": 6.4974589347839355, "sha256": "ede239819e0bd70908cc7f712bd3df1f2a8f234c1fdf0659d2615dfaf3d6441d", "task_sha256": "5b88cb12fa3764e4f392b0a896898a0028d95cf94d01f383ef8cf28cae262d74", "wall_time_s": 526.398963375017, "witness_error": 1.3401647737374507e-07, "witness_samples": 32, "witness_tolerance": 0.0001}

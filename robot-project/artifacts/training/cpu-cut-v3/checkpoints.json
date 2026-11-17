@@ -1,0 +1,88 @@
+[
+  {
+    "checkpoint": "100",
+    "pass_rate": 0.6,
+    "failing": {
+      "walks": 4,
+      "rated": 1
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 104.0218309750156,
+    "speed_ratio": 1.0607247874218375,
+    "speed_error_rms_mm_s": 6.618317170236688,
+    "max_tilt_deg": 4.907889529316323,
+    "steps_min": 5.7,
+    "slip_share_max": 0.8093173026207173,
+    "effort_rms_rated_ratio_max": 0.8585045227782055,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 2.478503576392697
+  },
+  {
+    "checkpoint": "200",
+    "pass_rate": 0.0,
+    "failing": {
+      "walks": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 104.70813174993366,
+    "speed_ratio": 1.0691515889916299,
+    "speed_error_rms_mm_s": 6.721310835696995,
+    "max_tilt_deg": 5.633732223973219,
+    "steps_min": 0.1,
+    "slip_share_max": 0.9740337969530041,
+    "effort_rms_rated_ratio_max": 0.8096566311047091,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 2.168383266706665
+  },
+  {
+    "checkpoint": "300",
+    "pass_rate": 0.0,
+    "failing": {
+      "walks": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 101.93068295448685,
+    "speed_ratio": 1.0411448339129115,
+    "speed_error_rms_mm_s": 5.308109712796636,
+    "max_tilt_deg": 6.396259664618151,
+    "steps_min": 0.0,
+    "slip_share_max": 0.9987860737773124,
+    "effort_rms_rated_ratio_max": 0.8129421027772681,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 2.410672871613842
+  },
+  {
+    "checkpoint": "400",
+    "pass_rate": 0.0,
+    "failing": {
+      "walks": 10
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 98.28582802743078,
+    "speed_ratio": 1.0050003193890285,
+    "speed_error_rms_mm_s": 3.9201448788376494,
+    "max_tilt_deg": 6.455166103817358,
+    "steps_min": 0.5,
+    "slip_share_max": 0.930472867958762,
+    "effort_rms_rated_ratio_max": 0.8185480054511565,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 2.6304975152147962
+  },
+  {
+    "checkpoint": "final",
+    "pass_rate": 0.2,
+    "failing": {
+      "walks": 8
+    },
+    "completed": 1.0,
+    "mean_forward_speed_mm_s": 97.59723436901425,
+    "speed_ratio": 0.9989170513591343,
+    "speed_error_rms_mm_s": 5.3386791081345155,
+    "max_tilt_deg": 6.520569723763162,
+    "steps_min": 2.5,
+    "slip_share_max": 0.8489944290321111,
+    "effort_rms_rated_ratio_max": 0.8091478838032928,
+    "effort_peak_ratio_max": 1.0,
+    "cost_of_transport": 2.792844980530081
+  }
+]
