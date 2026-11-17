@@ -29,6 +29,7 @@ from q8.clearance import summarise  # noqa: E402
 from q8.manufacturing import bom, printability  # noqa: E402
 from q8.paths import ARTIFACTS, DESIGN_SCRIPT, MESHES, MJCF_DIR, PROJECT, cadex_project  # noqa: E402
 from q8.physics import static_report  # noqa: E402
+from q8.portable import write_json  # noqa: E402
 from q8.render import render_views  # noqa: E402
 from q8.stl import read_stl, write_binary_stl  # noqa: E402
 from q8.training import make_training_cut  # noqa: E402
@@ -55,6 +56,12 @@ def parse_sets(items: list[str]) -> dict[str, float]:
 
 def _json_default(o):
     return o.item() if hasattr(o, "item") else str(o)
+
+
+def write_design_report(out_dir: Path, report: dict) -> Path:
+    """design_report.json を書く。マシン固有の絶対パスは置き換える（q8.portable）。"""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    return write_json(out_dir / "design_report.json", report, indent=2, default=_json_default)
 
 
 def main() -> int:
@@ -144,8 +151,7 @@ def main() -> int:
         "within_budget_jpy_10000": report["bom"]["within_budget"],
     }
     out_dir = ARTIFACTS / args.variant
-    out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "design_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, default=_json_default))
+    write_design_report(out_dir, report)
     if not args.no_render:
         vm = mujoco.MjModel.from_xml_path(str(visual_xml))
         vd = mujoco.MjData(vm)

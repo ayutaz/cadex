@@ -15,6 +15,7 @@ import tempfile
 from pathlib import Path
 
 from .paths import CADEX_REPO, PROJECT
+from .portable import Roots, json_from_stdout, scrub_tree, write_json
 
 CUT_DIR_NAME = "cut"
 
@@ -49,7 +50,8 @@ def make_training_cut(cadex_project: Path, export_task: Path, mjcf_dir: Path) ->
         for f in (tmp / "relay" / "outputs").iterdir():
             shutil.copy2(f, out / f.name)
         shutil.copy2(tmp / "relay" / "relay.json", out / "relay.json")
-        (out / "cut_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2))
+        write_json(out / "cut_report.json", report, indent=2)
+        scrub_tree(out)  # Cadex の付け替えは絶対パスを記録する
     dropped = [line.strip() for line in relay.stdout.splitlines() + relay.stderr.splitlines()
                if line.startswith("randomisation dropped")]
     return {"fidelity_pass": bool(report.get("ok")) and not report.get("problems"),
@@ -60,14 +62,26 @@ ARCHIVE_SUFFIXES = (".cxpolicy",)
 ARCHIVE_NAMES = ("progress.json", "receipt.json", "checkpoints.json", "checkpoints.csv", "stderr.log")
 
 
-def archive_run(run_dir: Path, dest: Path) -> Path:
-    """学習結果のうち、再現と比較に必要な小さいファイルだけを dest に写す（トレースや動画は除く）。"""
+def save_receipt(stdout: str, path: Path, roots: Roots | None = None) -> Path:
+    """学習器の標準出力（受領書の JSON）を保存する。前に混ざる警告の行は落とし、根を置き換える。"""
+    return write_json(path, json_from_stdout(stdout), roots=roots)
+
+
+def archive_run(run_dir: Path, dest: Path, roots: Roots | None = None) -> Path:
+    """学習結果のうち、再現と比較に必要な小さいファイルだけを dest に写す（トレースや動画は除く）。
+
+    写したファイルからは、マシン固有の絶対パスを取り除く（q8.portable）。
+    """
     dest.mkdir(parents=True, exist_ok=True)
     for p in run_dir.iterdir():
         if p.is_file() and (p.suffix in ARCHIVE_SUFFIXES or p.name in ARCHIVE_NAMES):
-            shutil.copy2(p, dest / p.name)
+            if p.name == "receipt.json":
+                save_receipt(p.read_text(), dest / p.name, roots)
+            else:
+                shutil.copy2(p, dest / p.name)
     final_eval = run_dir / "eval-final" / "evaluation.json"
     if final_eval.exists():
         (dest / "eval-final").mkdir(exist_ok=True)
         shutil.copy2(final_eval, dest / "eval-final" / "evaluation.json")
+    scrub_tree(dest, roots)
     return dest

@@ -28,6 +28,7 @@ from q8.compare import KEY_METRICS, design_summary, summarise_seeds  # noqa: E40
 from q8.evaluation import evaluate_fixed_gait, metrics_table  # noqa: E402
 from q8.gait import TrotParams, trot_targets  # noqa: E402
 from q8.paths import ARTIFACTS, CADEX_CLI, MJCF_DIR, cadex_project  # noqa: E402
+from q8.portable import portable_text, scrub_tree, write_json  # noqa: E402
 from q8.robot import leg_geometry  # noqa: E402
 
 FIXED = {"period_s": 0.5, "stride_m": 0.04, "lift_m": 0.008}   # simulation/fixed_gait.py の探索で決めた値
@@ -53,6 +54,7 @@ def run_cadex_evaluate(variant: str, policy: Path, out_dir: Path, video: bool = 
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if not (out_dir / "evaluation.json").exists():
         raise RuntimeError(f"cadex evaluate が失敗: {proc.stderr[-2000:]}")
+    scrub_tree(out_dir)  # Cadex は重みやエンジンの場所を絶対パスで記録する
     return read_cadex_evaluation(out_dir)
 
 
@@ -68,16 +70,16 @@ def evaluate_variant(variant: str, *, policy: Path | None, out_dir: Path | None 
     target, nominal = fixed_gait_target(model, **FIXED)
     fixed = evaluate_fixed_gait(model, task, target_fn=target, seeds=seeds, seconds=seconds, command_mm_s=nominal)
     fixed["gait"] = {**FIXED, "nominal_speed_mm_s": nominal, "seconds": seconds}
-    (out_dir / "fixed_gait.json").write_text(json.dumps(fixed, ensure_ascii=False, indent=2, default=str))
+    write_json(out_dir / "fixed_gait.json", fixed, indent=2, default=str)
     pol = None
     if policy is not None:
         pol = run_cadex_evaluate(variant, policy, out_dir / "policy", video=video)
-        pol["weights"] = str(policy)
+        pol["weights"] = portable_text(str(policy))
     design = json.loads((ARTIFACTS / variant / "design_report.json").read_text())
     summary = {"variant": variant, "design": design_summary(design),
                "fixed_gait": summarise_seeds(fixed, KEY_METRICS), "policy": summarise_seeds(pol, KEY_METRICS),
                "metric_labels": KEY_METRICS}
-    (out_dir / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2))
+    write_json(out_dir / "summary.json", summary, indent=2)
     rows = metrics_table(fixed, label="fixed_gait", keys=list(KEY_METRICS))
     if pol is not None:
         rows += metrics_table(pol, label="policy", keys=list(KEY_METRICS))

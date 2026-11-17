@@ -100,3 +100,13 @@ robot/meshes/<variant>/、robot/mjcf/<variant>/、artifacts/<variant>/design_rep
   見た目用 MJCF）は robot-project 側で補う。
 - **生成物は再生成できる。** STL・学習の実行記録・一時ファイルは `.gitignore` 対象。STEP、MJCF、
   学習タスク、`design_report.json` はコミットする。
+- **成果物にマシン固有の絶対パスを書かない。** Cadex（`cadex evaluate`、学習器、カット処理）は、
+  受け取ったパスを絶対パスにして記録する。そこで、robot-project に成果物を書く・写す箇所
+  （`build_robot.py` の `design_report.json`、学習用カットモデル、`archive_run` による学習結果の保存、
+  `evaluate_variant.py` の評価結果）で `q8/portable.py` が既知の根を置き換える。
+  - robot-project → `<robot-project>`、Cadex のチェックアウト → `<cadex>`、
+    `~/cadex-projects` → `~/cadex-projects`、ホーム → `~`
+  - `.cxpolicy` はヘッダだけを書き換え、重みのバイト列は変えない。
+  - 学習器の標準出力に混ざる警告の行は落とし、`receipt.json` を JSON として保存する。
+  - `tests/test_portable.py` は、追跡中のファイルにこのマシンのホームのパスがあると失敗する。
+    手で置いたファイルが引っかかったら `uv run python -c "from q8.portable import scrub_tree; scrub_tree('<dir>')"` で直す。

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -56,7 +57,7 @@ def plan_steps(variant: str, *, train: str, policy_base: Path | None) -> list[tu
 def train_local(variant: str, iterations: int, envs: int, hidden: list[int]) -> Path:
     from q8.paths import ARTIFACTS, MJCF_DIR, PROJECT, TRAINER
 
-    from q8.training import cut_task_path
+    from q8.training import cut_task_path, save_receipt
 
     export_task = next((MJCF_DIR / variant).glob("*-task.json"))
     cut = cut_task_path(MJCF_DIR / variant)
@@ -70,8 +71,10 @@ def train_local(variant: str, iterations: int, envs: int, hidden: list[int]) -> 
            "--action-filter-alpha", "0.6", "--no-load-speed", "10.47"]
     if task == cut:
         cmd += ["--cad-model", str(next((MJCF_DIR / variant).glob("*-model.xml")))]
-    with (out / "receipt.json").open("w") as receipt, (out / "stderr.log").open("w") as err:
-        subprocess.run(cmd, check=True, stdout=receipt, stderr=err, env={**__import__("os").environ, "JAX_PLATFORMS": "cpu"})
+    with (out / "stderr.log").open("w") as err:
+        proc = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=err, text=True,
+                              env={**os.environ, "JAX_PLATFORMS": "cpu"})
+    save_receipt(proc.stdout, out / "receipt.json")  # 警告の行を落とし、絶対パスを置き換える
     return policy
 
 
