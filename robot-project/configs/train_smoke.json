@@ -1,5 +1,5 @@
 {
-  "_comment": "小規模パイプライン検証用。送る→起動→チェックポイント→回収→検証→再開が一通り通ることだけを見る。方策の良し悪しは見ない。trainer のキーは training/cadex_train.py のフラグ（_ を - に直して -- を付ける）。",
+  "_comment": "小規模パイプライン検証用。送る→起動→チェックポイント→回収→検証→再開が一通り通ることと、本番（train_full.json）と同じ大きさの一反復（envs・unroll・epochs・minibatches・hidden）の秒数を測る。方策の良し悪しは見ない。trainer のキーは training/cadex_train.py のフラグ（_ を - に直して -- を付ける）。",
   "name": "smoke",
   "bundle": "robot/mjcf/base/cut/walk-task.json",
   "policy_name": "walk",
@@ -10,10 +10,10 @@
   "trainer": {
     "seed": 0,
     "iterations": 10,
-    "envs": 512,
+    "envs": 8192,
     "unroll": 20,
     "epochs": 4,
-    "minibatches": 8,
+    "minibatches": 32,
     "hidden": [
       128,
       64
@@ -38,8 +38,8 @@
   },
   "offer": {
     "gpu_name": [
-      "RTX 3090",
-      "RTX 4090"
+      "RTX 4090",
+      "RTX 5090"
     ],
     "num_gpus": 1,
     "min_reliability": 0.97,

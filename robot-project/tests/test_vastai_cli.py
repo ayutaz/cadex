@@ -155,3 +155,12 @@ def test_python_m_vastai_help_が動く():
         cwd=ROOT, capture_output=True, text=True, check=False)
     assert result.returncode == 0
     assert "offers" in result.stdout and "resume" in result.stdout
+
+
+def test_launch_の_seed_は学習の乱数だけを差し替える():
+    code, out = run(["launch", "--config", FULL, "--dry-run", "--seed", "2",
+                     "--run-id", "full-s2"],
+                    environ={"VAST_SSH_HOST": "h"}, runner=ForbiddenRunner())
+    assert code == 0, out
+    assert "--seed 2" in out
+    assert "--seed 0" not in out

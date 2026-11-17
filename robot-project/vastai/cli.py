@@ -68,6 +68,8 @@ def _parser() -> argparse.ArgumentParser:
     p = sub.add_parser("launch", help="タスクのペアを送り、cadex_train.py を切り離して起動")
     with_config(p)
     p.add_argument("--run-id", default=None)
+    p.add_argument("--seed", type=int, default=None,
+                   help="学習の乱数（設定の trainer.seed を上書き）。同じ設定を乱数違いで複数回回すとき")
     p.add_argument("--dry-run", action="store_true", help="実行するコマンドを表示するだけ")
 
     p = sub.add_parser("status", help="progress.json を取ってきて 1 行で表示")
@@ -290,7 +292,9 @@ def _dispatch(args, *, environ, opener, runner, out, env_file) -> int:
     if command == "launch":
         loaded = _load(args)
         _validate(loaded, out)
-        result = session.launch(loaded, run_id=args.run_id, dry_run=args.dry_run)
+        extra = [] if args.seed is None else ["--seed", str(args.seed)]
+        result = session.launch(loaded, run_id=args.run_id, extra_argv=extra,
+                                dry_run=args.dry_run)
         return _report_launch(result, args.dry_run, out)
 
     if command == "resume":

@@ -28,8 +28,9 @@
 | `vastai/remote.py` | SSH/rsync: 送付・起動・進捗・回収と sha256 検証・再開・停止 |
 | `vastai/metrics.py` | `progress.json` → CSV / TensorBoard イベントファイル（依存なし） |
 | `vastai/config.py` | 学習設定と接続設定の読み込み・検証 |
-| `configs/train_smoke.json` | 小規模のパイプライン検証用（10 反復） |
-| `configs/train_full.json` | 本番用（1000 反復、8192 envs。環境数などは Cadex `training/RECIPE.md` §A の既定） |
+| `configs/train_smoke.json` | 小規模のパイプライン検証用（10 反復）。一反復の大きさ（envs・unroll・epochs・minibatches・hidden）と GPU の候補は本番と同じにしてあり、秒/反復の実測をそのまま本番の見積りに使える（テストで固定） |
+| `configs/train_full.json` | 本番用、基準機体（1000 反復、8192 envs。環境数などは Cadex `training/RECIPE.md` §A の既定） |
+| `configs/train_full_leg120.json` | 本番用、脚20%増し（leg120）。機体（`bundle`）以外は `train_full.json` と同じ（テストで固定） |
 
 コマンドはすべて `robot-project/` で実行する:
 
@@ -142,8 +143,8 @@ RTX 5090 で Go1 の 1260 反復が 333 秒＝約 0.26 秒/反復、別の機体
        --from-progress artifacts/runs/vastai/<smoke の run_id>/progress.json --dph 0.45
    ```
 
-   `progress.json` の `wall_time_s / 反復数` を秒/反復とし、smoke と本番の envs が
-   違えば比例で拡大する（GPU が飽和するまでは実際はこれより速いので、上限の目安）。
+   `progress.json` の `wall_time_s / 反復数` を秒/反復とする。今の smoke は本番と同じ envs
+   なので拡大しない（envs が違う設定で測った場合は比例で拡大し、上限の目安になる）。
    最初の反復は JIT コンパイルを含むので、反復の少ない smoke では多めに出る。
 3. 手で数を入れるなら `--seconds-per-iteration 0.5 --dph 0.45`。
 4. 納得したら `configs/train_full.json` の `estimate.seconds_per_iteration` を実測値に直す。
@@ -202,6 +203,13 @@ sha256 を一度に見る。`backend gpu` が出ない、または学習器が�
    書くので、ssh が切れても、Mac を閉じても学習は続く。
 5. 手元の `artifacts/runs/vastai/<run_id>/run.json` に記録を残す（以後の
    `status`/`pull`/`resume`/`stop` はこれを読む。消さないこと）。
+
+同じ設定を学習の乱数だけ変えて複数回回すときは `--seed` を付ける（設定の `trainer.seed` を
+上書きする。run_id は区別できる名前を `--run-id` で付ける）。
+
+```bash
+.venv/bin/python -m vastai launch --config configs/train_full_leg120.json --seed 1 --run-id full-leg120-s1
+```
 
 起動時に `--out <run_dir>/<policy_name>.cxpolicy` と `--progress <run_dir>/progress.json`
 を付け、`JAX_PLATFORMS` と `CADEX_JAX_CACHE` を明示的に渡す（vast.ai の SSH では
@@ -328,10 +336,10 @@ destroy を推奨する**。この道具に自動停止（時間上限で落と�
   "policy_name": "walk",                 // walk.cxpolicy / walk.000005.cxpolicy
   "device": "gpu",
   "env": {"CADEX_JAX_CACHE": "/workspace/cache/jax"},
-  "trainer": { "iterations": 10, "envs": 512, "minibatches": 8, "checkpoint_every": 5, ... },
+  "trainer": { "iterations": 10, "envs": 8192, "minibatches": 32, "checkpoint_every": 5, ... },
   "device_overrides": {"cpu": {"trainer": {"envs": 64}}},
   "resume": {"critic_warmup": 2, "actor_ramp": 0},
-  "offer": { "gpu_name": ["RTX 3090", "RTX 4090"], "max_dph": 0.6, ... },
+  "offer": { "gpu_name": ["RTX 4090", "RTX 5090"], "max_dph": 0.6, ... },
   "instance": {"image": "ghcr.io/ayutaz/cadex-train:sha-e7f4d9d", "disk_gb": 30, "label": "q8-smoke"},
   "estimate": {"seconds_per_iteration": 3.0, "setup_minutes": 15, "margin": 1.3},
   "remote": {"work_dir": "/workspace/runs", "trainer_root": "/opt/cadex", "python": "/opt/venv/bin/python"}
