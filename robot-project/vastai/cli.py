@@ -319,6 +319,12 @@ def _dispatch(args, *, environ, opener, runner, out, env_file) -> int:
             if not args.watch or state in ("done", "failed"):
                 break
             if not session.alive(args.run_id):
+                # 進捗を読んだ直後に学習が終わってプロセスが消えることがある。読み直して確かめる
+                progress = session.progress(args.run_id)
+                state = progress.get("state")
+                if state in ("done", "failed"):
+                    print(_status_line(progress), file=out)
+                    break
                 print("学習プロセスが居ません（落ちたか止められた）。"
                       f"python -m vastai pull {args.run_id} で train.log を回収して確かめる", file=out)
                 return 1

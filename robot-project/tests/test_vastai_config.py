@@ -200,3 +200,10 @@ def test_比べる二機体のタスクは報酬と成功条件が同じ():
         out["success"] = {k: v for k, v in out["success"].items() if k != "scale"}
         return out
     assert task("base") == task("leg120")
+
+
+@pytest.mark.parametrize("path", CONFIGS, ids=lambda p: p.stem)
+def test_イメージを速く取れるよう回線の速い台だけを探す(path):
+    # 学習イメージは数 GB。200 Mbps 級の台では取得に 30 分以上かかり、終わらない台もあった（2026-11-17）
+    offer = json.loads(path.read_text(encoding="utf-8"))["offer"]
+    assert offer["min_inet_down_mbps"] >= 1000

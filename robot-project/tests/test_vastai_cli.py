@@ -164,3 +164,35 @@ def test_launch_の_seed_は学習の乱数だけを差し替える():
     assert code == 0, out
     assert "--seed 2" in out
     assert "--seed 0" not in out
+
+
+def test_status_watch_は終わった直後にプロセスが消えても成功と扱う(tmp_path, monkeypatch):
+    # 進捗を読んだ時点では training、その直後に学習が終わってプロセスが消えた。
+    # 「落ちた」と誤って失敗の終了コードを返していた（2026-11-17、full-leg120-s1）
+    record = tmp_path / "full-x"
+    record.mkdir()
+    (record / "run.json").write_text(json.dumps({"run_id": "full-x", "remote_dir": "/w/full-x",
+                                              "host": "h", "port": 22}))
+    monkeypatch.setattr(cli, "LOCAL_RUNS", tmp_path)
+    monkeypatch.setattr(cli.time, "sleep", lambda s: None)
+    states = iter(["training", "done"])
+
+    def handler(argv):
+        command = argv[-1]
+        if "progress.json" in command:
+            return subprocess.CompletedProcess(argv, 0, json.dumps(
+                {"state": next(states), "iteration": 999, "total": 1000}), "")
+        if "kill -0" in command:
+            return subprocess.CompletedProcess(argv, 0, "no\n", "")
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    calls = []
+
+    def runner(argv, input=None):
+        calls.append(argv)
+        return handler(argv)
+
+    code, out = run(["status", "full-x", "--watch", "--interval", "0"],
+                    environ={"VAST_SSH_HOST": "h"}, runner=runner)
+    assert code == 0, out
+    assert "終わりました" in out

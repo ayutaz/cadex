@@ -54,7 +54,7 @@
     "min_reliability": 0.98,
     "min_cuda": 12.4,
     "min_disk_gb": 40,
-    "min_inet_down_mbps": 200,
+    "min_inet_down_mbps": 1000,
     "max_dph": 1.2,
     "verified": true,
     "limit": 10
