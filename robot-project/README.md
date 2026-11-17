@@ -143,9 +143,9 @@ uv run python -m pytest tests -q
 | [docs/hardware-spec.md](docs/hardware-spec.md) | 機体仕様、座標系、関節、サーボ、確認済みの値と推定値 | あり |
 | [docs/manufacturing.md](docs/manufacturing.md) | 印刷部品・購入部品・BOM・組立手順の案・未検証事項 | あり |
 | [docs/simulation.md](docs/simulation.md) | MuJoCo モデルの中身、固定モーションの結果、Sim2Real の差 | あり |
-| [docs/training.md](docs/training.md) | 強化学習の設定と手順 | 作成中 |
+| [docs/training.md](docs/training.md) | 強化学習の設定と手順 | あり |
 | [docs/training-vastai.md](docs/training-vastai.md) | vast.ai の GPU での学習 | あり |
-| [docs/experiment-results.md](docs/experiment-results.md) | 実験結果 | 作成中 |
+| [docs/experiment-results.md](docs/experiment-results.md) | 実験結果 | あり |
 | [docs/esp32-deployment.md](docs/esp32-deployment.md) | ESP32-S3 への移植 | あり |
 | [docs/urdf.md](docs/urdf.md) | URDF への変換 | あり |
 

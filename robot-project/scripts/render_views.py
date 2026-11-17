@@ -1,6 +1,6 @@
 """出力済みのMJCF（見た目用メッシュ付き）を、立位の初期姿勢で複数視点から描画する。
 
-使い方: uv run python scripts/render_views.py robot/mjcf/quadruped8-visual.xml artifacts/renders/base
+使い方: uv run python scripts/render_views.py robot/mjcf/base/visual.xml artifacts/base/renders
 """
 
 from __future__ import annotations

@@ -1,7 +1,8 @@
 """Phase 4: 学習なしの固定モーションを MuJoCo で再生し、数値で確かめる。
 
 順に実行する場面:
-  1. joint_check  各関節を1つずつ ±15度 動かし、指令した向きに動くか確かめる（宙吊りではなく接地のまま）
+  1. joint_check  胴体を宙に固定し、各関節に1つずつ +10度 を指令して、足先が後ろ（-X）へ動くか確かめる
+  1b. joint_sweep_hip_lf  接地したまま左前脚の股を ±15度 の正弦で動かす
   2. stand        指令0（立位）を保持
   3. trot         逆運動学のトロット（前進）
   4. turn         左右の歩幅差による旋回
@@ -9,7 +10,7 @@
 出力: <out>/fixed_gait.json（判定つき）、<out>/<scene>.csv（時系列）、<out>/<scene>.mp4（--video 時）
 
 使い方:
-  uv run python simulation/fixed_gait.py robot/mjcf/quadruped8-visual.xml artifacts/sim/base --video
+  uv run python simulation/fixed_gait.py robot/mjcf/base/visual.xml artifacts/base/fixed_gait --video
 """
 
 from __future__ import annotations
