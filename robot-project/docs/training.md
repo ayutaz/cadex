@@ -4,7 +4,11 @@
 
 学習器は Cadex 同梱の `training/cadex_train.py`（Brax PPO、MuJoCo MJX、JAX）をそのまま使う。
 新しく書いたのは、タスクの定義（設計スクリプトの `assembly.task`）と、それを回す周辺スクリプトだけ。
-GPU（vast.ai）での実行手順は [training-vastai.md](training-vastai.md)。
+GPU（vast.ai）での実行手順は [training-vastai.md](training-vastai.md)。結果は [experiment-results.md](experiment-results.md)。
+
+**今の状態（2026-11-17）**: 作る機体は小型機 `mini`。mini を GPU で学習シード5回学習した結果は、転ばず指令速度で進むが、
+足を上げずに滑る（合格率 0.24、滑り 0.83。experiment-results.md §6）。指令速度や報酬の重みを小型機に合わせる再調整中で、
+結果は未確定（§8）。
 
 ## 1. タスクの在りか
 
@@ -124,3 +128,22 @@ uv run python evaluation/evaluate_variant.py --variant base --policy artifacts/r
 
 隠れ層は既定の 512-256-128 ではなく 128-64 にしている。ESP32-S3 で推論するため（[esp32-deployment.md](esp32-deployment.md)）。
 学習の結果は [experiment-results.md](experiment-results.md) にまとめる。
+
+本番の学習は vast.ai の GPU（RTX 4090）で、`configs/train_full*.json`（8192 環境、1000 反復）を使って回す。
+複数台を借りて設定 × 学習シードを並べる `python -m vastai create --count N` と `sweep` の手順は
+[training-vastai.md](training-vastai.md)。学習シード違いの複数回は `scripts/compare_seeds.py` で評価し、
+平均 ± 標準偏差（最小〜最大）で比べる。
+
+## 8. 小型機 mini の再調整（作業中）
+
+mini は、base・leg120 と同じタスク（指令 40〜160 mm/s、報酬 v2）のままでは、足を上げずに滑って進んだ
+（experiment-results.md §6）。小型機に合わせた3案を作り、GPU で比べている最中で、**結果は未確定**。
+
+| 案 | 機体 / 設定 | mini からの差（`artifacts/<案>/design_report.json` の `params`） |
+|---|---|---|
+| `mini-cmd` | `robot/mjcf/mini-cmd/`、`configs/train_full_mini-cmd.json` | 指令速度 `cmd_min`/`cmd_max` を 40/160 から 30/120 mm/s に縮める |
+| `mini-v3` | `robot/mjcf/mini-v3/`、`configs/train_full_mini-v3.json` | `mini-cmd` に加え、v3 の報酬の重み（`w_trot` 0.5→1.0、`w_swing` 0.5→1.5） |
+| `mini-lift` | `robot/mjcf/mini-lift/`、`configs/train_full_mini-lift.json` | `mini-v3` に加え、足上げ高さ `gait_lift` を 10 から 7.5 mm に縮める |
+
+3案とも機体の形は mini と同じ。学習設定は、機体（`bundle`）と名前以外は `train_full_mini.json` と同じ。
+mini とタスクの差が意図した項目だけであることはテストで固定している。

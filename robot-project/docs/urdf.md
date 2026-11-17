@@ -1,6 +1,12 @@
 # URDF の書き出し
 
+最終確認日: 2026-11-17
+
 Cadex には URDF 出力がないので、Cadex が書いた MJCF から変換する（`q8/urdf.py`）。
+
+いまリポジトリにある URDF は基準機体の `robot/urdf/base/quadruped8.urdf` だけ。作る機体 `mini` の URDF は
+まだ作っていない。`--variant mini` で、`robot/mjcf/mini/model-model.xml` から同じ手順で作れる（mini には電池の
+リンク `c_bat` が無い）。
 
 ## 使い方
 

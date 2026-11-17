@@ -29,7 +29,7 @@ robot-project は Cadex 本体を一切変更していません。Cadex へは�
 | シミュレーション | `simulation/fixed_gait.py`、`q8/gait.py`、`q8/robot.py` | 逆運動学による固定歩容を MuJoCo で再生 |
 | 評価 | `evaluation/evaluate_variant.py`、`q8/evaluation.py`、`q8/compare.py` | 固定歩容と学習済み方策を同じ指標で評価し、機体どうしを比べる |
 | 学習基盤 | `configs/train_*.json`、`vastai/` | 学習設定と、vast.ai の GPU で学習を回す道具（複数台で待ち行列を回す `sweep` を含む） |
-| 移植 | `deploy/esp32/` | `.cxpolicy` を量子化して ESP32-S3 用の C コードにする（作業中） |
+| 移植 | `deploy/esp32/` | `.cxpolicy` を ESP32-S3 用の C コードにする（基準機体の方策で書き出しまで確認。ファームウェアは ESP-IDF で未ビルド） |
 | 変換 | `q8/urdf.py`、`scripts/mjcf_to_urdf.py` | MJCF → URDF |
 | 描画 | `q8/render.py`、`q8/visual.py`、`scripts/render_views.py` | 静止画・動画 |
 
@@ -56,7 +56,7 @@ robot/meshes/<variant>/、robot/mjcf/<variant>/、artifacts/<variant>/design_rep
         │   .cxpolicy（重み・観測の正規化）→ artifacts/runs/<run>/
         │        │
         │        ├─ ./cadex evaluate ──────── 成功条件・固定シード・動画 → artifacts/<variant>/evaluation/policy/
-        │        └─ deploy/esp32/ ─────────── 量子化 → C コード → ESP32-S3（作業中）
+        │        └─ deploy/esp32/ ─────────── C コード（float32 か int8）→ ESP32-S3（実機は未確認）
         │
         └─ evaluation/evaluate_variant.py ── 固定歩容と方策を同じ CadexEvaluation の指標で並べる
 ```
@@ -72,7 +72,7 @@ robot/meshes/<variant>/、robot/mjcf/<variant>/、artifacts/<variant>/design_rep
 | 固定歩容 | `visual.xml` | 判定 JSON、CSV、MP4 | `simulation/fixed_gait.py`（MuJoCo） |
 | 学習 | `walk-task.json` | `.cxpolicy` | `training/cadex_train.py`（Brax PPO、MJX） |
 | 評価 | MJCF と `.cxpolicy` | `evaluation.json`、トレース、動画 | `cadex evaluate`（エンジンが方策を再生） |
-| 移植 | `.cxpolicy` | C のソースとファームウェア | `deploy/esp32/`（作業中） |
+| 移植 | `.cxpolicy` | C のソースとファームウェア | `deploy/esp32/`（実機は未確認） |
 
 ## Cadex のプロジェクトストア
 
@@ -81,7 +81,21 @@ robot/meshes/<variant>/、robot/mjcf/<variant>/、artifacts/<variant>/design_rep
 | 機体 | プロジェクト |
 |---|---|
 | base（基準機体） | `~/cadex-projects/quadruped8` |
-| その他（例: leg120） | `~/cadex-projects/quadruped8-<variant>` |
+| その他（leg120、mini、mini の再調整案 mini-cmd / mini-v3 / mini-lift など） | `~/cadex-projects/quadruped8-<variant>` |
+
+## 機体（variant）
+
+機体はすべて同じ設計スクリプトから、`scripts/build_robot.py --variant V --set k=v ...`（または
+`scripts/redesign.py --scale`）でパラメータだけを変えて作ります。生成物は機体ごとに
+`robot/meshes/V/`、`robot/mjcf/V/`、`artifacts/V/` に分かれます。
+
+| 機体 | 何か |
+|---|---|
+| `base` | 基準機体（胴体 110 × 64 mm、電池 30 g の仮置き） |
+| `leg120` | base の上腿・下腿を 1.2 倍 |
+| `mini` | **作る機体**。胴体 96 × 62 mm、上腿 40 mm、下腿 44 mm、`hip_x` 40 mm、電池なし（`battery_mass_g=0`）。理由は [README](../README.md) |
+| `mini-cmd`、`mini-v3`、`mini-lift` | mini と同じ形で、学習タスクだけを変えた再調整の案。比較中で結果は未確定。`mini-cmd` は指令速度を 40〜160 から 30〜120 mm/s に縮める。`mini-v3` はそれに v3 の報酬の重み（`w_trot` 1.0、`w_swing` 1.5）を足す。`mini-lift` はさらに足上げ高さ（`gait_lift`）を 10 から 7.5 mm に縮める（各 `design_report.json` の `params`） |
+| `taskv2`、`taskv3` | base の形で、報酬を見直したときの学習タスク（[experiment-results.md](experiment-results.md)） |
 
 プロジェクトの中には、Cadex が管理する `script.py`（設計スクリプトの写し）、`script.json`（パラメータ）、
 `docs/`（干渉・部品一覧などのレポート）、`review/` などがあり、Cadex 自身が操作ごとに git へコミットします
