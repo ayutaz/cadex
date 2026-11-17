@@ -305,3 +305,61 @@ def test_real_policy_end_to_end(tmp_path):
     assert np.max(np.abs(f32 - cx.forward(policy, rows)) / span) < 1e-5
     np.testing.assert_array_equal(
         raw, np.stack([qz.forward_int8(qp, r, trace=True)["raw"] for r in rows]))
+
+
+# ---------------------------------------------------------------------------
+# 起動時の指令: 学習のリセットと同じ値（CadexDynamics.reset_command）
+# ---------------------------------------------------------------------------
+
+_KEYED_MODEL = """<mujoco>
+  <worldbody><body name="b"><joint name="j0" type="hinge"/><joint name="j1" type="hinge"/>
+    <geom size="0.01"/></body></worldbody>
+  <actuator><position name="a0" joint="j0"/><position name="a1" joint="j1"/></actuator>
+  <keyframe><key name="other" ctrl="0 0"/><key name="solved" ctrl="0.1 -2.0"/></keyframe>
+</mujoco>
+"""
+
+
+def test_reset_command_is_the_reset_keyframe_ctrl_in_surface_units_held_in_box(tmp_path):
+    import hashlib
+
+    model = tmp_path / "outputs" / "m.xml"
+    model.parent.mkdir()
+    model.write_text(_KEYED_MODEL)
+    task = {"model": {"path": "outputs/m.xml", "sha256": hashlib.sha256(model.read_bytes()).hexdigest()},
+            "episode": {"reset_keyframe": "solved"},
+            "actions": [{"actuator": "a0", "index": 0, "scale": 0.017453292519943295, "low": -45.0, "high": 20.0},
+                        {"actuator": "a1", "index": 1, "scale": 0.017453292519943295, "low": -60.0, "high": 45.0}]}
+    task_path = tmp_path / "outputs" / "walk-task.json"
+    task_path.write_text(json.dumps(task))
+    # 0.1 rad = 5.73°（範囲内）、-2.0 rad = -114.6° → 下限 -60 に切り詰め
+    assert ex.reset_command(task_path) == pytest.approx([5.729577951308232, -60.0])
+
+
+def test_reset_command_of_the_trained_robot_is_zero():
+    # 基準機体の学習用カットモデル: キーフレーム solved に ctrl が無い → 全関節 0°
+    task = ROOT / "robot" / "mjcf" / "base" / "cut" / "walk-task.json"
+    assert ex.reset_command(task) == [0.0] * 8
+
+
+def test_cli_uses_the_reset_command_when_the_task_is_given(tmp_path):
+    from deploy.esp32 import cxpolicy_io
+
+    task = ROOT / "robot" / "mjcf" / "base" / "cut" / "walk-task.json"
+    import hashlib
+
+    header, weights = cxpolicy_io.decode_policy(
+        cxpolicy_io.make_synthetic_policy(hidden=(8,), observations=REAL_NAMES, seed=1))
+    header["task"] = {**(header.get("task") or {}),
+                      "sha256": hashlib.sha256(task.read_bytes()).hexdigest()}  # このタスクで学習したことにする
+    blob = cxpolicy_io.encode_policy(header, weights)
+    policy = tmp_path / "p.cxpolicy"
+    policy.write_bytes(blob)
+    out = tmp_path / "w.h"
+    assert ex.main([str(policy), "--task", str(task), "--out", str(out), "--no-int8"]) == 0
+    text = out.read_text()
+    import re
+
+    body = re.search(r"const float policy_initial_command\[8\] = \{(.*?)\};", text, re.S).group(1)
+    values = [float(v.strip().rstrip("f")) for v in body.split(",") if v.strip()]
+    assert values == [0.0] * 8

@@ -163,6 +163,32 @@ def clock_period_s(task: dict[str, Any] | None) -> float | None:
     return None
 
 
+def reset_command(task_path: str | Path) -> list[float]:
+    """学習のリセットで効いている指令（``CadexDynamics.reset_command`` と同じ式）。
+
+    タスクの ``episode.reset_keyframe`` のキーフレームの ``ctrl`` を、各行動の単位（``/ scale``）に直し、
+    行動範囲で切り詰める。トレーナーは、両方の「前回の指令」をこの値から始める。モデルは
+    タスクの ``model.path`` で、タスクの親の親か、タスクと同じディレクトリにある（学習器と同じ規則）。
+    """
+
+    import mujoco
+
+    task_path = Path(task_path)
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    relative = Path(str(task["model"]["path"]))
+    model_path = task_path.resolve().parent.parent / relative
+    if not model_path.exists():
+        model_path = task_path.parent / relative.name
+    model = mujoco.MjModel.from_xml_path(str(model_path))
+    name = str((task.get("episode") or {}).get("reset_keyframe") or "")
+    key = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_KEY, name) if name else 0
+    if key < 0:
+        raise LayoutError(f"モデルにキーフレーム {name!r} がありません")
+    ctrl = model.key_ctrl[key]
+    return [min(max(float(ctrl[int(a["index"])]) / float(a["scale"]), float(a["low"])), float(a["high"]))
+            for a in task["actions"]]
+
+
 def load_task(path: str | Path, policy: cx.CxPolicy | None = None) -> dict[str, Any]:
     import hashlib
 
@@ -448,9 +474,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                        else qz.calibration_samples(policy, count=args.count))
             qpolicy = qz.quantize_policy(policy, samples, per_channel=not args.per_layer,
                                          percentile=args.percentile)
+        initial = args.initial_command
+        if initial is None and args.task:
+            initial = reset_command(args.task)
         text = render_header(policy, qpolicy, layout=layout,
                              servos=load_servos(args.servo, policy),
-                             initial_command=args.initial_command, source=Path(args.policy).name,
+                             initial_command=initial, source=Path(args.policy).name,
                              clock_period_s=clock_period_s(task))
     except (OSError, ValueError) as exc:
         print(f"エラー: {exc}", file=sys.stderr)
@@ -458,8 +487,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     Path(args.out).write_text(text, encoding="utf-8")
     print(f"書いた: {args.out}（{'-'.join(map(str, policy.layer_sizes))}、"
           f"int8 {'あり' if qpolicy else 'なし'}）")
-    if not args.initial_command:
-        print("注意: 初期指令は行動範囲の中央。学習時のリセット姿勢（keyframe）に合わせること。")
+    if args.initial_command:
+        pass
+    elif args.task:
+        print(f"初期指令: 学習のリセットと同じ値（{args.task} のリセットのキーフレーム）")
+    else:
+        print("注意: 初期指令は行動範囲の中央。学習時のリセット姿勢（keyframe）に合わせること。"
+              "--task を渡すと、学習のリセットと同じ値になる。")
     return 0
 
 
