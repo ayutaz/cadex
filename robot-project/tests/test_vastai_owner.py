@@ -112,6 +112,15 @@ def test_instances_marks_other_work_and_hides_its_ssh():
     assert "ssh6.vast.ai" not in out and "16384" not in out
 
 
+def test_instances_shows_a_just_created_instance_without_status():
+    # 作った直後の台は actual_status が null（None）で返る。一覧が落ちて自分の台が見えなくなった（2026-11-17）
+    booting = {**OURS, "id": 333, "actual_status": None, "dph_total": None, "ssh_host": None, "ssh_port": None}
+    code, out = _run(["instances"], RoutingOpener([booting, OTHER]))
+    assert code == 0
+    line, = [l for l in out.splitlines() if l.startswith("333")]
+    assert "このプロジェクト" in line and "-" in line
+
+
 def test_cli_destroy_of_other_work_fails_without_deleting():
     opener = RoutingOpener([OTHER])
     code, out = _run(["destroy", str(OTHER["id"]), "--yes"], opener)

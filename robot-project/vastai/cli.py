@@ -276,7 +276,8 @@ def _dispatch(args, *, environ, opener, runner, out, env_file) -> int:
             direct = row["direct_ssh"]
             owned = offers.is_owned(row)
             mark = "このプロジェクト" if owned else "他の作業：触らない"
-            print(f"{row.get('id')}  {row.get('actual_status', '-'):<10} "
+            status = row.get("actual_status") or "-"  # 作った直後は null で返る
+            print(f"{row.get('id')}  {status:<10} "
                   f"${float(row.get('dph_total') or 0):.3f}/h  {row.get('label') or ''}  [{mark}]", file=out)
             if not owned:
                 continue  # 他の作業の接続先は出さない
