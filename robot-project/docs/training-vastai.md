@@ -32,6 +32,7 @@
 | `configs/train_smoke.json` | 小規模のパイプライン検証用（10 反復）。送る→起動→回収→検証が通ること、イメージが GPU で動くことを見る。一反復の大きさと GPU の候補は本番と同じ（テストで固定）。ただし時間のほとんどはコンパイルなので、本番の見積りには使えない（§3） |
 | `configs/train_full.json` | 本番用、基準機体（1000 反復、8192 envs。環境数などは Cadex `training/RECIPE.md` §A の既定） |
 | `configs/train_full_leg120.json` | 本番用、脚20%増し（leg120）。機体（`bundle`）以外は `train_full.json` と同じ（テストで固定） |
+| `configs/train_full_mini.json` | 本番用、小型機（mini: 胴体 96×62 mm、MG90S、電池なし）。機体（`bundle`）以外は `train_full.json` と同じ（テストで固定） |
 
 コマンドはすべて `robot-project/` で実行する:
 
@@ -269,6 +270,10 @@ VAST_SSH_HOST=<[このプロジェクト] の行のホスト> VAST_SSH_PORT=<ポ
 - run_id は `<設定の name>-s<乱数>`（`full-s0`、`full-leg120-s3` など）。乱数は `--seed` で渡る。
 - label が `cadex-q8-` で始まらない台は、渡されても確認も起動も破棄もしない。
 - `--boot-timeout`（既定 20 分）までに起動しない台、`check` で GPU が使えない台は退く。
+  running になった直後は SSH が拒まれる（Connection refused）ことがあるので、`check` の失敗は
+  5分まで間をおいて繰り返してから退く。
+- ssh は `ConnectTimeout=20`・`ServerAliveInterval=15`・`ServerAliveCountMax=4` で、応答の無い接続を
+  待ち続けない。`check` の `nvidia-smi` と jax の確認は、リモートの `timeout` で区切る。
 - 学習に失敗した回は列に戻し（`--max-attempts`、既定 2）、その台は退く。
 - 列が空で、他の台で走っている回も無くなったら退く。`--destroy-when-done` なら退いた台を破棄する。
   付けなければ台は残る（課金が続く）。
@@ -278,6 +283,18 @@ VAST_SSH_HOST=<[このプロジェクト] の行のホスト> VAST_SSH_PORT=<ポ
 
 2026-11-17 の二機体 × 乱数5回（[experiment-results.md](experiment-results.md) §5）は、この手順を
 手で行った（このコマンドはその後に作った）。1回約 550 秒で、最大5台に分けて約1時間で終わった。
+
+`sweep` を本物の台で初めて使ったのは、2026-11-17 の小型機（mini）の乱数5回（[experiment-results.md](experiment-results.md) §6）。
+6台を借りて、5回を約23分（作成 21:11 → 最後の破棄 21:34）で終えた。起きたこと:
+
+- 1台は running になった直後の `check` が Connection refused で、1回の失敗で退いて破棄された
+  （→ 5分まで再試行するよう直した）。
+- 1台は `check` の ssh が応答の無いまま7分止まり、その台のスレッドが動かなくなった。手で ssh を
+  止めて退かせた（→ ssh のタイムアウトと `timeout` を付けた）。
+- 1台は20分たっても起動せず、`--boot-timeout` で退いて破棄された。
+- 残る3台で5回を回した（3台目以降の回は、先に終わった台が引き継いだ）。列が空になった台は、
+  最後の回が終わるまで待ってから破棄される（失敗した回が列に戻るのに備えるため）。
+- `instances` が作成直後の台（`actual_status` が null）で落ちた（→ 直した）。
 
 ## 7. 監視
 
