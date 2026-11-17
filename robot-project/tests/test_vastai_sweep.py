@@ -223,3 +223,60 @@ def test_an_instance_that_keeps_refusing_ssh_is_retired_after_the_grace():
     assert 1 in api.destroyed and "確認に失敗" in result["instances"][1]
     assert result["done"] == ["full-s0"]
     assert len([e for e in _events("check") if e[0] == "dead"]) < 100   # 猶予のあとは諦める
+
+
+class FlakyApi(FakeApi):
+    """一覧と破棄が、最初の何回か HTTP 429 で失敗する API（2026-11-17 に 10 台で起きた）。"""
+
+    def __init__(self, rows, *, list_failures=0, destroy_failures=0):
+        super().__init__(rows)
+        self.list_failures = list_failures
+        self.destroy_failures = destroy_failures
+
+    def list_instances(self):
+        with self.lock:
+            if self.list_failures:
+                self.list_failures -= 1
+                raise sweep.offers.VastError("vast.ai GET /instances: HTTP 429（API requests too frequent）")
+        return super().list_instances()
+
+    def destroy(self, iid):
+        with self.lock:
+            if self.destroy_failures:
+                self.destroy_failures -= 1
+                raise sweep.offers.VastError("vast.ai GET /instances: HTTP 429（API requests too frequent）")
+        super().destroy(iid)
+
+
+def test_a_rate_limited_instance_list_is_retried_while_waiting_for_boot():
+    # 一覧の 429 で台のスレッドが黙って終わり、台が破棄されずに残った（2026-11-17、61070900）
+    items = sweep.plan([FULL], [0])
+    api = FlakyApi([_row(1)], list_failures=3)
+    result = _sweep(items, api, lambda t: FakeSession(t), destroy=True).run([1])
+    assert result["done"] == ["full-s0"]
+    assert api.destroyed == [1]
+
+
+def test_an_unexpected_error_on_an_instance_still_retires_and_destroys_it():
+    # どんな失敗でも、借りた台を残さない（課金が続く）。その台の回は列に戻り、他の台が回す
+    items = sweep.plan([FULL], [0, 1])
+    api = FakeApi([_row(1, host="odd"), _row(2)])
+
+    class OddSession(FakeSession):
+        def launch(self, config, *, run_id, extra_argv, dry_run=False):
+            if self.target.host == "odd":
+                raise OSError("想定外の失敗")
+            return super().launch(config, run_id=run_id, extra_argv=extra_argv, dry_run=dry_run)
+
+    result = _sweep(items, api, lambda t: OddSession(t), destroy=True).run([1, 2])
+    assert sorted(result["done"]) == ["full-s0", "full-s1"]
+    assert sorted(api.destroyed) == [1, 2]
+    assert "想定外の失敗" in result["instances"][1]
+
+
+def test_a_failed_destroy_is_retried():
+    items = sweep.plan([FULL], [0])
+    api = FlakyApi([_row(1)], destroy_failures=2)
+    result = _sweep(items, api, lambda t: FakeSession(t), destroy=True).run([1])
+    assert result["done"] == ["full-s0"]
+    assert api.destroyed == [1]

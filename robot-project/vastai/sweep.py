@@ -10,6 +10,9 @@
    学習に失敗した回は列に戻し（``max_attempts`` まで）、その台は退く（GPU が壊れていることがあった）。
 4. 列が空で、他の台で走っている回も無くなったら退く。
 
+どんな失敗でも台を残さない（残れば課金が続く）。一覧の失敗（HTTP 429 など）は起動待ちの間くり返し、
+想定外の例外はその台を退かせ、破棄の失敗は ``DESTROY_ATTEMPTS`` 回までくり返す。
+
 ``destroy`` が真なら、退いた台を破棄する（課金を止める）。破棄は ``offers.destroy_instance`` を通るので、
 このプロジェクトの label でない台には送られない。
 """
@@ -28,6 +31,8 @@ from . import offers, remote
 LIST_GRACE_S = 300.0
 #: running になってから SSH が受け付けるまで待つ秒数（直後は Connection refused が返ることがある）
 SSH_GRACE_S = 300.0
+#: 破棄を試す回数（一覧や破棄の API は HTTP 429 を返すことがある）
+DESTROY_ATTEMPTS = 3
 
 
 @dataclass
@@ -143,17 +148,32 @@ class Sweep:
         with self.lock:
             self.instances[iid] = reason
         self.log(f"[{iid}] 退く: {reason}")
-        if self.destroy:
+        if not self.destroy:
+            return
+        for attempt in range(1, DESTROY_ATTEMPTS + 1):
             try:
                 self.api.destroy(iid)
                 self.log(f"[{iid}] 破棄しました")
-            except Exception as error:  # noqa: BLE001 — 破棄の失敗は伝えて続ける
-                self.log(f"[{iid}] 破棄に失敗: {error}。コンソールで確かめてください")
+                return
+            except Exception as error:  # noqa: BLE001 — 破棄の失敗は伝えて、くり返す
+                if attempt == DESTROY_ATTEMPTS:
+                    self.log(f"[{iid}] 破棄に失敗: {error}。コンソールで確かめてください")
+                    return
+                self.log(f"[{iid}] 破棄に失敗、{self.poll_s:.0f} 秒後にもう一度: {error}")
+                self.sleep(self.poll_s)
 
     def _wait_boot(self, iid: int) -> cfg.SSHTarget | str:
         start = self.clock()
         while True:
-            row = next((r for r in self.api.list_instances() if str(r.get("id")) == str(iid)), None)
+            try:
+                rows = self.api.list_instances()
+            except offers.VastError as error:  # HTTP 429 など。起動待ちの時間の中でくり返す
+                if self.clock() - start > self.boot_timeout_s:
+                    return f"一覧を取れない: {error}"
+                self.log(f"[{iid}] 一覧の取得に失敗、{self.poll_s:.0f} 秒後にもう一度: {error}")
+                self.sleep(self.poll_s)
+                continue
+            row = next((r for r in rows if str(r.get("id")) == str(iid)), None)
             elapsed = self.clock() - start
             if row is not None and not offers.is_owned(row):
                 return "other"
@@ -168,7 +188,9 @@ class Sweep:
                 return f"{self.boot_timeout_s / 60:.0f} 分たっても起動しない"
             self.sleep(self.poll_s)
 
-    def _train(self, session: Any, item: Item) -> bool:
+    def _train(self, session: Any, item: Item) -> str | None:
+        """1回を回す。成功なら None、失敗ならその理由。"""
+
         try:
             loaded = self.load(item.config)
             session.launch(loaded, run_id=item.run_id, extra_argv=["--seed", str(item.seed)])
@@ -180,16 +202,26 @@ class Sweep:
                     state = progress.get("state") if progress.get("state") in ("done", "failed") else "failed"
                 if state == "done":
                     session.pull(item.run_id)
-                    return True
+                    return None
                 if state == "failed":
-                    self.log(f"{item.run_id} が失敗: {progress.get('error') or 'プロセスが居ない'}")
-                    return False
+                    reason = str(progress.get("error") or "プロセスが居ない")
+                    self.log(f"{item.run_id} が失敗: {reason}")
+                    return reason
                 self.sleep(self.poll_s)
-        except (remote.RemoteError, remote.VerificationError, cfg.ConfigError) as error:
+        except Exception as error:  # noqa: BLE001 — 想定外の例外でも回を列に戻し、台を退かせる
             self.log(f"{item.run_id} が失敗: {error}")
-            return False
+            return str(error)
 
     def _worker(self, iid: int) -> None:
+        try:
+            self._work(iid)
+        except Exception as error:  # noqa: BLE001 — スレッドが黙って終わると、台が残り課金が続く
+            with self.lock:
+                retired = iid in self.instances
+            if not retired:
+                self._retire(iid, f"想定外の失敗: {error!r}")
+
+    def _work(self, iid: int) -> None:
         target = self._wait_boot(iid)
         if target == "other":
             with self.lock:
@@ -224,12 +256,12 @@ class Sweep:
                 self._retire(iid, "列が空")
                 return
             self.log(f"[{iid}] {item.run_id} を起動（乱数 {item.seed}）")
-            ok = self._train(session, item)
-            self._settle(item, ok)
-            if ok:
+            error = self._train(session, item)
+            self._settle(item, error is None)
+            if error is None:
                 self.log(f"[{iid}] {item.run_id} 完了・回収済み")
             else:
-                self._retire(iid, f"{item.run_id} の学習に失敗した台")
+                self._retire(iid, f"{item.run_id} の学習に失敗した台: {error}")
                 return
 
     def run(self, instance_ids: Iterable[int]) -> dict[str, Any]:

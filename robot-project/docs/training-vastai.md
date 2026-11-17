@@ -275,6 +275,8 @@ VAST_SSH_HOST=<[このプロジェクト] の行のホスト> VAST_SSH_PORT=<ポ
 - ssh は `ConnectTimeout=20`・`ServerAliveInterval=15`・`ServerAliveCountMax=4` で、応答の無い接続を
   待ち続けない。`check` の `nvidia-smi` と jax の確認は、リモートの `timeout` で区切る。
 - 学習に失敗した回は列に戻し（`--max-attempts`、既定 2）、その台は退く。
+- どんな失敗でも台を残さない。一覧の取得の失敗（HTTP 429 など）は起動待ちの間くり返し、想定外の例外はその台を
+  退かせ（回は列に戻る）、破棄の失敗は3回までくり返す。
 - 列が空で、他の台で走っている回も無くなったら退く。`--destroy-when-done` なら退いた台を破棄する。
   付けなければ台は残る（課金が続く）。
 - 終わったら、完了・失敗・未着手の回と、各台が退いた理由を出す。失敗か未着手があれば終了コード 1。
@@ -295,6 +297,11 @@ VAST_SSH_HOST=<[このプロジェクト] の行のホスト> VAST_SSH_PORT=<ポ
 - 残る3台で5回を回した（3台目以降の回は、先に終わった台が引き継いだ）。列が空になった台は、
   最後の回が終わるまで待ってから破棄される（失敗した回が列に戻るのに備えるため）。
 - `instances` が作成直後の台（`actual_status` が null）で落ちた（→ 直した）。
+
+2026-11-17 の小型機の再調整（10台、[experiment-results.md](experiment-results.md) §7）では、起動待ちの一覧の取得が
+HTTP 429（API requests too frequent）を返し、1台のスレッドが例外で黙って終わった。その台は学習にも使われず、
+`--destroy-when-done` でも破棄されずに running のまま残った（→ 直した）。**sweep の後は必ず `instances` で
+自分の台が消えたことを確かめる。**
 
 ## 7. 監視
 
