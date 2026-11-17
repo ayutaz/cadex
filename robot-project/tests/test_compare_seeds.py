@@ -19,7 +19,8 @@ def _fake_evaluate(calls):
             "slip_share_max": {"mean": 0.5, "min": 0.5, "max": 0.5, "n": 10}}}}
         Path(out_dir).mkdir(parents=True, exist_ok=True)
         (Path(out_dir) / "summary.json").write_text(json.dumps(summary))
-        return summary
+        # 本物の evaluate_variant の戻り値は summary.json と形が違う（variant を含まない）
+        return {"fixed_gait": None, "policy": {}}
     return evaluate
 
 

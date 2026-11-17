@@ -50,11 +50,11 @@ def run(runs: list[tuple[str, Path]], *, artifacts: Path = ARTIFACTS,
     names: dict[str, list[str]] = {v: [] for v in variants}
     for variant, folder in runs:
         out_dir = artifacts / variant / "evaluation-seeds" / folder.name
-        cached = out_dir / "summary.json"
-        if cached.exists():
-            summary = json.loads(cached.read_text(encoding="utf-8"))
-        else:
-            summary = evaluate(variant, policy=folder / POLICY_FILE, out_dir=out_dir, video=video)
+        saved = out_dir / "summary.json"
+        if not saved.exists():
+            # 戻り値は summary.json と形が違う（variant を含まない）ので、書かれたファイルを読む
+            evaluate(variant, policy=folder / POLICY_FILE, out_dir=out_dir, video=video)
+        summary = json.loads(saved.read_text(encoding="utf-8"))
         summaries[variant].append(summary)
         names[variant].append(folder.name)
     a, b = variants
