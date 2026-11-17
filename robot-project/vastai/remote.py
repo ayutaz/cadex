@@ -348,11 +348,12 @@ class Session:
             "    except Exception: print('pkg', n, '-')\n"
             "import jax; print('backend', jax.default_backend()); print('devices', jax.devices())\n")
         command = (
-            "nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader "
+            # GPU の壊れた台では nvidia-smi や jax の初期化が返らないことがあるので、時間を区切る
+            "timeout 60 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader "
             "2>&1 | sed 's/^/gpu /'; "
             f"sha256sum {q(trainer_root + '/training/cadex_train.py')} | sed 's/^/trainer /'; "
             f"cat {q(trainer_root + '/TRAINER_SHA256')} 2>/dev/null | sed 's/^/image /'; "
-            f"JAX_PLATFORMS=cuda {q(python)} -c {q(probe)} 2>&1 | tail -n 14; "
+            f"JAX_PLATFORMS=cuda timeout 180 {q(python)} -c {q(probe)} 2>&1 | tail -n 14; "
             "df -h /workspace 2>/dev/null | tail -n 1 | sed 's/^/disk /'")
         return self.ssh(command, what="インスタンスの確認")
 

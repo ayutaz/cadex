@@ -205,7 +205,9 @@ class SSHTarget:
 
     def _options(self) -> list[str]:
         # vast.ai はインスタンスごとにホスト鍵が変わる。初見は受け入れ、変化は拒む。
+        # 応答の無い接続を待ち続けない（起動直後の台で、確認の ssh が7分止まった。2026-11-17）。
         options = ["-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=accept-new",
+                   "-o", "ConnectTimeout=20", "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=4",
                    "-p", str(self.port)]
         if self.key:
             options += ["-i", str(Path(self.key).expanduser())]

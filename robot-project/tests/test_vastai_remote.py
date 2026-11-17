@@ -83,6 +83,7 @@ def config(task: Path, **trainer) -> dict:
 def test_ssh_argv():
     assert TARGET.ssh_argv("echo hi") == [
         "ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=accept-new",
+        "-o", "ConnectTimeout=20", "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=4",
         "-p", "41234", "root@ssh5.vast.ai", "echo hi"]
 
 
@@ -90,19 +91,40 @@ def test_ssh_argv_は鍵を_i_で渡す(tmp_path):
     key = tmp_path / "id"
     key.write_text("x")
     target = SSHTarget(host="h", port=22, user="root", key=str(key))
-    assert target.ssh_argv("true")[:8] == [
+    assert target.ssh_argv("true")[:14] == [
         "ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=accept-new",
+        "-o", "ConnectTimeout=20", "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=4",
         "-p", "22", "-i"]
+
+
+def test_接続の止まった_ssh_を待ち続けない():
+    # 起動直後の台への確認の ssh が、応答のないまま7分止まり、sweep の台が動かなくなった（2026-11-17）
+    argv = TARGET.ssh_argv("true")
+    options = [argv[i + 1] for i, a in enumerate(argv) if a == "-o"]
+    assert "ConnectTimeout=20" in options
+    assert "ServerAliveInterval=15" in options and "ServerAliveCountMax=4" in options
+
+
+def test_確認の重いコマンドはリモートで時間を区切る(tmp_path):
+    # GPU の壊れた台では nvidia-smi や jax の初期化が返らないことがある
+    runner = FakeRunner()
+    session = remote.Session(TARGET, runner=runner, local_root=tmp_path / "runs")
+    session.check("/opt/cadex", "/opt/venv/bin/python")
+    command = runner.remote_commands()[-1]
+    assert "timeout 60 nvidia-smi" in command
+    assert "timeout 180 /opt/venv/bin/python" in command
 
 
 def test_rsync_の送りと受け():
     up = TARGET.rsync_up(["a.json", "b.xml"], "/workspace/runs/x/")
     assert up == ["rsync", "-rt", "-e",
-                  "ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p 41234",
+                  ("ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 "
+                   "-o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p 41234"),
                   "a.json", "b.xml", "root@ssh5.vast.ai:/workspace/runs/x/"]
     down = TARGET.rsync_down("/workspace/runs/x/", "local/", includes=["*.cxpolicy"])
     assert down[:4] == ["rsync", "-rt", "-e",
-                        "ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p 41234"]
+                        ("ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 "
+                   "-o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p 41234")]
     assert "--include=*.cxpolicy" in down and down[-3] == "--exclude=*"
     assert down[-2:] == ["root@ssh5.vast.ai:/workspace/runs/x/", "local/"]
 
