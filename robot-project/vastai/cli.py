@@ -52,7 +52,13 @@ def _parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("create", help="オファーを借りる（--yes と VAST_API_KEY が無ければ dry-run）")
     with_config(p)
-    p.add_argument("--offer", type=int, required=True, help="offers の表の id")
+    which = p.add_mutually_exclusive_group(required=True)
+    which.add_argument("--offer", type=int, help="offers の表の id")
+    which.add_argument("--count", type=int,
+                       help="検索の直後に、設定の条件に合う安い順に N 台を借りる（1 マシン 1 台。"
+                            "オファーの id は数分で無効になるので、並べて借りるときはこちら）")
+    p.add_argument("--exclude-machine", type=int, action="append", default=[],
+                   help="--count で使わないマシンの machine_id（GPU が壊れていた、など。繰り返し可）")
     p.add_argument("--image", default=None, help="設定の instance.image を上書き")
     p.add_argument("--yes", action="store_true", help="本当に作る（課金が始まる）")
 
@@ -217,6 +223,24 @@ def _dispatch(args, *, environ, opener, runner, out, env_file) -> int:
         instance = dict(loaded.get("instance", {}))
         if args.image:
             instance["image"] = args.image
+        if args.count is not None:
+            many = offers.create_many(offers.build_query(dict(loaded.get("offer", {}), limit=80)),
+                                      instance, count=args.count, api_key=key, yes=args.yes,
+                                      opener=opener, exclude_machines=args.exclude_machine)
+            if not many["executed"]:
+                print(many["reason"], file=out)
+                print("借りるはずのオファー（検索の直後に安い順。実行時に検索し直す）:", file=out)
+                hours, _ = _hours(loaded)
+                print(offers.format_offers(many["chosen"], hours=hours,
+                                           disk_gb=float(instance.get("disk_gb", 40))), file=out)
+                return 0 if many["reason"].startswith("dry-run") else 2
+            for offer_id, why in many["skipped"]:
+                print(f"飛ばした: オファー {offer_id}（{why}）", file=out)
+            ids = [str(i) for i in many["created"]]
+            print(f"{len(ids)} 台を作りました（{', '.join(ids) or 'なし'}）。課金が始まっています。", file=out)
+            for i in ids:
+                print(f"終わったら必ず: python -m vastai destroy {i} --yes", file=out)
+            return 0 if len(ids) == args.count else 1
         result = offers.create_instance(args.offer, instance, api_key=key, yes=args.yes,
                                         opener=opener)
         if not result["executed"]:

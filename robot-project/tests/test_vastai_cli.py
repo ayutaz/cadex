@@ -196,3 +196,44 @@ def test_status_watch_は終わった直後にプロセスが消えても成功�
                     environ={"VAST_SSH_HOST": "h"}, runner=runner)
     assert code == 0, out
     assert "終わりました" in out
+
+
+class BundlesAndAsks:
+    """POST /bundles には OFFERS を、PUT には成功を返す。"""
+
+    def __init__(self):
+        self.requests = []
+
+    def __call__(self, request, timeout=None):
+        self.requests.append(request)
+        if request.get_method() == "POST":
+            return FakeResponse(json.dumps(OFFERS).encode())
+        return FakeResponse(json.dumps({"success": True, "new_contract": 777}).encode())
+
+
+def test_create_count_は既定で借りるはずのオファーを出すだけ():
+    opener = BundlesAndAsks()
+    code, out = run(["create", "--config", FULL, "--count", "1"], environ={"VAST_API_KEY": "k"},
+                    opener=opener)
+    assert code == 0, out
+    assert "dry-run" in out and "222" in out and "RTX 4090" in out
+    assert [r.get_method() for r in opener.requests] == ["POST"]
+
+
+def test_create_count_は_yes_で検索の直後に借りる():
+    opener = BundlesAndAsks()
+    code, out = run(["create", "--config", FULL, "--count", "1", "--yes", "--exclude-machine", "5"],
+                    environ={"VAST_API_KEY": "k"}, opener=opener)
+    assert code == 0, out
+    assert "777" in out and "destroy" in out
+    assert [r.get_method() for r in opener.requests] == ["POST", "PUT"]
+
+
+def test_create_は_offer_か_count_のどちらか一方():
+    import pytest
+
+    with pytest.raises(SystemExit):
+        run(["create", "--config", FULL], environ={"VAST_API_KEY": "k"}, opener=BundlesAndAsks())
+    with pytest.raises(SystemExit):
+        run(["create", "--config", FULL, "--offer", "1", "--count", "2"], environ={"VAST_API_KEY": "k"},
+            opener=BundlesAndAsks())

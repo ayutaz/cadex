@@ -26,7 +26,7 @@ import re
 from datetime import datetime
 import urllib.error
 import urllib.request
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 API = API_V0 = "https://console.vast.ai/api/v0"
 API_V1 = "https://console.vast.ai/api/v1"
@@ -333,3 +333,45 @@ def list_instances(*, api_key: str, opener: Opener | None = None) -> list[dict[s
         row["direct_ssh"] = _direct_ssh(item)
         rows.append(row)
     return rows
+
+
+def create_many(query: Mapping[str, Any], instance: Mapping[str, Any], *, count: int, api_key: str,
+                yes: bool, opener: Opener | None = None, now: datetime | None = None,
+                exclude_machines: Iterable[int] = ()) -> dict[str, Any]:
+    """検索して、その場で ``count`` 台を借りる（**課金が始まる**）。
+
+    オファーの id は数分で作り直され、表を見てから ``--offer`` で借りるまでに無効になる
+    （no_such_ask）。そこで検索の直後に安い順に借りていき、無効なものは飛ばす。
+    1 マシンに 1 台まで。``exclude_machines`` のマシン（GPU が壊れていた、など）は使わない。
+    ``yes`` と ``api_key`` が揃わなければ、借りるはずのオファーを返すだけ。
+    """
+
+    excluded = {int(m) for m in exclude_machines}
+    found = [o for o in search_offers(query, api_key=api_key, opener=opener)
+             if o.get("machine_id") is None or int(o["machine_id"]) not in excluded]
+    unique: list[dict[str, Any]] = []
+    machines: set[Any] = set()
+    for offer in found:
+        machine = offer.get("machine_id")
+        if machine is not None and machine in machines:
+            continue
+        machines.add(machine)
+        unique.append(offer)
+    reason = _guard(yes=yes, api_key=api_key, what="インスタンスの作成（課金開始）")
+    result: dict[str, Any] = {"executed": False, "reason": reason, "chosen": unique[:count],
+                              "created": [], "skipped": []}
+    if reason:
+        return result
+    when = now or datetime.now()
+    for offer in unique:
+        if len(result["created"]) >= count:
+            break
+        try:
+            made = create_instance(int(offer["id"]), instance, api_key=api_key, yes=True,
+                                   opener=opener, now=when)
+        except VastError as error:
+            result["skipped"].append((int(offer["id"]), str(error)))
+            continue
+        result["created"].append(made["instance_id"])
+    result["executed"] = True
+    return result
