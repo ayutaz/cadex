@@ -6,10 +6,44 @@ Cadexの内部APIには触れず、公開された CLI の契約（docs/CLI.md �
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
-from .paths import CADEX_CLI
+from .paths import CADEX_CLI, CADEX_REPO
+
+
+def _git_config(repo: Path, key: str) -> str:
+    out = subprocess.run(["git", "-C", str(repo), "config", "--get", key], capture_output=True, text=True)
+    return out.stdout.strip() if out.returncode == 0 else ""
+
+
+def author_env(source: Path | None = None) -> dict[str, str]:
+    """cadex リポジトリ（source）の作者を、git の作者・コミッターの環境変数にする。
+
+    Cadex はプロジェクトを初めて実行した時に git init して自動コミットする。環境変数は
+    git の設定（-c user.* を含む）より優先されるので、最初のコミットから作者がそろう。
+    """
+    source = CADEX_REPO if source is None else source
+    name, email = _git_config(source, "user.name"), _git_config(source, "user.email")
+    if not (name and email):
+        return {}
+    return {"GIT_AUTHOR_NAME": name, "GIT_AUTHOR_EMAIL": email,
+            "GIT_COMMITTER_NAME": name, "GIT_COMMITTER_EMAIL": email}
+
+
+def adopt_author(project: Path, source: Path | None = None) -> None:
+    """プロジェクトの git のローカル設定を、source の作者にそろえる（git が無ければ何もしない）。"""
+    if not (Path(project) / ".git").exists():
+        return
+    env = author_env(source)
+    for key, var in (("user.name", "GIT_AUTHOR_NAME"), ("user.email", "GIT_AUTHOR_EMAIL")):
+        if var in env and _git_config(Path(project), key) != env[var]:
+            subprocess.run(["git", "-C", str(project), "config", "--local", key, env[var]], check=True)
+
+
+def _call(cmd: list[str], env: dict[str, str], timeout: float) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
 
 
 class CadexError(RuntimeError):
@@ -24,7 +58,8 @@ def run(project: Path, *args: str, engine_timeout: int | None = None, timeout: f
     if engine_timeout:
         cmd += ["--engine-timeout", str(engine_timeout)]
     cmd += list(args)
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    proc = _call(cmd, {**os.environ, **author_env()}, timeout)
+    adopt_author(project)
     try:
         env = json.loads(proc.stdout) if proc.stdout.strip() else {}
     except json.JSONDecodeError:
