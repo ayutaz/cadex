@@ -24,11 +24,12 @@
 |---|---|
 | `vastai/Dockerfile` | CUDA 12 の公式イメージ + Python 3.12 + ピン留めの依存 + `jax[cuda12]==0.7.2` + 学習器 |
 | `vastai/cli.py`（`python -m vastai`） | 下のすべてのコマンドの入口 |
-| `vastai/offers.py` | vast.ai REST API: オファー検索・見積り・作成・一覧・破棄 |
+| `vastai/offers.py` | vast.ai REST API: オファー検索・見積り・作成（1台 / 検索直後に N 台）・一覧・破棄 |
+| `vastai/sweep.py` | 複数のインスタンスで学習の待ち行列を回す（`sweep`、§6.1） |
 | `vastai/remote.py` | SSH/rsync: 送付・起動・進捗・回収と sha256 検証・再開・停止 |
 | `vastai/metrics.py` | `progress.json` → CSV / TensorBoard イベントファイル（依存なし） |
 | `vastai/config.py` | 学習設定と接続設定の読み込み・検証 |
-| `configs/train_smoke.json` | 小規模のパイプライン検証用（10 反復）。一反復の大きさ（envs・unroll・epochs・minibatches・hidden）と GPU の候補は本番と同じにしてあり、秒/反復の実測をそのまま本番の見積りに使える（テストで固定） |
+| `configs/train_smoke.json` | 小規模のパイプライン検証用（10 反復）。送る→起動→回収→検証が通ること、イメージが GPU で動くことを見る。一反復の大きさと GPU の候補は本番と同じ（テストで固定）。ただし時間のほとんどはコンパイルなので、本番の見積りには使えない（§3） |
 | `configs/train_full.json` | 本番用、基準機体（1000 反復、8192 envs。環境数などは Cadex `training/RECIPE.md` §A の既定） |
 | `configs/train_full_leg120.json` | 本番用、脚20%増し（leg120）。機体（`bundle`）以外は `train_full.json` と同じ（テストで固定） |
 
@@ -39,9 +40,9 @@ cd robot-project
 .venv/bin/python -m vastai --help
 ```
 
-**課金が始まる操作は `create` だけ**、インスタンスを消すのは `destroy` だけで、
-どちらも `--yes` と `VAST_API_KEY` の両方が揃った時しか送らない。それ以外は
-送るはずの内容を表示して終わる（dry-run が既定）。`offers` と `instances` は読むだけ。
+**課金が始まる操作は `create` だけ**で、`--yes` と `VAST_API_KEY` の両方が揃った時しか送らない。
+インスタンスを消すのは `destroy` と、`sweep --destroy-when-done`（退いた台を破棄する）だけ。
+それ以外は送るはずの内容を表示して終わる（dry-run が既定）。`offers` と `instances` は読むだけ。
 
 **vast.ai のアカウントは他の作業と共有している。このプロジェクトが作ったインスタンスにしか触らない。**
 
@@ -127,27 +128,32 @@ fork（ayutaz/cadex）では `ghcr.io/ayutaz/cadex-train`。
 - 信頼度（`reliability2`）0.98 以上、verified。途中で落ちると借りた時間が無駄になる。
 - VRAM: 8192 envs の本番は 24 GB 級（RTX 4090）以上を目安に。足りなければ
   `envs` を下げる（`minibatches` で割り切れる値に）。
-- 下り回線: イメージの取得に効く。準備時間（`setup_minutes`）に反映する。
+- 下り回線: イメージ（数 GB）の取得に効く。設定は 1 Gbps 以上に絞ってある（`min_inet_down_mbps`、
+  テストで固定）。200 Mbps〜1.3 Gbps と表示された台で、取得に 30 分以上かかったり終わらなかったりした
+  （2026-11-17）。1 Gbps 以上の台は、作ってから約3分で起動した。表示の速さは保証ではないので、
+  並べて借りて起動の早い台を使う（§6.1）。
 
 ## 3. 時間とコストの見積り方
 
 一反復の秒数はロボットと envs と GPU でまるで違う（Cadex `training/RECIPE.md` §B:
 RTX 5090 で Go1 の 1260 反復が 333 秒＝約 0.26 秒/反復、別の機体では 8192 envs で
-14.1 秒/反復）。**推測せず、smoke で実測してから本番を見積もる**:
+14.1 秒/反復）。**この機体の実測は、RTX 4090 で約 0.55 秒/反復**（下）。
 
-1. 安いオファーで smoke（10 反復）を回して回収する（下の 4〜7）。
+**10 反復の smoke では見積もれない。** 時間のほとんどが JIT コンパイルで、smoke から出した値
+（4.1 秒/反復）は実際の約7倍だった。見積りには、本番の最初の数十反復の `progress.json` を使う:
+
+1. 本番を起動し、数分後に `status` で反復と経過を見る（または `pull` で `progress.json` を持ち帰る）。
 2. 実測から本番を見積もる:
 
    ```bash
    .venv/bin/python -m vastai estimate --config configs/train_full.json \
-       --from-progress artifacts/runs/vastai/<smoke の run_id>/progress.json --dph 0.45
+       --from-progress artifacts/runs/vastai/<run_id>/progress.json --dph 0.45
    ```
 
-   `progress.json` の `wall_time_s / 反復数` を秒/反復とする。今の smoke は本番と同じ envs
-   なので拡大しない（envs が違う設定で測った場合は比例で拡大し、上限の目安になる）。
-   最初の反復は JIT コンパイルを含むので、反復の少ない smoke では多めに出る。
+   `progress.json` の `wall_time_s / 反復数` を秒/反復とする（envs が違う設定で測った場合は比例で
+   拡大し、上限の目安になる）。最初の反復は JIT コンパイルを含むので、反復が少ないうちは多めに出る。
 3. 手で数を入れるなら `--seconds-per-iteration 0.5 --dph 0.45`。
-4. 納得したら `configs/train_full.json` の `estimate.seconds_per_iteration` を実測値に直す。
+4. 実測が変わったら `configs/train_*.json` の `estimate.seconds_per_iteration` を直す。
 
    実測（2026-11-17、RTX 4090 1台、8192 envs、学習用カットモデル、128-64）:
    - smoke（10 反復）: 1回目 183 秒、コンパイルのキャッシュが効いた2回目 40.8 秒。
@@ -168,6 +174,20 @@ RTX 5090 で Go1 の 1260 反復が 333 秒＝約 0.26 秒/反復、別の機体
 
 作成要求がタイムアウトしたら、再送する前にコンソールで作られていないか確かめる
 （応答が無くても作られていることがある）。
+
+**オファーの id は数分で作り直される。** 表を見てから `--offer` で借りるまでに無効になり、
+HTTP 400（`no_such_ask`）が返ることが多かった。並べて借りるときや、無効が続くときは `--count` を使う。
+検索の直後に、設定の条件に合う安い順に N 台を借り、無効なものは飛ばす（1 マシン 1 台まで）。
+
+```bash
+# 借りるはずのオファーを見る（dry-run）
+.venv/bin/python -m vastai create --config configs/train_full.json --count 5
+# 借りる。GPU が壊れていたマシンなどは --exclude-machine で外す（instances の machine_id）
+.venv/bin/python -m vastai create --config configs/train_full.json --count 5 --yes --exclude-machine 47598
+```
+
+借りた台が、`check` で GPU を使えないこともあった（`cuInit` が `CUDA_ERROR_UNKNOWN`。1回目の学習の
+あとに壊れた）。同じマシンを借り直さないよう、`--exclude-machine` で外す。
 
 作ったインスタンスには label `cadex-q8-<種類>-<日時>` が付く（dry-run でも送る label が見える）。
 コンソールでもこの label で、このプロジェクトのものと見分けられる。
@@ -231,6 +251,33 @@ VAST_SSH_HOST=<[このプロジェクト] の行のホスト> VAST_SSH_PORT=<ポ
 起動時に `--out <run_dir>/<policy_name>.cxpolicy` と `--progress <run_dir>/progress.json`
 を付け、`JAX_PLATFORMS` と `CADEX_JAX_CACHE` を明示的に渡す（vast.ai の SSH では
 イメージの `ENV` が引き継がれないことがあるため）。
+
+### 6.1 複数の台で並べる（sweep）
+
+設定 × 学習の乱数の回を、借りた複数の台で回す。各台は、起動を待ち、GPU を確かめ、共有の
+待ち行列から1回ずつ取って 起動 → 監視 → 回収 する。
+
+```bash
+# 計画だけを見る（何も送らない）
+.venv/bin/python -m vastai sweep --config configs/train_full.json --config configs/train_full_leg120.json \
+    --seeds 0-4 --instance 61059774 --instance 61059779 --dry-run
+# 回す。退いた台は破棄する
+.venv/bin/python -m vastai sweep --config configs/train_full.json --config configs/train_full_leg120.json \
+    --seeds 0-4 --instance 61059774 --instance 61059779 --destroy-when-done
+```
+
+- run_id は `<設定の name>-s<乱数>`（`full-s0`、`full-leg120-s3` など）。乱数は `--seed` で渡る。
+- label が `cadex-q8-` で始まらない台は、渡されても確認も起動も破棄もしない。
+- `--boot-timeout`（既定 20 分）までに起動しない台、`check` で GPU が使えない台は退く。
+- 学習に失敗した回は列に戻し（`--max-attempts`、既定 2）、その台は退く。
+- 列が空で、他の台で走っている回も無くなったら退く。`--destroy-when-done` なら退いた台を破棄する。
+  付けなければ台は残る（課金が続く）。
+- 終わったら、完了・失敗・未着手の回と、各台が退いた理由を出す。失敗か未着手があれば終了コード 1。
+- 回収した結果は `artifacts/runs/vastai/<run_id>/`。残すときは `q8.training.archive_run` で
+  `artifacts/training/<run_id>/` に写す（接続先と pid は落とす）。
+
+2026-11-17 の二機体 × 乱数5回（[experiment-results.md](experiment-results.md) §5）は、この手順を
+手で行った（このコマンドはその後に作った）。1回約 550 秒で、最大5台に分けて約1時間で終わった。
 
 ## 7. 監視
 
@@ -327,7 +374,8 @@ shasum -a 256 artifacts/runs/vastai/<run_id>/walk.cxpolicy
 4. vast.ai コンソールの Billing でも課金が止まったことを確かめる。
 
 停止中もストレージ料金がかかる可能性があるので、**学習が終わって回収したら Stop ではなく
-destroy を推奨する**。この道具に自動停止（時間上限で落とす仕組み）は無い。放置すれば課金は続く。
+destroy を推奨する**。`sweep --destroy-when-done` は退いた台を破棄するが、それ以外に
+自動停止（時間上限で落とす仕組み）は無い。放置すれば課金は続く。
 
 ## 11. GPU / CPU の切り替え
 
@@ -358,7 +406,7 @@ destroy を推奨する**。この道具に自動停止（時間上限で落と�
   "resume": {"critic_warmup": 2, "actor_ramp": 0},
   "offer": { "gpu_name": ["RTX 4090", "RTX 5090"], "max_dph": 0.6, ... },
   "instance": {"image": "ghcr.io/ayutaz/cadex-train:sha-e7f4d9d", "disk_gb": 30, "label": "q8-smoke"},
-  "estimate": {"seconds_per_iteration": 3.0, "setup_minutes": 15, "margin": 1.3},
+  "estimate": {"seconds_per_iteration": 0.6, "setup_minutes": 15, "margin": 1.3},
   "remote": {"work_dir": "/workspace/runs", "trainer_root": "/opt/cadex", "python": "/opt/venv/bin/python"}
 }
 ```
@@ -378,18 +426,13 @@ destroy を推奨する**。この道具に自動停止（時間上限で落と�
 - **mujoco の版はタスクの `mujoco_version`（3.10.0）と一致させる。** Dockerfile が
   ピン留めを確かめる。
 - run_id は使い捨て。同じ run_id で起動し直さない。
-- `artifacts/runs/vastai/` は `.gitignore` 済み（`artifacts/runs/`）。残したい
-  ポリシーは Cadex の手順（`put_asset` / `assembly.policy` に sha256 を書く）で取り込む。
-- vast.ai の REST API は公式ドキュメントの調査に合わせてある（検索 `POST /api/v0/bundles`、
-  作成 `PUT /api/v0/asks/{id}`、一覧 `GET /api/v1/instances`、破棄
-  `DELETE /api/v0/instances/{id}`。認証は `Authorization: Bearer`）。ただし
-  **実アカウントでは一度も試していない**。次の点は未確認で、`vastai/offers.py` に
-  `UNCONFIRMED` と注記してある:
-  - 作成が `PUT /asks/{id}` か `POST /asks/{id}/` か。各パスの末尾スラッシュの要否。
-  - 検索の `type` が `"on-demand"` か `"ondemand"` か（設定の `offer.type` で変えられる）。
-  - `gpu_name` を空白区切り（`"RTX 4090"`）で送ってよいか。
-  - `runtype` の綴り（既定 `"ssh_direc ssh_proxy"`。設定の `instance.runtype` で変えられる）。
-  - 直結の SSH ポートが `ports["22/tcp"][0].HostPort` に入るか（`instances` は
-    プロキシと直結の両方を表示する）。
-  - 停止中のストレージ課金の有無。
-  最初は必ず dry-run と `instances` の表示で中身を確かめる。
+- `artifacts/runs/vastai/` は `.gitignore` 済み（`artifacts/runs/`）。残したい回は
+  `q8.training.archive_run` で `artifacts/training/<run_id>/` に写す（受領書・ログ・方策・起動の記録。
+  接続先と pid は落とす）。Cadex のプロジェクトに取り込むなら、Cadex の手順
+  （`put_asset` / `assembly.policy` に sha256 を書く）で。
+- vast.ai の REST API（検索 `POST /api/v0/bundles`、作成 `PUT /api/v0/asks/{id}`、一覧
+  `GET /api/v1/instances`、破棄 `DELETE /api/v0/instances/{id}`。認証は `Authorization: Bearer`）は、
+  2026-11-17 に実アカウントで使って確かめた。検索の `type: "on-demand"`、`gpu_name` の空白区切り、
+  `runtype: "ssh_direc ssh_proxy"`（プロキシと直結の両方が使える）、直結の SSH ポート
+  （`ports["22/tcp"][0].HostPort`）も確認済み。未確認なのは、停止中のストレージ課金の有無。
+- 起動直後の台は、数十秒ほど一覧（`instances`）に出ないことがある。

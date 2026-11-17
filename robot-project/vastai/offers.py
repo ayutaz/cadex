@@ -7,16 +7,15 @@
 API キーはリクエストの ``Authorization: Bearer`` 見出しにだけ載せ、
 表示もファイル保存もしない。
 
-API の仕様（2026-11-17 時点の公式ドキュメントの調査による。未確認の点は UNCONFIRMED）:
+API の仕様（2026-11-17 に実アカウントで使って確かめた。未確認の点は UNCONFIRMED）:
 
 * 検索  POST   /api/v0/bundles          本体はフラットな JSON、応答は ``offers``
 * 作成  PUT    /api/v0/asks/{offer_id}  応答 ``{"success": true, "new_contract": id}``
-  （UNCONFIRMED: ``POST /asks/{id}/`` と書かれた資料もある）
+  （確認済み。無効になったオファーには HTTP 400 ``no_such_ask`` が返る）
 * 一覧  GET    /api/v1/instances        応答は ``instances``（一覧だけ v1）
 * 破棄  DELETE /api/v0/instances/{id}
 * 停止  PUT    /api/v0/instances/{id}  ``{"state": "stopped"}``（この道具は使わない）
-* UNCONFIRMED: 末尾スラッシュの要否（vast の CLI は ``/bundles/`` のように付ける）。
-  失敗したら HTTP の状態コードを見て API_V0 / API_V1 と各パスを直す。
+* 末尾スラッシュ無しの上のパスで、検索・作成・一覧・破棄が通ることを確かめた。
 """
 
 from __future__ import annotations
@@ -90,13 +89,13 @@ def build_query(offer: Mapping[str, Any]) -> dict[str, Any]:
     query: dict[str, Any] = {
         "rentable": {"eq": True},
         "rented": {"eq": False},
-        # UNCONFIRMED: 値が "on-demand" か "ondemand" か（設定の offer.type で変えられる）
+        # "on-demand" で通ることを確かめた（設定の offer.type で変えられる）
         "type": offer.get("type", "on-demand"),
         "order": [["dph_total", "asc"]],
         "limit": int(offer.get("limit", 10)),
     }
     # gpu_name は応答と同じ空白区切り（"RTX 4090"）で書く。CLI は "RTX_4090" の "_" を
-    # 空白に直してから送る。UNCONFIRMED: API が "_" 区切りも受け付けるか。
+    # 空白に直してから送る（"RTX 4090" で通ることを確かめた。"_" 区切りは試していない）。
     names = offer.get("gpu_name")
     if isinstance(names, (list, tuple)):
         query["gpu_name"] = {"in": list(names)}
@@ -234,8 +233,8 @@ def instance_request(instance: Mapping[str, Any]) -> dict[str, Any]:
         "image": instance.get("image", ""),
         "disk": float(instance.get("disk_gb", 40)),
         # SSH で入る（直結 + プロキシ）。この方式ではイメージの ENTRYPOINT は使われない。
-        # UNCONFIRMED: 値の綴り。vast の CLI（--ssh --direct）は "ssh_direc ssh_proxy" を送るが、
-        # ドキュメントには "ssh_proxy" / "ssh_direct" とある。設定の instance.runtype で変えられる。
+        # vast の CLI（--ssh --direct）と同じ "ssh_direc ssh_proxy"。これでプロキシと直結の両方の
+        # SSH が使えることを確かめた。設定の instance.runtype で変えられる。
         "runtype": instance.get("runtype", "ssh_direc ssh_proxy"),
         "label": instance.get("label", ""),
     }
@@ -305,8 +304,8 @@ def destroy_instance(instance_id: int, *, api_key: str, yes: bool,
 
 
 def _direct_ssh(instance: Mapping[str, Any]) -> tuple[str, int] | None:
-    # UNCONFIRMED: 直結の SSH ポートが ports["22/tcp"][0]["HostPort"] に入ること、
-    # それが ssh_port（プロキシ側）と別の値であること。両方を表示して利用者に選ばせる。
+    # 直結の SSH ポートは ports["22/tcp"][0]["HostPort"] に入り、ssh_port（プロキシ側）と別の値
+    # だった（確認済み）。両方を表示して利用者に選ばせる。
     mapped = (instance.get("ports") or {}).get("22/tcp") or []
     ip = instance.get("public_ipaddr")
     if not mapped or not ip:

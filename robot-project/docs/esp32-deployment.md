@@ -18,8 +18,9 @@
   （float32 では 688 KiB あり、SRAM に載らない）。合成ポリシーでの誤差は、平均 0.3〜0.4°、
   最大 1.6〜3.7°（§5）。
 - トレーナーには `--hidden` があり、小さい actor（実機に載るネットワーク）を指定できる。
-  critic は `--value-hidden` で別に大きくできる。ただし、**小さい actor でこの四足が
-  歩けるかは未検証**（タスクバンドルがまだ無く、学習を回していない）。
+  critic は `--value-hidden` で別に大きくできる。小さい actor（26-128-64-8）でこの四足は、
+  シミュレーションでは歩けた（GPU で学習、二機体 × 学習シード5回の合格率は 0.92 と 1.00。
+  [experiment-results.md](experiment-results.md) §5、本書 §12）。実機では未確認。
 
 ### 実物での確認（2026-11-17、`artifacts/runs/cpu-a/walk.000050.cxpolicy`）
 
@@ -109,8 +110,9 @@ b"CXPOLICY1\n" | u64 LE のヘッダ長 | 正準 JSON（キー整列・空白な
   （`cadex_train.py` 1280〜1350 行付近で確認）。
 - warm start（`--init-from`）は層の形が一致していることを要求する。小さい actor は最初から学習するか、
   蒸留で作る。
-- 未検証: 小さい actor で同じ報酬に届くか。学習側で `--hidden 128 64` と `--hidden 64 64` を
-  並べて回して比べること。
+- `--hidden 128 64` は GPU 学習で歩けた（[experiment-results.md](experiment-results.md) §5）。
+  未検証: `--hidden 64 64` でも届くか。`configs/train_full.json` の `hidden` だけを変えた設定を作り、
+  `python -m vastai sweep` で並べて回して比べること。
 
 ## 4. 計算量・メモリ・推論時間（時間は推定）
 

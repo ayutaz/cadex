@@ -28,7 +28,7 @@ robot-project は Cadex 本体を一切変更していません。Cadex へは�
 | 生成と検証 | `scripts/build_robot.py`、`q8/cadex.py`、`q8/clearance.py`、`q8/physics.py`、`q8/manufacturing.py` | Cadex を呼んで生成・干渉計測・出力し、質量・保持トルク・印刷可否・BOM をまとめる |
 | シミュレーション | `simulation/fixed_gait.py`、`q8/gait.py`、`q8/robot.py` | 逆運動学による固定歩容を MuJoCo で再生 |
 | 評価 | `evaluation/evaluate_variant.py`、`q8/evaluation.py`、`q8/compare.py` | 固定歩容と学習済み方策を同じ指標で評価し、機体どうしを比べる |
-| 学習基盤 | `configs/train_*.json`、`vastai/` | 学習設定と、vast.ai の GPU で学習を回す道具（作業中） |
+| 学習基盤 | `configs/train_*.json`、`vastai/` | 学習設定と、vast.ai の GPU で学習を回す道具（複数台で待ち行列を回す `sweep` を含む） |
 | 移植 | `deploy/esp32/` | `.cxpolicy` を量子化して ESP32-S3 用の C コードにする（作業中） |
 | 変換 | `q8/urdf.py`、`scripts/mjcf_to_urdf.py` | MJCF → URDF |
 | 描画 | `q8/render.py`、`q8/visual.py`、`scripts/render_views.py` | 静止画・動画 |
@@ -51,7 +51,7 @@ robot/meshes/<variant>/、robot/mjcf/<variant>/、artifacts/<variant>/design_rep
         │
         ├─ simulation/fixed_gait.py ──────── MuJoCo（CPU）で固定歩容 → artifacts/base/fixed_gait/
         │
-        ├─ training/cadex_train.py ───────── MuJoCo MJX / JAX（CPU、将来は vast.ai の GPU）で PPO
+        ├─ training/cadex_train.py ───────── MuJoCo MJX / JAX（手元の CPU か vast.ai の GPU）で PPO
         │        ▼
         │   .cxpolicy（重み・観測の正規化）→ artifacts/runs/<run>/
         │        │

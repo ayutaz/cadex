@@ -35,8 +35,8 @@ robot-project/
     mjcf_to_urdf.py         MJCF → URDF
   simulation/fixed_gait.py  学習なしの固定モーション（立位・関節確認・トロット・旋回）を MuJoCo で再生
   evaluation/evaluate_variant.py  固定歩容と学習済み方策を同じ成功条件・シード・指標で評価
-  configs/                  BOM の価格表（bom_prices.json）、学習設定（train_smoke.json, train_full.json）
-  vastai/                   vast.ai の GPU で学習を回す道具（作業中）
+  configs/                  BOM の価格表（bom_prices.json）、学習設定（train_smoke.json, train_full.json, train_full_leg120.json）
+  vastai/                   vast.ai の GPU で学習を回す道具（借りる・送る・起動・監視・回収・並列の sweep）
   deploy/esp32/             .cxpolicy を ESP32-S3 用の C コードへ変換する道具とファームウェア（作業中）
   tests/                    pytest
   docs/                     ドキュメント（下記）
@@ -100,6 +100,8 @@ uv run python -m pytest tests -q
 | `evaluation/evaluate_variant.py --variant V [--policy P]` | 固定歩容（MuJoCo 上で開ループ）と学習済み方策（`cadex evaluate`）を同じ10シードで評価 | `artifacts/V/evaluation/` |
 | `scripts/render_views.py MODEL OUT [--collision]` | 静止画を描く | PNG |
 | `scripts/mjcf_to_urdf.py --variant V` | MJCF から URDF を作る | `robot/urdf/V/quadruped8.urdf` |
+| `python -m vastai create --count N` / `sweep` | vast.ai の GPU を検索の直後に N 台借り、設定 × 学習の乱数の回を並べて回す（手順は [docs/training-vastai.md](docs/training-vastai.md)） | `artifacts/runs/vastai/<run>/` |
+| `scripts/compare_seeds.py A=<回> ... B=<回> ...` | 学習の乱数違いの複数回を評価し、二機体を 平均 ± 標準偏差（最小〜最大）で比べる | `artifacts/compare/seeds_A_vs_B.{md,json}` |
 
 Cadex を直接使う場合（例）:
 
