@@ -1,0 +1,124 @@
+<mujoco model="cadex-assembly">
+  <compiler angle="radian" autolimits="false" />
+  <option integrator="implicitfast" timestep="0.002" iterations="2" ls_iterations="3">
+    <flag island="disable" />
+  </option>
+  <size nkey="1" />
+  <worldbody>
+    <geom name="environment/floor" size="0 0 0.1" type="plane" solref="0.004" contype="1" conaffinity="0" />
+    <body name="c_chassis">
+      <inertial pos="-2.33219211e-12 -2.58694318e-12 0.0832535376" quat="1 -3.69391855e-10 4.86750104e-11 3.58503766e-10" mass="0.106729842" diaginertia="4.16865429e-05 0.000128662879 0.000158933436" />
+      <joint name="c_chassis/free" type="free" />
+      <geom name="c_chassis/collision0" size="0.048 0.031 0.012" pos="0 0 0.0832329" type="box" conaffinity="1" solref="0.004" contype="0" condim="1" priority="1" />
+      <body name="c_imu">
+        <inertial pos="0 0.0205 0.0747329" quat="0 0.707107 0 0.707107" mass="0.002" diaginertia="1.16167e-07 7.5e-08 4.41667e-08" />
+      </body>
+      <body name="c_thigh_lf">
+        <inertial pos="0.0214734983 0.0255200212 0.0477440546" quat="0.061222407 0.859509058 0.106040831 0.496237179" mass="0.024928273" diaginertia="2.34079682e-06 7.5538081e-06 8.74076695e-06" />
+        <joint name="hip_lf" pos="0.04 0 0.0798329" axis="0 1 0" limited="true" range="-0.785398 0.349066" armature="2e-05" damping="0.0168564" frictionloss="0.002" />
+        <geom name="c_thigh_lf/collision0" size="0.0065 0.02" pos="0.03 0.03525 0.0625123" quat="0.965926 0 0.258819 0" type="capsule" contype="0" conaffinity="0" solref="0.004" />
+        <body name="c_shin_lf">
+          <inertial pos="0.0241884833 0.0427879978 0.0369840223" quat="0.603351906 0.602692615 0.368736704 -0.369812564" mass="0.003914553" diaginertia="1.26865455e-07 7.94694462e-07 8.94039967e-07" />
+          <joint name="knee_lf" pos="0.02 0 0.0451918" axis="0 1 0" limited="true" range="-1.0472 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002" />
+          <geom name="c_shin_lf/collision0" size="0.004 0.016" pos="0.03 0.04275 0.0255959" quat="0.972297 0 -0.233748 0" type="capsule" contype="0" conaffinity="0" solref="0.004" />
+          <body name="c_foot_lf">
+            <inertial pos="0.04 0.04275 0.006" mass="0.00108573" diaginertia="1.56346e-08 1.56346e-08 1.56346e-08" />
+            <geom name="c_foot_lf/collision0" size="0.006" pos="0.04 0.04275 0.006" contype="0" conaffinity="1" friction="0.9" solref="0.004" />
+            <site name="obs/6/contact" size="0.006 0.006 0.006" type="box" rgba="0 0 0 0" pos="0.04 0.04275 0.006" quat="1 0 0 0" />
+          </body>
+        </body>
+      </body>
+      <body name="c_thigh_rf">
+        <inertial pos="0.0214734983 -0.0255200212 0.0477440546" quat="0.061222407 -0.859509058 0.106040831 -0.496237179" mass="0.024928273" diaginertia="2.34079682e-06 7.5538081e-06 8.74076695e-06" />
+        <joint name="hip_rf" pos="0.04 0 0.0798329" axis="0 1 0" limited="true" range="-0.785398 0.349066" armature="2e-05" damping="0.0168564" frictionloss="0.002" />
+        <geom name="c_thigh_rf/collision0" size="0.0065 0.02" pos="0.03 -0.03525 0.0625123" quat="0.965926 0 0.258819 0" type="capsule" contype="0" conaffinity="0" solref="0.004" />
+        <body name="c_shin_rf">
+          <inertial pos="0.0241884833 -0.0427879978 0.0369840223" quat="0.369812564 -0.368736704 -0.602692615 -0.603351906" mass="0.003914553" diaginertia="1.26865455e-07 7.94694462e-07 8.94039967e-07" />
+          <joint name="knee_rf" pos="0.02 0 0.0451918" axis="0 1 0" limited="true" range="-1.0472 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002" />
+          <geom name="c_shin_rf/collision0" size="0.004 0.016" pos="0.03 -0.04275 0.0255959" quat="0.972297 0 -0.233748 0" type="capsule" contype="0" conaffinity="0" solref="0.004" />
+          <body name="c_foot_rf">
+            <inertial pos="0.04 -0.04275 0.006" mass="0.00108573" diaginertia="1.56346e-08 1.56346e-08 1.56346e-08" />
+            <geom name="c_foot_rf/collision0" size="0.006" pos="0.04 -0.04275 0.006" contype="0" conaffinity="1" friction="0.9" solref="0.004" />
+            <site name="obs/10/contact" size="0.006 0.006 0.006" type="box" rgba="0 0 0 0" pos="0.04 -0.04275 0.006" quat="1 0 0 0" />
+          </body>
+        </body>
+      </body>
+      <body name="c_thigh_lh">
+        <inertial pos="-0.0585265017 0.0255200212 0.0477440546" quat="0.061222407 0.859509058 0.106040831 0.496237179" mass="0.024928273" diaginertia="2.34079682e-06 7.5538081e-06 8.74076695e-06" />
+        <joint name="hip_lh" pos="-0.04 0 0.0798329" axis="0 1 0" limited="true" range="-0.610865 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002" />
+        <geom name="c_thigh_lh/collision0" size="0.0065 0.02" pos="-0.05 0.03525 0.0625123" quat="0.965926 0 0.258819 0" type="capsule" contype="0" conaffinity="0" solref="0.004" />
+        <body name="c_shin_lh">
+          <inertial pos="-0.0558115167 0.0427879978 0.0369840223" quat="0.603351906 0.602692615 0.368736704 -0.369812564" mass="0.003914553" diaginertia="1.26865455e-07 7.94694462e-07 8.94039967e-07" />
+          <joint name="knee_lh" pos="-0.06 0 0.0451918" axis="0 1 0" limited="true" range="-1.0472 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002" />
+          <geom name="c_shin_lh/collision0" size="0.004 0.016" pos="-0.05 0.04275 0.0255959" quat="0.972297 0 -0.233748 0" type="capsule" contype="0" conaffinity="0" solref="0.004" />
+          <body name="c_foot_lh">
+            <inertial pos="-0.04 0.04275 0.006" mass="0.00108573" diaginertia="1.56346e-08 1.56346e-08 1.56346e-08" />
+            <geom name="c_foot_lh/collision0" size="0.006" pos="-0.04 0.04275 0.006" contype="0" conaffinity="1" friction="0.9" solref="0.004" />
+            <site name="obs/14/contact" size="0.006 0.006 0.006" type="box" rgba="0 0 0 0" pos="-0.04 0.04275 0.006" quat="1 0 0 0" />
+          </body>
+        </body>
+      </body>
+      <body name="c_thigh_rh">
+        <inertial pos="-0.0585265017 -0.0255200212 0.0477440546" quat="0.061222407 -0.859509058 0.106040831 -0.496237179" mass="0.024928273" diaginertia="2.34079682e-06 7.5538081e-06 8.74076695e-06" />
+        <joint name="hip_rh" pos="-0.04 0 0.0798329" axis="0 1 0" limited="true" range="-0.610865 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002" />
+        <geom name="c_thigh_rh/collision0" size="0.0065 0.02" pos="-0.05 -0.03525 0.0625123" quat="0.965926 0 0.258819 0" type="capsule" contype="0" conaffinity="0" solref="0.004" />
+        <body name="c_shin_rh">
+          <inertial pos="-0.0558115167 -0.0427879978 0.0369840223" quat="0.369812564 -0.368736704 -0.602692615 -0.603351906" mass="0.003914553" diaginertia="1.26865455e-07 7.94694462e-07 8.94039967e-07" />
+          <joint name="knee_rh" pos="-0.06 0 0.0451918" axis="0 1 0" limited="true" range="-1.0472 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002" />
+          <geom name="c_shin_rh/collision0" size="0.004 0.016" pos="-0.05 -0.04275 0.0255959" quat="0.972297 0 -0.233748 0" type="capsule" contype="0" conaffinity="0" solref="0.004" />
+          <body name="c_foot_rh">
+            <inertial pos="-0.04 -0.04275 0.006" mass="0.00108573" diaginertia="1.56346e-08 1.56346e-08 1.56346e-08" />
+            <geom name="c_foot_rh/collision0" size="0.006" pos="-0.04 -0.04275 0.006" contype="0" conaffinity="1" friction="0.9" solref="0.004" />
+            <site name="obs/18/contact" size="0.006 0.006 0.006" type="box" rgba="0 0 0 0" pos="-0.04 -0.04275 0.006" quat="1 0 0 0" />
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <general name="hip_lf/position" joint="hip_lf" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138" />
+    <general name="knee_lf/position" joint="knee_lf" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138" />
+    <general name="hip_rf/position" joint="hip_rf" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138" />
+    <general name="knee_rf/position" joint="knee_rf" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138" />
+    <general name="hip_lh/position" joint="hip_lh" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138" />
+    <general name="knee_lh/position" joint="knee_lh" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138" />
+    <general name="hip_rh/position" joint="hip_rh" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138" />
+    <general name="knee_rh/position" joint="knee_rh" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138" />
+  </actuator>
+  <sensor>
+    <framequat objtype="xbody" objname="c_imu" name="obs/0" />
+    <frameangvel objtype="xbody" objname="c_imu" name="obs/1" />
+    <framelinvel objtype="xbody" objname="c_chassis" name="obs/2" />
+    <framepos objtype="xbody" objname="c_chassis" name="obs/3" />
+    <jointpos joint="hip_lf" name="obs/4" />
+    <jointpos joint="knee_lf" name="obs/5" />
+    <touch site="obs/6/contact" name="obs/6" />
+    <subtreecom body="c_foot_lf" name="obs/7" />
+    <jointpos joint="hip_rf" name="obs/8" />
+    <jointpos joint="knee_rf" name="obs/9" />
+    <touch site="obs/10/contact" name="obs/10" />
+    <subtreecom body="c_foot_rf" name="obs/11" />
+    <jointpos joint="hip_lh" name="obs/12" />
+    <jointpos joint="knee_lh" name="obs/13" />
+    <touch site="obs/14/contact" name="obs/14" />
+    <subtreecom body="c_foot_lh" name="obs/15" />
+    <jointpos joint="hip_rh" name="obs/16" />
+    <jointpos joint="knee_rh" name="obs/17" />
+    <touch site="obs/18/contact" name="obs/18" />
+    <subtreecom body="c_foot_rh" name="obs/19" />
+    <actuatorfrc actuator="hip_lf/position" name="obs/21" />
+    <actuatorfrc actuator="knee_lf/position" name="obs/23" />
+    <actuatorfrc actuator="hip_rf/position" name="obs/25" />
+    <actuatorfrc actuator="knee_rf/position" name="obs/27" />
+    <actuatorfrc actuator="hip_lh/position" name="obs/29" />
+    <actuatorfrc actuator="knee_lh/position" name="obs/31" />
+    <actuatorfrc actuator="hip_rh/position" name="obs/33" />
+    <actuatorfrc actuator="knee_rh/position" name="obs/35" />
+  </sensor>
+  <keyframe>
+    <key name="solved" />
+  </keyframe>
+  <custom>
+    <text name="cadex:tier" data="training" />
+  </custom>
+</mujoco>

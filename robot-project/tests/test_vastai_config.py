@@ -176,30 +176,39 @@ def test_smoke_は本番と同じ大きさの一反復で時間を測る():
     assert smoke["offer"]["gpu_name"] == full["offer"]["gpu_name"]  # 同じ GPU で測る
 
 
-def test_脚20増しの本番設定は基準機体と機体だけが違う():
+#: 基準機体（train_full.json）と比べる派生機体の本番設定。機体（bundle）以外は同じにする。
+VARIANT_CONFIGS = {"leg120": "train_full_leg120.json", "mini": "train_full_mini.json"}
+
+
+@pytest.mark.parametrize("variant", sorted(VARIANT_CONFIGS))
+def test_派生機体の本番設定は基準機体と機体だけが違う(variant):
     base = json.loads((ROOT / "configs" / "train_full.json").read_text(encoding="utf-8"))
-    leg = json.loads((ROOT / "configs" / "train_full_leg120.json").read_text(encoding="utf-8"))
-    assert leg["bundle"] == "robot/mjcf/leg120/cut/walk-task.json"
+    other = json.loads((ROOT / "configs" / VARIANT_CONFIGS[variant]).read_text(encoding="utf-8"))
+    assert other["bundle"] == f"robot/mjcf/{variant}/cut/walk-task.json"
+    assert (ROOT / other["bundle"]).exists()
     assert base["bundle"] == "robot/mjcf/base/cut/walk-task.json"
+    assert other["name"] == f"full-{variant}"
     ignore = {"_comment", "name", "bundle", "trainer", "instance"}
-    assert {k: v for k, v in leg.items() if k not in ignore} == \
+    assert {k: v for k, v in other.items() if k not in ignore} == \
         {k: v for k, v in base.items() if k not in ignore}
-    assert {k: v for k, v in leg["trainer"].items() if k != "label"} == \
+    assert {k: v for k, v in other["trainer"].items() if k != "label"} == \
         {k: v for k, v in base["trainer"].items() if k != "label"}
-    assert leg["instance"]["image"] == base["instance"]["image"]
-    assert leg["name"] != base["name"]
+    assert {k: v for k, v in other["instance"].items() if k != "label"} == \
+        {k: v for k, v in base["instance"].items() if k != "label"}
+    assert other["instance"]["label"] == f"q8-full-{variant}"
 
 
-def test_比べる二機体のタスクは報酬と成功条件が同じ():
+@pytest.mark.parametrize("variant", sorted(VARIANT_CONFIGS))
+def test_比べる機体のタスクは報酬と成功条件が同じ(variant):
     # 形状の差だけを比べるため、機体のモデル以外（報酬・成功条件・指令）は同じ。
     # success.scale は機体の寸法と質量から決まる値（腰の高さ・重心の高さ・質量）なので除く。
-    def task(variant):
-        data = json.loads((ROOT / "robot" / "mjcf" / variant / "cut" / "walk-task.json")
+    def task(name):
+        data = json.loads((ROOT / "robot" / "mjcf" / name / "cut" / "walk-task.json")
                           .read_text(encoding="utf-8"))
         out = {k: data[k] for k in ("reward", "success", "commands", "episode", "termination")}
         out["success"] = {k: v for k, v in out["success"].items() if k != "scale"}
         return out
-    assert task("base") == task("leg120")
+    assert task("base") == task(variant)
 
 
 @pytest.mark.parametrize("path", CONFIGS, ids=lambda p: p.stem)
