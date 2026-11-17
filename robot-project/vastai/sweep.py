@@ -4,7 +4,8 @@
 
 1. 起動を待つ。label が ``cadex-q8-`` で始まらない台（他の作業のもの）には、確認も起動も破棄もしない。
    作った直後の台は一覧に出ないことがあるので、少し待つ。``boot_timeout_s`` までに起動しなければ退く。
-2. GPU を確かめる（``check`` に ``backend gpu`` が出る）。出なければ退く。
+2. GPU を確かめる（``check`` に ``backend gpu`` が出る）。出なければ退く。running になった直後は
+   SSH が拒まれることがあるので、確認の失敗は ``SSH_GRACE_S`` まで間をおいて繰り返す。
 3. 共有の待ち行列から1回ずつ取り、起動 → 監視 → 回収する。学習の乱数は ``--seed`` で渡す。
    学習に失敗した回は列に戻し（``max_attempts`` まで）、その台は退く（GPU が壊れていることがあった）。
 4. 列が空で、他の台で走っている回も無くなったら退く。
@@ -25,6 +26,8 @@ from . import offers, remote
 
 #: 作った直後の台が一覧に出るまで待つ秒数
 LIST_GRACE_S = 300.0
+#: running になってから SSH が受け付けるまで待つ秒数（直後は Connection refused が返ることがある）
+SSH_GRACE_S = 300.0
 
 
 @dataclass
@@ -200,11 +203,17 @@ class Sweep:
         with self.lock:
             sample = self.queue[0].config if self.queue else None
         where = {**cfg.DEFAULT_REMOTE, **((self.load(sample).get("remote") or {}) if sample else {})}
-        try:
-            report = session.check(where["trainer_root"], where["python"])
-        except remote.RemoteError as error:
-            self._retire(iid, f"確認に失敗: {error}")
-            return
+        start = self.clock()
+        while True:
+            try:
+                report = session.check(where["trainer_root"], where["python"])
+                break
+            except remote.RemoteError as error:
+                if self.clock() - start > SSH_GRACE_S or self._finished():
+                    self._retire(iid, f"確認に失敗: {error}")
+                    return
+                self.log(f"[{iid}] 確認に失敗、{self.poll_s:.0f} 秒後にもう一度: {error}")
+                self.sleep(self.poll_s)
         if "backend gpu" not in report:
             self._retire(iid, "GPU が使えない（backend gpu が出ない）")
             return

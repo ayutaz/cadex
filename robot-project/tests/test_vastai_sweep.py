@@ -46,9 +46,10 @@ class FakeSession:
     log: list = []
     lock = threading.Lock()
 
-    def __init__(self, target, *, gpu=True, fail_runs=(), vanish_runs=()):
+    def __init__(self, target, *, gpu=True, fail_runs=(), vanish_runs=(), refuse_checks=0):
         self.target = target
         self.gpu = gpu
+        self.refuse_checks = refuse_checks
         self.fail_runs = set(fail_runs)
         self.vanish_runs = set(vanish_runs)
         self.reads = {}
@@ -59,6 +60,10 @@ class FakeSession:
 
     def check(self, trainer_root, python):
         self._note("check")
+        if self.refuse_checks:
+            self.refuse_checks -= 1
+            raise sweep.remote.RemoteError("インスタンスの確認に失敗しました（終了コード 255）: "
+                                           "ssh: connect to host h1 port 40001: Connection refused")
         return "backend gpu\n" if self.gpu else "backend cpu\n"
 
     def launch(self, config, *, run_id, extra_argv, dry_run=False):
@@ -199,3 +204,22 @@ def test_without_destroy_nothing_is_destroyed():
     result = _sweep(items, api, factory, destroy=False).run([1, 2])
     assert api.destroyed == []
     assert sorted(result["done"]) == ["full-s0", "full-s1"]
+
+
+def test_ssh_refused_just_after_boot_is_retried_instead_of_destroying_the_instance():
+    # running になった直後は sshd がまだ受け付けないことがある。1回の拒否で破棄していた（2026-11-17）
+    items = sweep.plan([FULL], [0])
+    api = FakeApi([_row(1)])
+    result = _sweep(items, api, lambda t: FakeSession(t, refuse_checks=3), destroy=True).run([1])
+    assert result["done"] == ["full-s0"]
+    assert [e[0] for e in _events("launch")] == ["h1"]
+
+
+def test_an_instance_that_keeps_refusing_ssh_is_retired_after_the_grace():
+    items = sweep.plan([FULL], [0])
+    api = FakeApi([_row(1, host="dead"), _row(2)])
+    factory = lambda t: FakeSession(t, refuse_checks=10_000 if t.host == "dead" else 0)  # noqa: E731
+    result = _sweep(items, api, factory, destroy=True).run([1, 2])
+    assert 1 in api.destroyed and "確認に失敗" in result["instances"][1]
+    assert result["done"] == ["full-s0"]
+    assert len([e for e in _events("check") if e[0] == "dead"]) < 100   # 猶予のあとは諦める
