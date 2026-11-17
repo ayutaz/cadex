@@ -106,3 +106,18 @@ def test_visual_meshes_attach_to_matching_bodies(tmp_path):
 
     m = mujoco.MjModel.from_xml_path(str(out))
     assert m.nmesh == 2
+
+
+def test_bom_has_a_battery_line_only_when_the_design_carries_one(tmp_path):
+    pr = {"parts": {}}
+    prices = tmp_path / "prices.json"
+    prices.write_text(json.dumps({"items": {
+        "standin/battery": {"name": "電池", "unit_price": 0, "status": "未定"},
+        "filament/pla": {"name": "PLA", "unit_price_per_g": 2.5, "status": "推定"},
+        "filament/tpu": {"name": "TPU", "unit_price_per_g": 4.0, "status": "推定"}}}))
+    bat = {"component": "c_bat", "output": "battery", "family": "", "sku": "", "appearance": "mechanism",
+           "volume_mm3": 8320.0}
+    with_bat = {l["item"]: l for l in bom([bat], pr, prices, pla_density=800.0)["purchased"]}
+    assert with_bat["standin/battery"]["qty"] == 1
+    without = {l["item"] for l in bom([], pr, prices, pla_density=800.0)["purchased"]}
+    assert "standin/battery" not in without          # 電池なし（battery_mass_g=0）の機体は行を出さない

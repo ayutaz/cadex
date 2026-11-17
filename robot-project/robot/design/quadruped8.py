@@ -25,7 +25,7 @@ p = params(
     pla_density=num(800.0, unit="kg/m3", min=300.0, max=1250.0, step=10.0,
                     label="印刷部品の実効密度（推定: PLA 1240 kg/m3、充填率約30%、外周4本）"),
     tpu_density=num(1200.0, unit="kg/m3", min=600.0, max=1250.0, step=10.0, label="足先の密度（TPU 95A、充填率100%）"),
-    battery_mass_g=num(30.0, unit="g", min=0.0, max=120.0, step=1.0, label="電池の質量（仮置き）"),
+    battery_mass_g=num(30.0, unit="g", min=0.0, max=120.0, step=1.0, label="電池の質量（仮置き。0なら電池を載せない）"),
     # 関節の可動域。clearance スイープ（5度刻み）で測った最初の接触から2ステップ以上手前に置く。
     # 前脚の股 +30 度でシャーシと上腿が接触（+25 度まで干渉なし）→ 上限 +20。
     # 後脚の股 -45 度で前脚の上腿と後脚の足先が接触（-40 度まで干渉なし）→ 下限 -35。
@@ -137,9 +137,13 @@ IMU_L, IMU_W, IMU_H = 21.0, 16.0, 3.0
 imu_y0 = W2 - w - IMU_W - 0.5
 imu = part.box(IMU_L, IMU_W, IMU_H, origin=[-IMU_L / 2.0, imu_y0, z_bot + w], label="imu_standin")
 # 電池の代用品（40 x 26 x 8 mm、質量はパラメータ）。空洞の床の中央。
+# battery_mass_g が 0 なら電池を載せない: 部品・コンポーネント・溶接・質量・ランダム化をどれも作らない
+# （胴体を小さくした機体では、この箱がシャーシ・カバー・IMU とぶつかる）。
+HAS_BAT = p.battery_mass_g > 0.0
 BAT = (40.0, 26.0, 8.0)
-battery = part.box(BAT[0], BAT[1], BAT[2], origin=[-BAT[0] / 2.0, -BAT[1] / 2.0, z_bot + w], label="battery_standin")
-bat_density = max(p.battery_mass_g, 0.1) * 1.0e6 / (BAT[0] * BAT[1] * BAT[2])
+if HAS_BAT:
+    battery = part.box(BAT[0], BAT[1], BAT[2], origin=[-BAT[0] / 2.0, -BAT[1] / 2.0, z_bot + w], label="battery_standin")
+    bat_density = max(p.battery_mass_g, 0.1) * 1.0e6 / (BAT[0] * BAT[1] * BAT[2])
 
 
 def rot_y(shape, deg, pivot):
@@ -152,7 +156,9 @@ def y_slab(y_in, thick, sy):
     return lo, thick
 
 
-result = {"chassis": chassis, "cover": cover, "esp32": esp32, "imu": imu, "battery": battery}
+result = {"chassis": chassis, "cover": cover, "esp32": esp32, "imu": imu}
+if HAS_BAT:
+    result["battery"] = battery
 legs = {}
 for name, sx, sy in (("lf", 1, 1), ("rf", 1, -1), ("lh", -1, 1), ("rh", -1, -1)):
     hip = [sx * p.hip_x, 0.0, ZH]
@@ -242,11 +248,15 @@ c_chassis = assembly.component(chassis, appearance="shell", role="frame", label=
 c_cover = assembly.component(cover, appearance="shell", role="frame", label="cover")
 c_esp = assembly.component(esp32, appearance="mechanism", role="hardware", label="esp32s3")
 c_imu = assembly.component(imu, appearance="accent", role="hardware", label="imu")
-c_bat = assembly.component(battery, appearance="mechanism", role="hardware", label="battery")
-result.update({"c_chassis": c_chassis, "c_cover": c_cover, "c_esp": c_esp, "c_imu": c_imu, "c_bat": c_bat})
-comps += [c_chassis, c_cover, c_esp, c_imu, c_bat]
-joints += [weld(c_chassis, c_cover, "cover"), weld(c_cover, c_esp, "esp"),
-           weld(c_chassis, c_imu, "imu"), weld(c_chassis, c_bat, "battery")]
+c_bat = assembly.component(battery, appearance="mechanism", role="hardware", label="battery") if HAS_BAT else None
+result.update({"c_chassis": c_chassis, "c_cover": c_cover, "c_esp": c_esp, "c_imu": c_imu})
+comps += [c_chassis, c_cover, c_esp, c_imu]
+if HAS_BAT:
+    result["c_bat"] = c_bat
+    comps.append(c_bat)
+joints += [weld(c_chassis, c_cover, "cover"), weld(c_cover, c_esp, "esp"), weld(c_chassis, c_imu, "imu")]
+if HAS_BAT:
+    joints.append(weld(c_chassis, c_bat, "battery"))
 contacts = []
 bolt_comps = []
 for i, b in enumerate(bolts):
@@ -266,8 +276,10 @@ bodies += [
     assembly.body(c_cover, density_kg_m3=p.pla_density),
     assembly.body(c_esp, density_kg_m3=9.0e-3 / (ESP_L * ESP_W * ESP_H * 1e-9)),   # 約9 g（推定）
     assembly.body(c_imu, density_kg_m3=2.0e-3 / (IMU_L * IMU_W * IMU_H * 1e-9)),   # 約2 g（推定）
-    assembly.body(c_bat, density_kg_m3=bat_density),
-] + [assembly.body(cb, density_kg_m3=dens) for cb, dens in bolt_comps]
+]
+if HAS_BAT:
+    bodies.append(assembly.body(c_bat, density_kg_m3=bat_density))
+bodies += [assembly.body(cb, density_kg_m3=dens) for cb, dens in bolt_comps]
 
 drives = []
 drive_by = {}
@@ -424,8 +436,9 @@ terminations = [
 randomisation = [
     assembly.randomise(c_chassis, "mass", scale=[0.85, 1.15], label="rand_chassis_mass"),
     assembly.randomise(c_cover, "mass", scale=[0.85, 1.15], label="rand_cover_mass"),
-    assembly.randomise(c_bat, "mass", scale=[0.6, 1.4], label="rand_battery_mass"),   # 重心位置も動く
 ]
+if HAS_BAT:
+    randomisation.append(assembly.randomise(c_bat, "mass", scale=[0.6, 1.4], label="rand_battery_mass"))  # 重心位置も動く
 for name in ("lf", "rf", "lh", "rh"):
     for j in (hip_joints[name], knee_joints[name]):
         randomisation.append(assembly.randomise(j, "damping", scale=[0.7, 1.3]))      # サーボ速度のばらつき
