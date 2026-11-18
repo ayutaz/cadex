@@ -58,6 +58,25 @@ vast.ai の Web コンソールや、公式の `vastai` コマンドで直接操
      オファーや設定を変えたら、もう一度示す。
 4. `create` は先に `--yes` なしで送り（dry-run）、送る中身を確かめる。
    タイムアウトしたら再送せず、`instances` で作られていないかを確かめる。
+5. **学習用バンドルが、今の機体の形から作ったものかを確かめる。** 形は
+   `robot/design/` → 実ビルド → `robot/mjcf/<機体>/cut/` → `q8/dr_bundle.py` → `artifacts/<案>/cut/`
+   の順に流れる。形を直したのにバンドルを作り直さないと、古い形で全部の回を学習してしまう
+   （2026-11-18 に、作り直しが2回要った）。「すぐ回して」と言われても、借りる前に毎回見る。
+   ```bash
+   # 上流ほど古く、下流ほど新しいはず。下流の時刻が上流より前なら、そこから作り直す
+   git log -1 --format='%ci %h' -- robot/design/              # 形の元
+   git log -1 --format='%ci %h' -- robot/mjcf/<機体>/cut       # 実ビルドしたカットモデル
+   git log -1 --format='%ci %h' -- artifacts/<案>/cut          # DR バンドル
+   git status --short -- robot/design robot/mjcf/<機体> artifacts/<案>   # 未コミットの作り直し・直しかけ
+   uv run pytest tests/test_vastai_config.py -k "今の機体に" -q   # バンドル＝今のカットモデル＋DR（1バイト一致）
+   grep '"bundle"' configs/train_full_<案>.json                # 設定が artifacts/<案>/cut/walk-task.json を指すか
+   ```
+   一致のテストは、カットモデルとバンドルを比べるだけ。カットモデル自体が古ければ通ってしまうので、
+   時刻の比べ（`robot/design/` より後に実ビルドしたか）を省かない。案がテストの一覧
+   （`TAIL_TRI_DR_BUILT` など）に無ければ、テストは何も見ていない。作り直し方は `q8-body-variants` を参照。
+   設計スクリプト（`robot/design/quadruped8.py`）は全部の機体で1つなので、直しがどの機体に効くかは、
+   差分を読んで推測せずに確かめる。その機体を作り直し、`robot/mjcf/<機体>/cut/` の各ファイルを前の版と
+   `cmp` で比べる。1バイト同じならバンドルはそのままでよく、違えばバンドルも作り直す。
 
 ## 学習イメージ
 
@@ -92,13 +111,19 @@ curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" \
 
 ## 流れ
 
-複数回（学習シード違い、機体違い）は、**1回1台で並べる**。1回約 550 秒なので、10回なら
-10台で約30分、1台なら約2時間。費用は台数でほとんど変わらない（台×時間が同じ）。
+複数回（学習シード違い、機体違い）は、**1回1台で並べ、予備を1台足す：N 回なら `create --count N+1`。**
+1回約 10〜22 分（RTX 4090）。費用は同時に回しても順に回しても、ほぼ同じ（台数×時間）で、待ち時間だけが短くなる。
+予備は、鍵が通らない台・起動しない台・GPU が壊れた台の回を引き受ける（`sweep` が自動で外して破棄し、
+回を列に戻す）。予備の数は N+1 に固定し、その場の判断で2台以上にしない。
+
+実績（2026-11-17〜18、RTX 4090）: 12回＋予備1台で約 $2.1。13台のうち2台は SSH の鍵が通らず
+（`Permission denied (publickey)`）、`sweep` が外して破棄し、予備ともう1台が回を引き受けた。
+金額は `$/h × 台 × 時間` の概算で、vast.ai の請求額とは突き合わせていない。依頼者には「概算」と書いて伝える。
 
 | 段階 | コマンド | 確かめること |
 |---|---|---|
 | 一覧（読むだけ） | `instances` | `[このプロジェクト]` の行だけを扱う |
-| 探して借りる | `create --config configs/train_full_<機体>.json --count N`（dry-run）→ `--yes` | 検索の直後に安い順に借りる。label が `cadex-q8-…`、ID を控える |
+| 探して借りる | `create --config configs/train_full_<機体>.json --count <回数+1>`（dry-run）→ `--yes` | 検索の直後に安い順に借りる。label が `cadex-q8-…`、ID を控える |
 | 回す（複数回） | `sweep --config configs/train_full_<機体>.json [--config …] --seeds 0-4 --instance <ID1> --instance <ID2> …`（`--dry-run` で計画）→ `--destroy-when-done` | 起動待ち・GPU 確認・起動・監視・回収・失敗の再投入・破棄まで行う。回の名前は `<設定の name>-s<シード>`（例 `full-mini-s0`）。数十分かかるので、ログをファイルに出して裏で回す |
 | 1回だけ | `VAST_SSH_HOST=… VAST_SSH_PORT=… check` → `launch [--seed N --run-id …]` → `status <run_id> --watch` → `pull <run_id>` | `backend gpu`、学習器の sha256、受領書の device=gpu、sha256 の三者一致 |
 | 残す | `q8.training.archive_run(artifacts/runs/vastai/<run>, artifacts/training/<run>)` | 接続先と pid は落ちる。比べるなら `scripts/compare_seeds.py`（評価も行う） |
@@ -109,7 +134,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" \
 - **`offers` の表を見てから `--offer <id>` で借りると、id が無効になっていることが多い**（HTTP 400
   `no_such_ask`）。`--count` を使う。
 - **回線は 1 Gbps 以上**（設定の `min_inet_down_mbps`）。遅い台はイメージの取得が30分以上終わらなかった。
-  表示の速さは保証ではないので、急ぐときは1〜2台多めに借り、起動の早い台を使う（`sweep` は
+  表示の速さは保証ではない。遅い台は予備（N+1 の1台）が埋める（`sweep` は
   起動しない台を `--boot-timeout` で退かせ、余った台も列が空になれば退かせる）。
 - **GPU が壊れた台がある**（`check` で `cuInit` が `CUDA_ERROR_UNKNOWN`）。`sweep` は退かせる。
   借り直すときは `--exclude-machine <machine_id>` で同じマシンを外す。
@@ -133,10 +158,36 @@ curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" \
   止めてよいのは、自分の `sweep` が自分の台に張った手元の ssh プロセスだけ。リモートの台や、
   他の作業のインスタンスには何もしない。`pkill ssh` のようにまとめて止めない。
 - **20分たっても起動しない台（loading のまま）は、`--boot-timeout` で退いて破棄される。** 6台借りて
-  1台がそうなった。予備を1〜2台多めに借りるのはこのため。
+  1台がそうなった。予備を1台足すのはこのため。
+- **SSH の鍵が通らない台がある**（`Permission denied (publickey)`。13台のうち2台）。`sweep` が退かせて
+  破棄するので、手で消したり鍵を直しに行ったりしない。
 - **仕事の無くなった台は、すぐには破棄されない。** 失敗した回が列に戻るのに備えて、最後の回が
   終わるまで待ってから破棄される。そのぶん課金が少し増えるが、設計どおりなので手で消さない。
 - 実測: 小型機（mini）の1回は 476〜514 秒（RTX 4090）。5回を6台で約23分（作成から最後の破棄まで）。
+
+### 終わりを待つ：知らせだけに頼らない
+
+バックグラウンドの `sweep` の「終わりの知らせ」は、届かないことがある。2026-11-18 に2回、終わっているのに
+35〜45 分止まった（17:45 に終わったのに、評価が始まったのは 18:27）。待ちは次の形にする。
+
+1. `sweep` はログをファイルに出して裏で走らせる（`... > sweep.log 2>&1`）。終わると最後に
+   `完了 N:`・`失敗 N:`・`未着手 N:` の3行が出る。
+2. **15分ごとに自分が起きる仕掛けを、走らせた直後に置く。** どちらか。
+   - Monitor ツール（`timeout_ms: 900000`）。期限で切れたこと自体が15分ごとの起床になる。切れたら下の4つを見て、また置く。
+     ```bash
+     tail -n0 -F sweep.log | grep -E --line-buffered '完了・回収済み|が失敗|退く|破棄に失敗|^未着手 |Traceback'
+     ```
+   - `run_in_background` の Bash で `sleep 900; tail -n 5 sweep.log`。終わると自分が起きる。起きたら、また置く。
+3. 起きたら（知らせの有無にかかわらず）、次の4つを見る。
+   - `sweep.log` の末尾（`未着手 N:` の行があれば終わっている。各台の最後の行の時刻）
+   - `uv run python -m vastai instances`（自分の台が残っているか、`[このプロジェクト]` の行だけ）
+   - `artifacts/runs/vastai/<run>/` の回収（回の数だけそろったか）
+   - 成果物の更新時刻（`ls -lt artifacts/runs/vastai/ | head`）
+   終わっていれば、知らせを待たずに次（回収の確かめ・評価・`instances` で破棄の確認）に進む。
+   1台のログが10分以上進まないなら、上の「手元の ssh が止まっている」の手当てをする。
+4. **リーダー（担当に待ちを任せた側）は、CronCreate で15分ごとの見張りを置く。** 見張りは、担当の
+   最後の報告と `sweep.log` の末尾を見て、終わっているのに担当が動いていなければ、SendMessage で
+   担当を再開させる（「sweep は終わっている。評価に進んで」）。sweep が全部終わり、評価まで済んだら見張りを消す（CronDelete）。
 
 学習設定は機体ごとに `configs/train_full_<機体>.json`（base は `train_full.json`）。新しい機体の設定の作り方、
 回収した結果を Git に残す方法と比べ方は `q8-artifacts-and-publishing` を参照（`artifacts/runs/` は Git の追跡外）。
@@ -157,6 +208,11 @@ curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" \
 | 「`sweep` が全部面倒を見るので、ログが止まっても待つ」 | 手元の ssh が止まると、その台のスレッドは動かないまま。その台のポートの ssh だけを止めて退かせる |
 | 「起動直後に Connection refused だったので、壊れた台として消す」 | 起動直後は普通。`sweep` が5分まで再試行する |
 | 「片付けは stop でいい」 | 停止中もストレージに課金される。回収を確かめてから destroy |
+| 「終わったら知らせが来るので、それまで待つ」 | 知らせは届かないことがある（35〜45 分止まった）。15分ごとに起きる仕掛けを置き、自分で見に行く |
+| 「念のため予備を2〜3台」 | 予備は1台（N+1）。鍵や起動の失敗は `sweep` が予備に回す |
+| 「形を直したのは別の担当で、バンドルは前に作ってある」 | 古い形で全部の回を学習しうる。借りる前に、形の元・カットモデル・バンドルの順に時刻を比べる |
+| 「1バイト一致のテストが通ったので、バンドルは新しい」 | テストはカットモデルとバンドルを比べるだけ。カットモデルが古ければ通る。`robot/design/` との時刻も見る |
+| 「費用は $X だった」 | `$/h × 台 × 時間` の概算。請求額と突き合わせていなければ「概算」と書く |
 
 ## 危険信号（止まって見直す）
 
@@ -169,3 +225,6 @@ curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" \
 - `pull` の検証が終わる前に `destroy` しようとしている
 - 本番の見積りに smoke の時間を使おうとしている
 - 複数台を使うのに `.env` の接続先を書き換えようとしている（環境変数で台ごとに渡す）
+- `sweep` を裏で走らせたのに、15分ごとに起きる仕掛け（Monitor か `sleep 900`）を置かずに待とうとしている
+- `create --count` に回数ちょうど、または回数+2 以上を入れようとしている（回数+1）
+- 形を直すコミットの後なのに、バンドルの時刻を見ずに借りようとしている
