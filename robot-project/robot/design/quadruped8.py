@@ -730,11 +730,17 @@ def gait_rewards():
         ]
     if GAIT_MODE == 0:
         # 決めない: 接地のリズムの報酬は無く、足上げはどの脚にも位相によらず払う。
-        return [assembly.reward(" + ".join(lift_term(leg) for leg in LEG_NAMES), weight=p.w_swing, label="swing_lift")]
+        # ただし脚 k の足上げは、ほかの2本がどちらも接地しているときだけ払う（3本を同時に浮かせる＝跳ねると 0）。
+        return [assembly.reward(" + ".join(
+            "%s * %s" % (lift_term(leg), " * ".join("ft_%s_down" % o for o in LEG_NAMES if o != leg))
+            for leg in LEG_NAMES), weight=p.w_swing, label="swing_lift")]
     stance = ["tanh(5*(%s + 0.5))" % ph for ph in WAVE_PHASE]       # 立脚で +、遊脚で −
+    # 立脚の度合いの3脚の平均を引く: 全脚が接地したままなら、どの時刻も 0（四足のトロットの式と同じ意味）。
+    # 脚 k を上げたときの報酬は「平均 - 脚 k の度合い」で、脚 k の遊脚の位相で正、立脚の位相で負。
+    mean_st = "((%s) / 3)" % " + ".join(stance)
     return [
         # 立脚の位相で接地していれば +、遊脚の位相で接地していれば −（重みは四足のトロットと同じ w_trot）
-        assembly.reward(" + ".join("%s * ft_%s_down" % (st, leg) for st, leg in zip(stance, LEG_NAMES)),
+        assembly.reward(" + ".join("(%s - %s) * ft_%s_down" % (st, mean_st, leg) for st, leg in zip(stance, LEG_NAMES)),
                         weight=p.w_trot, label="gait_contact"),
         assembly.reward(" + ".join("(0.5 - 0.5*%s) * %s" % (st, lift_term(leg)) for st, leg in zip(stance, LEG_NAMES)),
                         weight=p.w_swing, label="swing_lift"),

@@ -99,11 +99,21 @@ def test_gait_mode_0_は接地のリズムの報酬が無い():
     for leg in ("lf", "rf", "hc"):
         assert "fc_%s_z" % leg in lift
     assert "clock" not in lift                      # 位相で重みを付けない
-    # どの足を上げても同じだけ払う
-    base = dict(fc_lf_z=6.0, fc_rf_z=6.0, fc_hc_z=6.0)
-    one = [evaluate(lift, **{**base, "fc_%s_z" % leg: 16.0}) for leg in ("lf", "rf", "hc")]
-    assert one[0] > evaluate(lift, **base)
-    assert one == pytest.approx([one[0]] * 3)
+    # 足上げの項は、ほかの2本がどちらも接地しているときだけ払う（3本を同時に浮かせる＝跳ねると 0）
+    legs = ("lf", "rf", "hc")
+    up = {"fc_%s_z" % k: 16.0 for k in legs}
+    assert evaluate(lift, **up, **{"ft_%s_down" % k: 0.0 for k in legs}) == pytest.approx(0.0, abs=1e-12)
+    # 1本だけ浮かせると、その足の項だけが正（ほかの足が少し上がっていても、その項は 0）
+    one = []
+    for leg in legs:
+        z = {"fc_%s_z" % k: (16.0 if k == leg else 7.0) for k in legs}
+        down = {"ft_%s_down" % k: (0.0 if k == leg else 1.0) for k in legs}
+        one.append(evaluate(lift, **z, **down))
+        assert one[-1] == pytest.approx(math.tanh((16.0 - 6.0) / 10.0))
+    assert one == pytest.approx([one[0]] * 3)       # どの足でも同じ
+    # 2本を同時に浮かせても払わない
+    z = {"fc_%s_z" % k: 16.0 for k in legs}
+    assert evaluate(lift, **z, ft_lf_down=0.0, ft_rf_down=0.0, ft_hc_down=1.0) == pytest.approx(0.0, abs=1e-12)
     # 位相クロックは方策の入力として残す（4脚と同じ入力の並び）
     goals = [g.args[0] for g in task(log).kwargs["goals"]]
     assert goals == ["cmd", "clock"]
@@ -121,17 +131,28 @@ def test_gait_mode_1_は1_3周期ずつずらす():
     contact = r["gait_contact"]
     assert "clock_sin" in contact and "clock_cos" in contact
     legs = ("lf", "rf", "hc")
-    down0 = {"ft_%s_down" % k: 0.0 for k in legs}
+
+    def contact_of(theta, down):
+        return evaluate(contact, clock_sin=math.sin(theta), clock_cos=math.cos(theta),
+                        **{"ft_%s_down" % k: down[i] for i, k in enumerate(legs)})
+
+    # 全脚が接地したままなら、どの時刻も 0（1周期の平均も 0）。四足のトロットの式と同じく、立っているだけでは得をしない
+    allv = [contact_of(math.radians(d / 10.0), (1.0, 1.0, 1.0)) for d in range(3600)]
+    assert sum(allv) / len(allv) == pytest.approx(0.0, abs=1e-6)
+    assert max(abs(v) for v in allv) < 1e-9
     for k, leg in enumerate(legs):
-        def contact_of(theta, leg=leg):
-            return evaluate(contact, clock_sin=math.sin(theta), clock_cos=math.cos(theta),
-                            **{**down0, "ft_%s_down" % leg: 1.0})
-        # 立脚の中心は k·120°、遊脚（接地すると罰）の中心は k·120° + 180°
-        assert _argmax_deg(contact_of) == pytest.approx(k * 120.0, abs=1.0)
-        assert _argmax_deg(lambda th: -contact_of(th)) == pytest.approx((k * 120.0 + 180.0) % 360.0, abs=1.0)
-        # 立脚の割合は 2/3（どの時刻も遊脚は1本）
-        stance = sum(contact_of(math.radians(d)) > 0 for d in range(360)) / 360.0
-        assert stance == pytest.approx(2.0 / 3.0, abs=0.01)
+        lifted = tuple(0.0 if i == k else 1.0 for i in range(3))
+        def lift_one(theta, lifted=lifted):
+            return contact_of(theta, lifted)
+        # 脚 k だけを上げたときの報酬が最も大きいのは、脚 k の遊脚の中心 k·120° + 180°（正）
+        best = _argmax_deg(lift_one)
+        assert best == pytest.approx((k * 120.0 + 180.0) % 360.0, abs=1.0)
+        assert lift_one(math.radians(best)) > 0.5
+        # 立脚の中心 k·120° で上げると罰（負）
+        assert lift_one(math.radians(k * 120.0)) < 0.0
+        # 正になる位相は、遊脚の 1/3 周期のまわりだけ
+        frac = sum(lift_one(math.radians(d)) > 0 for d in range(360)) / 360.0
+        assert 0.3 < frac < 0.4
     # 足上げは遊脚の位相で払う
     lift = r["swing_lift"]
     low = {"fc_%s_z" % k: 6.0 for k in legs}
