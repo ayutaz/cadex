@@ -301,3 +301,59 @@ def test_しっぽのサーボのリード線は股サーボの収納部へ抜�
     # 通り道は左右の中央（しっぽのサーボの幅）で、後ろの股サーボの収納部（|y| >= 胴体の半幅 - ケースの高さ - すきま）に重なる
     y0, y1 = _extent(ch, 1)
     assert y0 < -(31.0 - 28.4 - c) and y1 > 31.0 - 28.4 - c
+
+
+# --- しっぽの衝突形状（Task 4 の追加。倒れると台・ハウジング・上下のサーボが床にめり込んだ） ---
+
+def _collisions(log, comp_label):
+    bodies = [t for t in of_kind(log, "assembly.body") if t.args[0].label == comp_label]
+    assert len(bodies) == 1, comp_label
+    col = bodies[0].kwargs.get("collision")
+    return [] if col is None else (list(col) if isinstance(col, list) else [col])
+
+
+def _box_range(col, axis):
+    centre = col.kwargs["offset"]["position"][axis]
+    half = col.kwargs["size_mm"][axis] / 2.0
+    return centre - half, centre + half
+
+
+@pytest.mark.parametrize("dof", [1.0, 2.0])
+def test_しっぽの台に衝突の箱があり_下へ出たサーボも覆う(dof):
+    _, log = run_design(**MINI_R2_P7_EFF, tail_dof=dof)
+    cols = _collisions(log, "chassis")
+    assert [col.label for col in cols] == ["body_box", "tail_mount_box"]
+    box = cols[1]
+    assert box.args[0] == "box" and box.kwargs.get("contact_group", 0) == 0
+    (mount_fuse,) = [t for t in of_kind(log, "part.fuse") if t.args and isinstance(t.args[0], list)
+                     and len(t.args[0]) == 2 and t.args[0][0].kind == "part.box" and t.args[0][0].args[0] == 96.0]
+    mount = mount_fuse.args[0][1]
+    assert _box_range(box, 0) == pytest.approx(_extent(mount, 0))
+    assert _box_range(box, 1) == pytest.approx(_extent(mount, 1))
+    # 上は胴体の上面、下は左右のサーボのケースの下（台の下から 28.4 - 24 = 4.4 mm 出る）とすきま
+    z_top = _extent(mount, 2)[1]
+    assert _box_range(box, 2) == pytest.approx((z_top - 28.4 - 0.5, z_top))
+
+
+def test_しっぽ2のハウジングと上下のサーボに衝突の箱がある():
+    _, log = run_design(**MINI_R2_P7_EFF, tail_dof=2.0)
+    cols = _collisions(log, "tail_link_1")
+    assert [col.label for col in cols] == ["tail_housing_box"]
+    box = cols[0]
+    assert box.args[0] == "box" and box.kwargs.get("contact_group") == 1  # しっぽのリンクと同じ
+    tl1 = [t for t in of_kind(log, "part.cut") if t.label == "tail_link_1"][0]
+    housing = [b for b in tl1.args[0].args[0] if b.kind == "part.box"][0]
+    for axis in (0, 1, 2):
+        assert _box_range(box, axis) == pytest.approx(_extent(housing, axis)), axis
+    # 上下のサーボ（ケースの上面 y = 28.4/2、軸の高さ TP[2]）はハウジングの箱の中に入る（タブの先まで）
+    tp = _servo(log, "tail_pitch_servo").origin
+    tabs = _servo_x_roll180(tp[0])["tabs"]
+    assert _box_range(box, 0)[0] <= tabs[0] and _box_range(box, 0)[1] >= tabs[1]
+    assert _box_range(box, 2)[1] >= tp[2] + 12.2 / 2.0
+
+
+@pytest.mark.parametrize("dof, link", [(1.0, "tail_link_1"), (2.0, "tail_link_2")])
+def test_しっぽのリンクと先端には衝突形状がある(dof, link):
+    _, log = run_design(**MINI_R2_P7_EFF, tail_dof=dof)
+    assert [col.args[0] for col in _collisions(log, link)] == ["capsule"]
+    assert [col.args[0] for col in _collisions(log, "tail_tip")] == ["sphere"]

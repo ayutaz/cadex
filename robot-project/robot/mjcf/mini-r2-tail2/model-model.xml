@@ -13,6 +13,7 @@
       <inertial pos="-0.00844663 0 0.0736347" quat="0 0.711616 0 0.702568" mass="0.0147802" diaginertia="2.27119e-05 1.80359e-05 4.8318e-06"/>
       <joint name="c_chassis/free" type="free"/>
       <geom name="c_chassis/collision0" size="0.048 0.031 0.012" pos="0 0 0.0832329" type="box" conaffinity="2147483647" solref="0.004"/>
+      <geom name="c_chassis/collision1" size="0.020375 0.0086 0.01445" pos="-0.066375 0 0.0807829" type="box" conaffinity="2147483647" solref="0.004"/>
       <body name="c_cover">
         <inertial pos="-0.0075849 0 0.0897966" quat="0 0.703264 0 0.710929" mass="0.0340434" diaginertia="5.94721e-05 4.83471e-05 1.20617e-05"/>
         <body name="c_esp">
@@ -142,6 +143,7 @@
       <body name="c_tail_link_1">
         <inertial pos="-0.0778041 -0.00160687 0.105633" quat="-0.023724 0.712235 0.0407506 0.700356" mass="0.0119307" diaginertia="3.01311e-06 2.56341e-06 1.66352e-06"/>
         <joint name="tail_yaw" pos="-0.07065 0 0.0952329" axis="0 0 1" limited="true" range="-0.785398 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002"/>
+        <geom name="c_tail_link_1/collision0" size="0.019325 0.01545 0.01085" pos="-0.076925 -0.00125 0.107083" type="box" contype="2" conaffinity="2147483647" solref="0.004"/>
         <body name="c_tail_yaw_horn">
           <inertial pos="-0.07065 0 0.100866" quat="0.5 0.5 -0.5 0.5" mass="0.000228973" diaginertia="9.55396e-09 4.8479e-09 4.8479e-09"/>
         </body>

@@ -1,7 +1,7 @@
 {
   "variant": "tri-r2",
   "cadex_project": "~/cadex-projects/quadruped8-tri-r2",
-  "accepted_revision": "6069b856c7f6d4339871c76f3041eac4eb65ef98324945c372b56e7609149389",
+  "accepted_revision": "df9896750a54df1e0826dd0a708848d958834e4b5d16e4a6bb13ab84fc3a482c",
   "design_script": "robot/design/quadruped8.py",
   "params": {
     "body_length": 96.0,
@@ -57,20 +57,20 @@
     "source": "CadexCatalog.py の SERVOS（TowerPro公表値 4.8 V）。連続定格は失速の40%とした推定"
   },
   "physics": {
-    "total_mass_g": 202.9,
+    "total_mass_g": 182.8,
     "mass_by_group_g": {
       "electronics": 11.0,
       "hardware": 2.22,
-      "printed_pla": 106.03,
+      "printed_pla": 85.88,
       "printed_tpu": 3.26,
       "servo": 80.4
     },
     "com_m": [
-      -0.00927,
-      -0.00293,
-      0.06734
+      -0.0068,
+      -0.00367,
+      0.06556
     ],
-    "com_height_mm": 67.3,
+    "com_height_mm": 65.6,
     "feet_xy_mm": {
       "lf": [
         40.0,
@@ -85,7 +85,7 @@
         11.0
       ]
     },
-    "support_margin_mm": 14.9,
+    "support_margin_mm": 15.5,
     "leg": {
       "thigh_mm": 40.0,
       "shin_mm": 44.0,
@@ -94,32 +94,32 @@
     },
     "static_estimate": {
       "3脚支持（立位）": {
-        "load_per_foot_n": 0.664,
-        "worst_joint_torque_nmm": 13.3,
-        "stall_ratio": 0.075,
-        "rated_ratio": 0.188
+        "load_per_foot_n": 0.598,
+        "worst_joint_torque_nmm": 12.0,
+        "stall_ratio": 0.068,
+        "rated_ratio": 0.169
       },
       "2脚支持（1脚を上げた最悪）": {
-        "load_per_foot_n": 0.995,
-        "worst_joint_torque_nmm": 19.9,
-        "stall_ratio": 0.113,
-        "rated_ratio": 0.282
+        "load_per_foot_n": 0.896,
+        "worst_joint_torque_nmm": 17.9,
+        "stall_ratio": 0.102,
+        "rated_ratio": 0.254
       }
     },
     "sim_hold": {
       "seconds": 2.0,
-      "body_drop_mm": 0.22,
-      "tilt_deg": 0.109,
+      "body_drop_mm": 0.2,
+      "tilt_deg": 0.091,
       "mean_abs_torque_nmm": {
-        "hip_lf": 4.88,
-        "knee_lf": 6.5,
-        "hip_rf": 5.11,
-        "knee_rf": 13.4,
-        "hip_hc": 5.4,
-        "knee_hc": 19.68
+        "hip_lf": 4.86,
+        "knee_lf": 6.09,
+        "hip_rf": 5.06,
+        "knee_rf": 12.64,
+        "hip_hc": 5.23,
+        "knee_hc": 16.71
       },
-      "worst_stall_ratio": 0.111,
-      "worst_rated_ratio": 0.279
+      "worst_stall_ratio": 0.095,
+      "worst_rated_ratio": 0.237
     },
     "note": "静力学の見積りは脚の質量と慣性力を無視した下限。MuJoCoの保持は位置サーボの比例帯（5度で失速トルク）を含む。いずれも実機で未検証。"
   },
@@ -228,9 +228,9 @@
           69.65,
           8.6
         ],
-        "solid_volume_cm3": 28.18,
+        "solid_volume_cm3": 20.19,
         "fits_bed": true,
-        "triangles": 2012
+        "triangles": 2696
       },
       "cover": {
         "material": "PLA",
@@ -239,9 +239,9 @@
           69.65,
           15.4
         ],
-        "solid_volume_cm3": 55.94,
+        "solid_volume_cm3": 38.74,
         "fits_bed": true,
-        "triangles": 3900
+        "triangles": 4580
       },
       "foot_hc": {
         "material": "TPU",
@@ -382,8 +382,8 @@
     ]
   },
   "timings_s": {
-    "build_s": 5.9,
-    "clearance_s": 25.2
+    "build_s": 5.8,
+    "clearance_s": 26.6
   },
   "training_cut": {
     "fidelity_pass": true,
@@ -496,9 +496,9 @@
       {
         "item": "filament/pla",
         "name": "PLAフィラメント（1 kg 約2,500円）",
-        "qty": "106.0 g",
+        "qty": "85.9 g",
         "unit_price_jpy": 2.5,
-        "cost_jpy": 265,
+        "cost_jpy": 215,
         "price_status": "推定",
         "components": []
       },
@@ -569,7 +569,7 @@
         "qty": 1
       }
     ],
-    "estimated_total_jpy": 5858,
+    "estimated_total_jpy": 5808,
     "budget_jpy": 10000,
     "within_budget": true,
     "note": "価格は推定。電池・充電・降圧電源は未計上（後回しの指定）"

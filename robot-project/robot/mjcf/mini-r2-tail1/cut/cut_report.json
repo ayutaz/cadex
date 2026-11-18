@@ -1,10 +1,10 @@
 {
   "ok": true,
   "problems": [],
-  "engine_mjcf": "~/cadex-projects/quadruped8-mini-r2-tail1/script_artifacts/508d5efbf88fdfe30b37f27aac27b42a139f825eee29318e4b05238866f55304/attempt-1794986435028-b41f53973b94/outputs/model-model.xml",
-  "engine_mjcf_sha256": "0d10a536d7cd7ea80edaa785a583d9ae6ec676ed8ed3c15f91200c9dbc3262ff",
-  "training_mjcf_sha256": "fb9f9ae34903bdf5eaf133e2c278ae0aa9c8fa69596ca4a120daeeecfa078bec",
-  "out": "/var/folders/b_/0zt18535599cmxt7wypby49dd83z85/T/tmp08cgjet8/cut.xml",
+  "engine_mjcf": "~/cadex-projects/quadruped8-mini-r2-tail1/script_artifacts/da6dffe97872669b3149f668842ab01f762ec6611117caf1da3583d86261db57/attempt-1794987552170-e661179dc9e0/outputs/model-model.xml",
+  "engine_mjcf_sha256": "c2e9a589f31b7e336986da45db903025e19242473c431bdce9d27f11847963be",
+  "training_mjcf_sha256": "96777f6da18c854c26c4dd063129d0929242970e8b01806b98cc781a61dc2b05",
+  "out": "/var/folders/b_/0zt18535599cmxt7wypby49dd83z85/T/tmpd25j1ywc/cut.xml",
   "feet": [
     "c_foot_lf/collision0",
     "c_foot_rf/collision0",
@@ -12,7 +12,8 @@
     "c_foot_rh/collision0"
   ],
   "fall_geoms": [
-    "c_chassis/collision0"
+    "c_chassis/collision0",
+    "c_chassis/collision1"
   ],
   "options": {
     "timestep": 0.002,
@@ -32,12 +33,12 @@
       "problems": [
         "fidelity or standing failed"
       ],
-      "sha256": "1b11eff2182a116228401b3d905b1fd27dcd8e94514e5ce100b0a51a5529c017",
+      "sha256": "88adccaac5d1e96024ae4336cfc60c750f1581252fd3389124f3f4b13734a2e8",
       "check": {
         "worst_gated_mm": 409.372,
         "gated": 6,
         "signals": 12,
-        "stand_tilt_deg": 60.732,
+        "stand_tilt_deg": 43.151,
         "stand_pass": false,
         "pass": false
       }
@@ -50,7 +51,7 @@
         "integrator": "implicitfast"
       },
       "problems": [],
-      "sha256": "fb9f9ae34903bdf5eaf133e2c278ae0aa9c8fa69596ca4a120daeeecfa078bec",
+      "sha256": "96777f6da18c854c26c4dd063129d0929242970e8b01806b98cc781a61dc2b05",
       "check": {
         "worst_gated_mm": 1.904,
         "gated": 6,
@@ -221,9 +222,10 @@
     "nu": 9,
     "neq": 0,
     "nsensor": 29,
-    "ngeom_colliding": 15,
+    "ngeom_colliding": 16,
     "colliding": [
       "c_chassis/collision0",
+      "c_chassis/collision1",
       "c_thigh_lf/collision0",
       "c_shin_lf/collision0",
       "c_foot_lf/collision0",
@@ -262,9 +264,10 @@
     "nu": 9,
     "neq": 0,
     "nsensor": 29,
-    "ngeom_colliding": 5,
+    "ngeom_colliding": 6,
     "colliding": [
       "c_chassis/collision0",
+      "c_chassis/collision1",
       "c_foot_lf/collision0",
       "c_foot_rf/collision0",
       "c_foot_lh/collision0",

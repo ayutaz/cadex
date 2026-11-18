@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 import mujoco
+import numpy as np
 import pytest
 
 from q8 import dr_bundle
@@ -163,3 +164,28 @@ def test_評価が使う足は3脚のモデルで3本になる(monkeypatch):
         ev.evaluate_fixed_gait(_model(["lf", "rf", "hc"]), task, target_fn=lambda t: {}, seeds=[0],
                                seconds=0.1, command_mm_s=0.0)
     assert seen["feet"] == ["c_foot_lf", "c_foot_rf", "c_foot_hc"]
+
+
+@pytest.mark.parametrize("variant", ["mini-r2-p7-eff", "mini-r2-tail1", "mini-r2-tail2", "tri-r2"])
+def test_関節を可動域いっぱいに振っても衝突形状どうしが当たらない(variant):
+    # しっぽ・3本足の台とハウジングに衝突の箱を足した（Task 4）。MuJoCo の衝突形状で、
+    # 各関節を 5° 刻みで可動域いっぱいに振り（ほかは立位、胴体は宙に浮かせる）、床以外の接触が無いこと。
+    path = ROOT / "robot" / "mjcf" / variant / "model-model.xml"
+    if not path.exists():
+        pytest.skip(f"{path} が無い（scripts/build_robot.py --variant {variant}）")
+    m = mujoco.MjModel.from_xml_path(str(path))
+    d = mujoco.MjData(m)
+    hits = set()
+    for j in range(m.njnt):
+        if m.jnt_type[j] == mujoco.mjtJoint.mjJNT_FREE:
+            continue
+        lo, hi = m.jnt_range[j]
+        for q in np.arange(lo, hi + 1e-9, math.radians(5.0)):
+            mujoco.mj_resetDataKeyframe(m, d, 0)
+            d.qpos[2] += 1.0
+            d.qpos[m.jnt_qposadr[j]] = q
+            mujoco.mj_forward(m, d)
+            for con in d.contact[:d.ncon]:
+                if m.geom_bodyid[con.geom1] and m.geom_bodyid[con.geom2]:
+                    hits.add((m.joint(j).name, m.geom(con.geom1).name, m.geom(con.geom2).name))
+    assert not hits

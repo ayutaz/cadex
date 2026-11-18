@@ -10,6 +10,7 @@
       <inertial pos="-0.0103012173 1.3518001e-12 0.0830855273" quat="0 0.999994308 -7.20508133e-11 0.00337397476" mass="0.125672942" diaginertia="4.32783249e-05 0.000206681894 0.000236106103" />
       <joint name="c_chassis/free" type="free" />
       <geom name="c_chassis/collision0" size="0.048 0.031 0.012" pos="0 0 0.0832329" type="box" conaffinity="1" solref="0.004" contype="0" condim="1" priority="1" />
+      <geom name="c_chassis/collision1" size="0.020375 0.0086 0.01445" pos="-0.066375 0 0.0807829" type="box" conaffinity="1" solref="0.004" contype="0" condim="1" priority="1" />
       <body name="c_imu">
         <inertial pos="0 0.0205 0.0747329" quat="0 0.707107 0 0.707107" mass="0.002" diaginertia="1.16167e-07 7.5e-08 4.41667e-08" />
       </body>
@@ -76,6 +77,7 @@
       <body name="c_tail_link_1">
         <inertial pos="-0.0775933221 -0.000579323544 0.10753007" quat="0.997783163 0.0150868095 0.00755074837 0.0643749484" mass="0.025559673" diaginertia="2.85852023e-06 3.48445697e-06 4.60665477e-06" />
         <joint name="tail_yaw" pos="-0.07065 0 0.0952329" axis="0 0 1" limited="true" range="-0.785398 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002" />
+        <geom name="c_tail_link_1/collision0" size="0.019325 0.01545 0.01085" pos="-0.076925 -0.00125 0.107083" type="box" contype="0" conaffinity="0" solref="0.004" />
         <body name="c_tail_link_2">
           <inertial pos="-0.113305877 0.0184656735 0.109333" quat="0.707106681 0.707106681 0.000377109737 0.000377109737" mass="0.009470173" diaginertia="1.84917661e-07 4.69663679e-06 4.79991109e-06" />
           <joint name="tail_pitch" pos="-0.08015 0.0142 0.109333" axis="0 1 0" limited="true" range="-0.523599 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002" />

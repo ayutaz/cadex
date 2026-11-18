@@ -21,8 +21,8 @@
     125.6,
     69.7
    ],
-   "volume_cm3": 28.183,
-   "filament_g": 22.55,
+   "volume_cm3": 20.189,
+   "filament_g": 16.15,
    "orientations": [
     {
      "down": [
@@ -41,9 +41,9 @@
       0,
       1
      ],
-     "bed_contact_mm2": 2184.3,
-     "overhang_mm2": 4697.7,
-     "bridge_mm2": 4697.7,
+     "bed_contact_mm2": 973.1,
+     "overhang_mm2": 5908.9,
+     "bridge_mm2": 5908.9,
      "height_mm": 8.6
     },
     {
@@ -53,8 +53,8 @@
       0
      ],
      "bed_contact_mm2": 676.8,
-     "overhang_mm2": 1037.5,
-     "bridge_mm2": 1023.3,
+     "overhang_mm2": 1117.3,
+     "bridge_mm2": 1064.4,
      "height_mm": 69.7
     },
     {
@@ -64,8 +64,8 @@
       0
      ],
      "bed_contact_mm2": 271.8,
-     "overhang_mm2": 1442.5,
-     "bridge_mm2": 1428.3,
+     "overhang_mm2": 1522.3,
+     "bridge_mm2": 1469.4,
      "height_mm": 69.7
     },
     {
@@ -75,8 +75,8 @@
       0
      ],
      "bed_contact_mm2": 151.7,
-     "overhang_mm2": 761.9,
-     "bridge_mm2": 747.7,
+     "overhang_mm2": 805.0,
+     "bridge_mm2": 750.7,
      "height_mm": 125.6
     },
     {
@@ -86,8 +86,8 @@
       0
      ],
      "bed_contact_mm2": 265.7,
-     "overhang_mm2": 648.2,
-     "bridge_mm2": 633.9,
+     "overhang_mm2": 688.3,
+     "bridge_mm2": 674.1,
      "height_mm": 125.6
     }
    ]
@@ -98,16 +98,16 @@
     0,
     1
    ],
-   "overhang_mm2": 683.8,
-   "bridge_mm2": 683.8,
+   "overhang_mm2": 351.2,
+   "bridge_mm2": 351.2,
    "bed_contact_mm2": 5158.2,
    "height_mm": 15.4,
    "footprint_mm": [
     125.6,
     69.7
    ],
-   "volume_cm3": 55.936,
-   "filament_g": 44.75,
+   "volume_cm3": 38.744,
+   "filament_g": 31.0,
    "orientations": [
     {
      "down": [
@@ -115,9 +115,9 @@
       0,
       -1
      ],
-     "bed_contact_mm2": 2179.3,
-     "overhang_mm2": 3662.8,
-     "bridge_mm2": 3662.8,
+     "bed_contact_mm2": 968.1,
+     "overhang_mm2": 4541.4,
+     "bridge_mm2": 4541.4,
      "height_mm": 15.4
     },
     {
@@ -127,8 +127,8 @@
       1
      ],
      "bed_contact_mm2": 5158.2,
-     "overhang_mm2": 683.8,
-     "bridge_mm2": 683.8,
+     "overhang_mm2": 351.2,
+     "bridge_mm2": 351.2,
      "height_mm": 15.4
     },
     {
@@ -138,8 +138,8 @@
       0
      ],
      "bed_contact_mm2": 1329.6,
-     "overhang_mm2": 1703.5,
-     "bridge_mm2": 1621.1,
+     "overhang_mm2": 2005.9,
+     "bridge_mm2": 1845.1,
      "height_mm": 69.7
     },
     {
@@ -149,8 +149,8 @@
       0
      ],
      "bed_contact_mm2": 486.6,
-     "overhang_mm2": 2546.4,
-     "bridge_mm2": 2464.1,
+     "overhang_mm2": 2848.9,
+     "bridge_mm2": 2688.1,
      "height_mm": 69.7
     },
     {
@@ -160,8 +160,8 @@
       0
      ],
      "bed_contact_mm2": 573.3,
-     "overhang_mm2": 1333.3,
-     "bridge_mm2": 1250.9,
+     "overhang_mm2": 1420.8,
+     "bridge_mm2": 1256.9,
      "height_mm": 125.6
     },
     {
@@ -171,8 +171,8 @@
       0
      ],
      "bed_contact_mm2": 475.9,
-     "overhang_mm2": 1432.2,
-     "bridge_mm2": 1349.9,
+     "overhang_mm2": 1513.7,
+     "bridge_mm2": 1431.4,
      "height_mm": 125.6
     }
    ]
@@ -969,7 +969,7 @@
      "rotated": false
     }
    ],
-   "filament_g": 67.2952
+   "filament_g": 47.1464
   },
   {
    "key": "plate2_thighs",

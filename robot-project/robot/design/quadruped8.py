@@ -212,15 +212,6 @@ if TRI:
 cav_x = p.hip_x - (CASE_L - FRONT) - c - LEAD
 cavity = part.box(2.0 * cav_x, 2.0 * (W2 - w), p.body_height - 2.0 * w,
                   origin=[-cav_x, -(W2 - w), z_bot + w])
-if TRI:
-    # 後ろの股サーボ hc のリード線の通り道: 逃げ（ケースの前の面から LEAD）の先から胴体の空洞へ 1 mm 入るまで。
-    # 四足の後ろの股サーボは逃げが空洞に届くが、hc は股軸が胴体の後端より後ろなので届かない。
-    # 左右は胴体の側面の壁の内側から、タブの下 4 mm まで（逃げと同じ上限）。高さはサーボの収納部の幅。
-    hc_lead_x0 = HC_X + (CASE_L - FRONT) + c + LEAD - 1.0
-    hc_lead_y1 = HC_YB + S["mount_hole_z_mm"] - c - 4.0
-    bays.append(part.box(-cav_x + 1.0 - hc_lead_x0, hc_lead_y1 + (W2 - w), CASE_W + 2.0 * c,
-                         origin=[hc_lead_x0, -(W2 - w), ZH - CASE_W / 2.0 - c]))
-
 # 制御基板 ESP32-S3-DevKitC-1 の代用品（寸法は推定: 63 x 25.5 x 4 mm）。上面の浅いポケットに載る。
 ESP_L, ESP_W, ESP_H = 63.0, 25.5, 4.0
 esp_pocket = part.box(ESP_L + 2 * c, ESP_W + 2 * c, 2.0 + c,
@@ -240,6 +231,27 @@ for i, bx in enumerate((p.hip_x + CASE_CX, -(p.hip_x + CASE_CX))):
         part.cylinder(lib.clearance_hole("m2") / 2.0, z_seat - ZH + 0.01, origin=[bx, 0.0, ZH]),
         part.cylinder(lib.tap_drill("m2") / 2.0, THREAD_IN + 1.0, origin=[bx, 0.0, ZH - THREAD_IN - 1.0]),
     ]
+if TRI:
+    # 3本足の胴体の後ろの空洞: 四足では後ろの股サーボ2個が入る所が中実のまま残り、chassis + cover が約 24 g 重かった。
+    # hc の股サーボのタブの収納部（先端 + すきま）から壁1枚ぶん前から、四足の空洞の後ろの端まで、左右は側面の壁の内側まで。
+    # 後ろの上下の締結ボルト（x = -(hip_x + CASE_CX)）のまわりには、座ぐりの半径 + 肉厚の柱を残す。
+    rear_x0 = HC_X + (TAB_HALF - CASE_CX) + c + w
+    rear_bolt_x = -(p.hip_x + CASE_CX)
+    rear_pillar = part.cylinder(head["head_dia_mm"] / 2.0 + 0.2 + w, p.body_height,
+                                origin=[rear_bolt_x, 0.0, z_bot])
+    bays.append(part.cut(part.box(-cav_x + 1.0 - rear_x0, 2.0 * (W2 - w), p.body_height - 2.0 * w,
+                                  origin=[rear_x0, -(W2 - w), z_bot + w]), [rear_pillar]))
+    # 股サーボの +Y 側（台もサーボも無い）は、胴体の後ろの壁の内側まで空洞にする
+    side_y0 = HC_YB + c + w
+    bays.append(part.box(rear_x0 - (-BL / 2.0 + w), (W2 - w) - side_y0, p.body_height - 2.0 * w,
+                         origin=[-BL / 2.0 + w, side_y0, z_bot + w]))
+    # 後ろの股サーボ hc のリード線の通り道: 逃げ（ケースの前の面から LEAD）の先から胴体の空洞へ 1 mm 入るまで。
+    # 四足の後ろの股サーボは逃げが空洞に届くが、hc は股軸が胴体の後端より後ろなので届かない。
+    # 左右は胴体の側面の壁の内側から、タブの下 4 mm まで（逃げと同じ上限）。高さはサーボの収納部の幅。
+    hc_lead_x0 = HC_X + (CASE_L - FRONT) + c + LEAD - 1.0
+    hc_lead_y1 = HC_YB + S["mount_hole_z_mm"] - c - 4.0
+    bays.append(part.box(-cav_x + 1.0 - hc_lead_x0, hc_lead_y1 + (W2 - w), CASE_W + 2.0 * c,
+                         origin=[hc_lead_x0, -(W2 - w), ZH - CASE_W / 2.0 - c]))
 body_cut = part.cut(hull, bays + [cavity, esp_pocket] + bolt_holes)
 if TAIL or TRI:
     # しっぽ・3本足の台は胴体の箱の外へはみ出すので、分ける箱を台まで広げる（はみ出しが両方に残らないように）
@@ -516,9 +528,28 @@ for i, b in enumerate(bolts):
 
 body_box = [BL, 2.0 * W2, p.body_height]
 body_mid = [0.0, 0.0, z_bot + p.body_height / 2.0]
+
+
+def box_collision(lo, hi, label, group=0):
+    """ワールドの立位の座標で [lo, hi] の箱の衝突形状（コンポーネントの座標は立位のワールドと同じ）。"""
+    return assembly.collision("box", size_mm=[b - a for a, b in zip(lo, hi)],
+                              offset={"position": [(a + b) / 2.0 for a, b in zip(lo, hi)]},
+                              contact_group=group, label=label)
+
+
+chassis_collision = assembly.collision("box", size_mm=body_box, offset={"position": body_mid}, label="body_box")
+if TRI or TAIL:
+    # 胴体の後端の台（胴体の箱の外）にも衝突の箱を足す（倒れると台が床にめり込んでいた）。胴体と同じ扱い。
+    chassis_collision = [chassis_collision]
+    if TRI:
+        chassis_collision.append(box_collision([HC_X - H_SHAFT, HC_YB - hc_depth, z_bot],
+                                               [-BL / 2.0 + w, HC_YB, z_top], "hc_mount_box"))
+    if TAIL:
+        # 左右のサーボのケースは台の下から出るので、箱の下はケースの下とすきままで
+        chassis_collision.append(box_collision([TY[0] - H_SHAFT, -HW, z_top - CASE_H - c],
+                                               [-BL / 2.0 + w, HW, z_top], "tail_mount_box"))
 bodies += [
-    assembly.body(c_chassis, density_kg_m3=p.pla_density,
-                  collision=assembly.collision("box", size_mm=body_box, offset={"position": body_mid}, label="body_box")),
+    assembly.body(c_chassis, density_kg_m3=p.pla_density, collision=chassis_collision),
     assembly.body(c_cover, density_kg_m3=p.pla_density),
     assembly.body(c_esp, density_kg_m3=9.0e-3 / (ESP_L * ESP_W * ESP_H * 1e-9)),   # 約9 g（推定）
     assembly.body(c_imu, density_kg_m3=2.0e-3 / (IMU_L * IMU_W * IMU_H * 1e-9)),   # 約2 g（推定）
@@ -655,7 +686,9 @@ if TAIL:
                                                 "axis": [0, 1, 0], "angle_degrees": 90.0},
                                         contact_group=1, label="tail_cap_1")))
     else:
-        bodies.append(assembly.body(c_tl1, density_kg_m3=p.pla_density))
+        # 上下のサーボのハウジング（と、その中の上下のサーボ）の衝突の箱。しっぽのリンクと同じ contact_group
+        bodies.append(assembly.body(c_tl1, density_kg_m3=p.pla_density, collision=box_collision(
+            [TP[0] - H_SHAFT, TP_Y - depth_tp, tz0], [TP[0] + H_LEAD, TP_Y, TP[2] + HW], "tail_housing_box", 1)))
         c_tpsv = tail_comp(tail_pitch_sv.body, "tail_pitch_servo", "mechanism", "hardware")
         c_tphorn = tail_comp(tp_horn.body, "tail_pitch_horn", "mechanism", "hardware")
         c_tl2 = tail_comp(tail_link_2, "tail_link_2", "shell", "link")

@@ -1,7 +1,7 @@
 {
   "variant": "mini-r2-tail1",
   "cadex_project": "~/cadex-projects/quadruped8-mini-r2-tail1",
-  "accepted_revision": "508d5efbf88fdfe30b37f27aac27b42a139f825eee29318e4b05238866f55304",
+  "accepted_revision": "da6dffe97872669b3149f668842ab01f762ec6611117caf1da3583d86261db57",
   "design_script": "robot/design/quadruped8.py",
   "params": {
     "body_length": 96.0,
@@ -490,8 +490,8 @@
     ]
   },
   "timings_s": {
-    "build_s": 7.3,
-    "clearance_s": 35.8
+    "build_s": 6.9,
+    "clearance_s": 31.5
   },
   "training_cut": {
     "fidelity_pass": true,

@@ -10,11 +10,12 @@
   <worldbody>
     <geom name="environment/floor" size="0 0 0.1" type="plane" solref="0.004"/>
     <body name="c_chassis">
-      <inertial pos="-0.0184633 -0.00167885 0.0744325" quat="-0.0702876 0.711663 0.0574268 0.696633" mass="0.022546" diaginertia="3.12359e-05 2.35263e-05 7.9851e-06"/>
+      <inertial pos="-0.013218 -0.00431075 0.0736009" quat="-0.0823369 0.705978 0.0832786 0.698484" mass="0.0161509" diaginertia="2.75365e-05 2.19159e-05 5.78982e-06"/>
       <joint name="c_chassis/free" type="free"/>
       <geom name="c_chassis/collision0" size="0.048 0.031 0.012" pos="0 0 0.0832329" type="box" conaffinity="2147483647" solref="0.004"/>
+      <geom name="c_chassis/collision1" size="0.0158 0.01545 0.012" pos="-0.0618 -0.0232 0.0832329" type="box" conaffinity="2147483647" solref="0.004"/>
       <body name="c_cover">
-        <inertial pos="-0.0163726 -0.00349024 0.0889238" quat="-0.0546934 0.697205 0.0748965 0.710848" mass="0.044749" diaginertia="7.86293e-05 6.30897e-05 1.70369e-05"/>
+        <inertial pos="-0.00961479 -0.00648514 0.0899028" quat="-0.0824667 0.699653 0.0821948 0.704932" mass="0.0309955" diaginertia="6.88704e-05 5.84271e-05 1.13928e-05"/>
         <body name="c_esp">
           <inertial pos="0 0 0.0952329" quat="0 0.707107 0 0.707107" mass="0.009" diaginertia="3.46444e-06 2.98875e-06 4.99688e-07"/>
         </body>

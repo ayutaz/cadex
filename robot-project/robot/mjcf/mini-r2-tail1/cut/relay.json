@@ -1,9 +1,9 @@
 {
  "schema": "cadex-relay-v1",
- "task_sha256": "fc6e7a6e7285a380b88dd7c6cd0dcb69533a40bded424ef7b37e8960d7943414",
- "export_sha256": "0d10a536d7cd7ea80edaa785a583d9ae6ec676ed8ed3c15f91200c9dbc3262ff",
- "onto_sha256": "fb9f9ae34903bdf5eaf133e2c278ae0aa9c8fa69596ca4a120daeeecfa078bec",
- "model_sha256": "3d0f859ed69f583d9be5f9b0c38df0e4f5691813608b1bffc47680aca877b06b",
+ "task_sha256": "e76621fde0fbacf7f0609446322e8342fab69eadf86ee95a2b1b5250c1630da4",
+ "export_sha256": "c2e9a589f31b7e336986da45db903025e19242473c431bdce9d27f11847963be",
+ "onto_sha256": "96777f6da18c854c26c4dd063129d0929242970e8b01806b98cc781a61dc2b05",
+ "model_sha256": "e7078ab3f8d63bf3b8c3771ac5f56de2643fd5c4d0cf2dbf59c6ac1c1b553009",
  "sensors_kept": 29,
  "sensors_dropped": {},
  "sites_moved": {},

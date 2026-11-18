@@ -197,3 +197,65 @@ def test_rear_legs_1_の股のサーボのリード線は胴体の空洞へ抜�
     assert y0 >= -(31.0 - w) - 1e-9          # 側面の壁は切らない
     hc_yb = _servo(log, "hip_servo_hc").origin[1]
     assert y1 <= hc_yb - 9.9 - c - 4.0 + 1e-9  # タブの下 4 mm より下（股サーボのタブの棚を残す）
+
+
+# --- 3本足の胴体の後ろの空洞（Task 4 の追加。実ビルドで chassis + cover が mini-r2 より 24 g 重かった） ---
+
+def _servo_tab_tip_x(log, label):
+    from test_design_tail import _servo, _servo_x_roll180
+
+    return _servo_x_roll180(_servo(log, label).origin[0])["tabs"][1]
+
+
+def test_rear_legs_1_は胴体の後ろも空洞にし_ボルトの柱と台の肉を残す():
+    from test_design_tail import _extent
+
+    c, w, W2 = 0.5, 2.0, 31.0
+    _, log = run_design(**MINI_R2_P7_EFF, rear_legs=1.0, clearance=c, wall=w)
+    (chassis,) = [t for t in of_kind(log, "part.cut") if t.label == "chassis"]
+    tools = chassis.args[0].args[1]
+    cav_x = 40.0 - (22.8 - 8.75) - c - 6.0
+    # 後ろの空洞: hc の股サーボのタブの収納部（先端 + すきま）から壁 1枚ぶん前から、四足の空洞の後ろの端まで。
+    # 後ろのボルトの柱（円柱）を切り抜いた形（part.cut）で、左右は側面の壁の内側まで。
+    rear = [t for t in tools if t.kind == "part.cut" and t.args[0].kind == "part.box"]
+    assert len(rear) == 1
+    box = rear[0].args[0]
+    x0, x1 = _extent(box, 0)
+    assert x0 == pytest.approx(_servo_tab_tip_x(log, "hip_servo_hc") + c + w)
+    assert x1 >= -cav_x
+    assert _extent(box, 1) == pytest.approx((-(W2 - w), W2 - w))
+    pillars = [t for t in rear[0].args[1] if t.kind == "part.cylinder"]
+    assert [p.kwargs["origin"][:2] for p in pillars] == [[-(40.0 + (8.75 - 22.8 / 2.0)), 0.0]]
+    # 股サーボの +Y 側（台もサーボも無い所）は、胴体の後ろの壁の内側まで空洞にする
+    side = [t for t in tools if t.kind == "part.box" and _extent(t, 0)[0] == pytest.approx(-(96.0 / 2.0 - w))]
+    assert len(side) == 1
+    hc_yb = __import__("test_design_tail")._servo(log, "hip_servo_hc").origin[1]
+    assert _extent(side[0], 1)[0] == pytest.approx(hc_yb + c + w)
+
+
+def _collisions(log, comp_label):
+    bodies = [t for t in of_kind(log, "assembly.body") if t.args[0].label == comp_label]
+    assert len(bodies) == 1, comp_label
+    col = bodies[0].kwargs.get("collision")
+    return [] if col is None else (list(col) if isinstance(col, list) else [col])
+
+
+def _box_range(col, axis):
+    centre = col.kwargs["offset"]["position"][axis]
+    half = col.kwargs["size_mm"][axis] / 2.0
+    return centre - half, centre + half
+
+
+def test_rear_legs_1_の台に衝突の箱がある():
+    from test_design_tail import _extent
+
+    _, log = run_design(**MINI_R2_P7_EFF, rear_legs=1.0)
+    cols = _collisions(log, "chassis")
+    assert [col.label for col in cols] == ["body_box", "hc_mount_box"]
+    fuses = [t for t in of_kind(log, "part.fuse") if t.args and isinstance(t.args[0], list)
+             and t.args[0] and t.args[0][0].kind == "part.box" and t.args[0][0].args[0] == 96.0]
+    mount = fuses[0].args[0][1]
+    box = cols[1]
+    assert box.args[0] == "box" and box.kwargs.get("contact_group", 0) == 0  # 胴体と同じ
+    for axis in (0, 1, 2):
+        assert _box_range(box, axis) == pytest.approx(_extent(mount, axis))

@@ -10,6 +10,7 @@
       <inertial pos="-0.0103012173 1.3518001e-12 0.0830855273" quat="0 0.999994308 -7.20508133e-11 0.00337397476" mass="0.125672942" diaginertia="4.32783249e-05 0.000206681894 0.000236106103" />
       <joint name="c_chassis/free" type="free" />
       <geom name="c_chassis/collision0" size="0.048 0.031 0.012" pos="0 0 0.0832329" type="box" conaffinity="1" solref="0.004" contype="0" condim="1" priority="1" />
+      <geom name="c_chassis/collision1" size="0.020375 0.0086 0.01445" pos="-0.066375 0 0.0807829" type="box" conaffinity="1" solref="0.004" contype="0" condim="1" priority="1" />
       <body name="c_imu">
         <inertial pos="0 0.0205 0.0747329" quat="0 0.707107 0 0.707107" mass="0.002" diaginertia="1.16167e-07 7.5e-08 4.41667e-08" />
       </body>

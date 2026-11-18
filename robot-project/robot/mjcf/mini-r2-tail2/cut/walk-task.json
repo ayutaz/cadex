@@ -335,11 +335,11 @@
  "goal_algorithm": "random.Random(seed) continuing after the disturbance draws: for each goal entry in bundle order, for each of its segments in order -- segment k holds from control step k * resample_steps, and a goal with resample_steps 0 has one segment held for the episode -- a value or a speed is uniform(low, high); a point is up to `attempts` tries of uniform(low, high) for each of its joints in order, written over the reset keyframe's qpos, then mj_forward, then the tip point xpos[body_id] + xmat[body_id] * local_m, accepted when its z is at least min_z_m (if stated), no contact joins a geom pair outside resting_contacts, and it lies at least min_separation_m from the previous segment's point (start_m for the first); the accepted point times scale is the goal, and a segment with no accepted try refuses the episode. An unseeded episode holds `nominal`. The observation at control step s and the reward of the state that step lands on both read segment min(s // resample_steps, segments - 1); on a phase goal, the drawn value is the start phase of its segment, and at control step s the angle is start + radians_per_step * (s - k * resample_steps) for the segment k in force; its channels are sin(angle) then cos(angle)",
  "label": "walk",
  "model": {
-  "bytes": 12535,
+  "bytes": 12884,
   "mujoco_version": "3.10.0",
   "output": "model",
   "path": "outputs/cut.xml",
-  "sha256": "92efb298dbad36129b0b7d316b94d608cacdd2382ee1c70912955ec369914e3a"
+  "sha256": "1fa0d6060c4cdfb49e0298ab9e31721456369a6c14705c92fcf4dec1bea380b2"
  },
  "mujoco_version": "3.10.0",
  "observations": [

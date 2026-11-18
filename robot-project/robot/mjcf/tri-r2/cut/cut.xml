@@ -7,9 +7,10 @@
   <worldbody>
     <geom name="environment/floor" size="0 0 0.1" type="plane" solref="0.004" contype="1" conaffinity="0" />
     <body name="c_chassis">
-      <inertial pos="-0.00797836016 -0.0041229233 0.0834614334" quat="0.995810655 0.00645718834 0.00149441492 0.0911987441" mass="0.117344342" diaginertia="4.34364084e-05 0.000197307027 0.000227956245" />
+      <inertial pos="-0.0030740256 -0.00576566687 0.083456575" quat="0.993701633 0.0120963757 0.00216909017 0.111382394" mass="0.097195742" diaginertia="3.40788732e-05 0.000184188499 0.000206859082" />
       <joint name="c_chassis/free" type="free" />
       <geom name="c_chassis/collision0" size="0.048 0.031 0.012" pos="0 0 0.0832329" type="box" conaffinity="1" solref="0.004" contype="0" condim="1" priority="1" />
+      <geom name="c_chassis/collision1" size="0.0158 0.01545 0.012" pos="-0.0618 -0.0232 0.0832329" type="box" conaffinity="1" solref="0.004" contype="0" condim="1" priority="1" />
       <body name="c_imu">
         <inertial pos="0 0.0205 0.0747329" quat="0 0.707107 0 0.707107" mass="0.002" diaginertia="1.16167e-07 7.5e-08 4.41667e-08" />
       </body>
