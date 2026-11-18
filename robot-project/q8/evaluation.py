@@ -155,7 +155,7 @@ def evaluate_fixed_gait(model: mujoco.MjModel, task: dict, *, target_fn: Callabl
                         seeds: list[int], seconds: float, command_mm_s: float, feet: list[str] | None = None,
                         control_hz: int = 50, rated_fraction: float = 0.4) -> dict:
     dyn, ev = cadex_modules()
-    feet = feet or success_spec(task)["feet"]
+    feet = feet or success_spec(task, model)["feet"]
     rig = dyn.evaluation_rig(model, feet=feet)
     predicates = task["success"]["predicates"]
     results = []

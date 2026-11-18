@@ -101,7 +101,7 @@ def joint_ids(model: mujoco.MjModel) -> dict[str, dict[str, int]]:
 
 def joint_ranges(model: mujoco.MjModel) -> dict[str, tuple[float, float]]:
     return {n: tuple(float(v) for v in model.jnt_range[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, n)])
-            for n in JOINTS}
+            for n in model_joints(model)}
 
 
 def quat_tilt_deg(q: np.ndarray) -> float:

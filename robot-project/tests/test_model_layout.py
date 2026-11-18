@@ -118,3 +118,39 @@ def test_今の機体では今と同じ():
     assert now["feet_xy_mm"] == report["feet_xy_mm"]
     assert now["static_estimate"] == report["static_estimate"]
     assert now["sim_hold"]["mean_abs_torque_nmm"] == pytest.approx(report["sim_hold"]["mean_abs_torque_nmm"], abs=0.1)
+
+
+def test_joint_ranges_と_channels_は3脚としっぽ付きの関節を読む():
+    from q8.evaluation import _channels
+    from q8.robot import joint_ranges
+
+    tail = _model(["lf", "rf", "lh", "rh"], tail=True)
+    ranges = joint_ranges(tail)
+    assert set(ranges) == set(model_joints(tail))
+    assert ranges["tail_yaw"] == pytest.approx((math.radians(-1.0), math.radians(1.0)))
+    assert [c["joint"] for c in _channels(tail, 0.4)][-2:] == ["tail_yaw", "tail_pitch"]
+    tri = _model(["lf", "rf", "hc"])
+    assert set(joint_ranges(tri)) == {"hip_lf", "knee_lf", "hip_rf", "knee_rf", "hip_hc", "knee_hc"}
+    assert len(_channels(tri, 0.4)) == 6
+
+
+def test_評価が使う足は3脚のモデルで3本になる(monkeypatch):
+    import q8.evaluation as ev
+
+    seen = {}
+
+    class Stop(Exception):
+        pass
+
+    class Dyn:
+        @staticmethod
+        def evaluation_rig(model, feet):
+            seen["feet"] = list(feet)
+            raise Stop
+
+    monkeypatch.setattr(ev, "cadex_modules", lambda: (Dyn, None))
+    task = {"success": {"predicates": [], "seeds": []}}
+    with pytest.raises(Stop):
+        ev.evaluate_fixed_gait(_model(["lf", "rf", "hc"]), task, target_fn=lambda t: {}, seeds=[0],
+                               seconds=0.1, command_mm_s=0.0)
+    assert seen["feet"] == ["c_foot_lf", "c_foot_rf", "c_foot_hc"]
