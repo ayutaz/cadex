@@ -100,6 +100,14 @@ def test_fewest_support_は脚を最も多く上げた場合を出す():
     assert fewest_support(three) == three["static_estimate"]["2脚支持（1脚を上げた最悪）"]
 
 
+def test_fewest_support_は並び順に頼らない():
+    # 支える脚の最も少ない場合 = 足1本あたりの荷重が最大の場合。static_estimate の並びを逆にしても同じものを選ぶ
+    for legs, label in ((["lf", "rf", "lh", "rh"], "2脚支持（トロット）"), (["lf", "rf", "hc"], "2脚支持（1脚を上げた最悪）")):
+        rep = static_report(_model(legs), 0.2, 0.1, settle_s=0.01)
+        reordered = {**rep, "static_estimate": dict(reversed(list(rep["static_estimate"].items())))}
+        assert fewest_support(reordered) == rep["static_estimate"][label], legs
+
+
 def test_dr_bundle_は8個でないアクチュエータにも遅れを入れる():
     xml = dr_bundle.dr_model_xml(_xml(["lf", "rf", "lh", "rh"], tail=True).replace(
         '<body name="c_chassis" pos="0 0 0.08">', '<body name="c_chassis">'))

@@ -278,12 +278,53 @@ def _check_layout(lay):
     assert set(lay["verdict_voids"].values()) <= {(c["part"], c["insert"]) for c in lay["void_checks"]}
 
 
-def test_layout_の既定は今の4脚の定数と同じ():
+# 4脚の値を、layout() を入れる前（コミット 75a3bb623）の定数から写して固定する。
+# 部品・プレート・差し込み・リード線・判定のキーは、Git にある mini-r2 の印刷計画（そのときの定数で作った出力）と比べる。
+OLD_STEPS = [  # (key, title, detail, new)
+    ("step1_hip_servos", "股サーボ 4個を chassis に入れる", False,
+     ["hip_servo_lf", "hip_servo_rf", "hip_servo_lh", "hip_servo_rh"]),
+    ("step2_cover", "cover を被せて M2x10 を 2本締める", False, ["cover", "body_bolt_0", "body_bolt_1"]),
+    ("step3_knee_servo", "膝サーボを上腿に入れる（左前脚、外側から見た図）", True, ["knee_servo_lf"]),
+    ("step3b_knee_servo_inside", "膝サーボを上腿に入れる（左前脚、内側から見た図）", True, ["knee_servo_lf"]),
+    ("step4_hip_horn", "股ホーンを上腿に留め、股サーボの軸に差す（左前脚）", True, ["hip_horn_lf", "thigh_lf"]),
+    ("step5_thighs", "4本の上腿を付けた状態", False,
+     ["hip_horn_lf", "hip_horn_rf", "hip_horn_lh", "hip_horn_rh", "thigh_lf", "thigh_rf", "thigh_lh", "thigh_rh",
+      "knee_servo_lf", "knee_servo_rf", "knee_servo_lh", "knee_servo_rh"]),
+    ("step6_shins", "膝ホーンと下腿を付ける", False,
+     ["knee_horn_lf", "knee_horn_rf", "knee_horn_lh", "knee_horn_rh", "shin_lf", "shin_rf", "shin_lh", "shin_rh"]),
+    ("step7_feet", "足先を付ける（滑り止めシートは描いていない）", False, ["foot_lf", "foot_rf", "foot_lh", "foot_rh"]),
+    ("step8_esp32", "完成形（ESP32-S3 を cover 上面のポケットに載せた場合）", False, ["esp32"]),
+    ("stand_side", "立った姿勢を左から見た図（ホーンを付ける角度の目安）", True,
+     ["thigh_lf", "thigh_rf", "thigh_lh", "thigh_rh", "shin_lf", "shin_rf", "shin_lh", "shin_rh"]),
+]
+MINI_R2_PLAN = ROOT / "artifacts" / "mini-r2" / "assembly" / "print_plan.json"
+
+
+def test_layout_の既定は_layout_を入れる前の4脚と同じ():
     lay = ag.layout()
-    assert lay["printed"] == ag.PRINTED_PARTS and lay["all"] == ag.ALL_PARTS
-    assert lay["plates"] == ag.PLATES and lay["steps"] == ag.STEPS
-    assert lay["fit_checks"] == ag.FIT_CHECKS and lay["void_checks"] == ag.VOID_CHECKS
-    assert lay["verdict_fits"] == ag.VERDICT_FITS and lay["verdict_voids"] == ag.VERDICT_VOIDS
+    plan = json.loads(MINI_R2_PLAN.read_text())
+    assert lay["printed"] == list(plan["parts"])
+    assert len(lay["printed"]) == 14
+    assert [(p["key"], p["title"], p["parts"]) for p in lay["plates"]] == \
+        [(p["key"], p["title"], p["parts"]) for p in plan["plates"]]
+    assert [(c["part"], c["insert"], list(c["direction"]), c["label"]) for c in lay["fit_checks"]] == \
+        [(c["part"], c["insert"], c["direction"], c["label"]) for c in plan["fit_checks"]]
+    assert [(c["part"], c["insert"], c["label"]) for c in lay["void_checks"]] == \
+        [(c["part"], c["insert"], c["label"]) for c in plan["enclosed_voids"]]
+    assert list(lay["verdict_fits"]) + list(lay["verdict_voids"]) == list(plan["assembly_verdict"])
+    assert lay["verdict_fits"] == {
+        "hip_servo_into_chassis": ("chassis", "hip_servo_lf"), "cover_closes": ("cover", "hip_servo_lf"),
+        "knee_servo_into_thigh": ("thigh_lf", "knee_servo_lf"), "hip_horn_into_thigh": ("thigh_lf", "hip_horn_lf"),
+        "knee_horn_into_shin": ("shin_lf", "knee_horn_lf")}
+    assert lay["verdict_voids"] == {"hip_lead_exits": ("chassis+cover", "hip_servo_lf"),
+                                    "knee_lead_exits": ("thigh_lf", "knee_servo_lf")}
+    assert [(s["key"], s["title"], bool(s.get("detail")), s["new"]) for s in lay["steps"]] == OLD_STEPS
+    assert lay["all"] == lay["printed"] + [f"{k}_{g}" for k in ("hip_servo", "knee_servo", "hip_horn", "knee_horn")
+                                           for g in ("lf", "rf", "lh", "rh")] + \
+        ["body_bolt_0", "body_bolt_1", "esp32", "imu"]
+    # モジュールの定数は既定の layout と同じもの
+    assert (ag.PRINTED_PARTS, ag.ALL_PARTS, ag.PLATES, ag.STEPS) == (lay["printed"], lay["all"], lay["plates"],
+                                                                     lay["steps"])
     _check_layout(lay)
 
 
