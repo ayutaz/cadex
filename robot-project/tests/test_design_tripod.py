@@ -178,3 +178,22 @@ def test_3本足は_mini_r2_の値でも作れる():
     assert hip[0] == pytest.approx(-(96.0 / 2.0 + R + G))
     (cap,) = [t for t in of_kind(log, "assembly.collision") if t.label == "thigh_cap_hc"]
     assert abs(cap.kwargs["offset"]["position"][1]) <= 0.5
+
+
+def test_rear_legs_1_の股のサーボのリード線は胴体の空洞へ抜ける():
+    # 四足では後ろの股サーボの逃げが胴体の空洞に届く。3本足の hc は股軸が胴体の後端より後ろなので、逃げの先は
+    # 胴体の壁の中で閉じる。空洞まで通り道を開ける（胴体の側面の壁は残す）
+    from test_design_tail import _extent, _lead_channel, _servo, _servo_x_roll180
+
+    c, w = 0.5, 2.0
+    _, log = run_design(**MINI_R2_P7_EFF, rear_legs=1.0, clearance=c, wall=w)
+    hc = _servo_x_roll180(_servo(log, "hip_servo_hc").origin[0])
+    lead_end = hc["case"][1] + c + 6.0
+    cav_x = 40.0 - (22.8 - 8.75) - c - 6.0  # 胴体の空洞の後ろの端は -cav_x
+    assert lead_end < -cav_x
+    chans = _lead_channel(log, lead_end, -cav_x)
+    assert len(chans) == 1
+    y0, y1 = _extent(chans[0], 1)
+    assert y0 >= -(31.0 - w) - 1e-9          # 側面の壁は切らない
+    hc_yb = _servo(log, "hip_servo_hc").origin[1]
+    assert y1 <= hc_yb - 9.9 - c - 4.0 + 1e-9  # タブの下 4 mm より下（股サーボのタブの棚を残す）

@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 import xml.etree.ElementTree as ET
 
 import numpy as np
@@ -121,3 +122,21 @@ def test_bom_has_a_battery_line_only_when_the_design_carries_one(tmp_path):
     assert with_bat["standin/battery"]["qty"] == 1
     without = {l["item"] for l in bom([], pr, prices, pla_density=800.0)["purchased"]}
     assert "standin/battery" not in without          # 電池なし（battery_mass_g=0）の機体は行を出さない
+
+
+def test_しっぽのリンクは印刷部品で先端のおもりは購入品(tmp_path):
+    # 前は tail_link_* が印刷部品に入らず、部品表に値段の分からない代用品（standin/tail_link_1）として載った
+    _box(tmp_path / "tail_link_1.stl", (80, 25, 6.5))
+    _box(tmp_path / "tail_link_2.stl", (70, 6.5, 25))
+    _box(tmp_path / "tail_tip.stl", (10, 10, 10))
+    pr = printability(tmp_path, {"wall": 2.0, "link_thickness": 6.5, "clearance": 0.5})
+    assert set(pr["parts"]) == {"tail_link_1", "tail_link_2"}
+    assert {p["material"] for p in pr["parts"].values()} == {"PLA"}
+    inv = [{"component": "c_" + n, "output": n, "family": "", "sku": "", "appearance": "shell", "volume_mm3": 1.0}
+           for n in ("tail_link_1", "tail_link_2", "tail_tip")]
+    prices = json.loads((Path(__file__).resolve().parents[1] / "configs" / "bom_prices.json").read_text())
+    path = tmp_path / "prices.json"
+    path.write_text(json.dumps(prices))
+    by = {l["item"]: l for l in bom(inv, pr, path, pla_density=800.0)["purchased"]}
+    assert not {"standin/tail_link_1", "standin/tail_link_2"} & set(by)
+    assert by["standin/tail_tip"]["unit_price_jpy"] is not None

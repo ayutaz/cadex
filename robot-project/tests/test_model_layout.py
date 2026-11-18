@@ -11,7 +11,7 @@ import mujoco
 import pytest
 
 from q8 import dr_bundle
-from q8.physics import static_report
+from q8.physics import fewest_support, static_report
 from q8.robot import JOINTS, LEGS, model_feet, model_joints, model_legs
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -88,6 +88,15 @@ def test_static_report_は3脚で支持多角形を三角形にする():
     assert set(outside["feet_xy_mm"]) == {"lf", "rf", "hc"}
     labels = list(outside["static_estimate"])
     assert any("1脚を上げた最悪" in label for label in labels)
+
+
+def test_fewest_support_は脚を最も多く上げた場合を出す():
+    # 判定（build_robot の trot_static_torque_within_rated）と比較表（q8.compare）が使う、支える脚の最も少ない場合。
+    # 4脚ならトロット（2脚支持）、3脚なら1脚を上げた最悪（2脚支持）。
+    four = static_report(_model(["lf", "rf", "lh", "rh"]), 0.2, 0.1, settle_s=0.01)
+    assert fewest_support(four) == four["static_estimate"]["2脚支持（トロット）"]
+    three = static_report(_model(["lf", "rf", "hc"]), 0.2, 0.1, settle_s=0.01)
+    assert fewest_support(three) == three["static_estimate"]["2脚支持（1脚を上げた最悪）"]
 
 
 def test_dr_bundle_は8個でないアクチュエータにも遅れを入れる():

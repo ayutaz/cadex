@@ -78,7 +78,11 @@ class FakeLib:
         self._log = log
 
     def servo(self, sku, origin=None, direction=None, roll_degrees=0.0, label=None):
-        return FakeServo(self._log, label)
+        sv = FakeServo(self._log, label)
+        # 置き場所は kwargs に入れない（宣言の列 signature を変えないため）。属性として持つ
+        sv.body.origin = origin
+        sv.body.roll_degrees = roll_degrees
+        return sv
 
     def bolt(self, size, length, origin=None, direction=None, label=None):
         body = Thing("lib.bolt", (size, length), {"label": label})

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from statistics import mean
 
+from q8.physics import fewest_support
+
 # Phase 7 で求められた評価項目と CadexEvaluation の指標の対応
 KEY_METRICS = {
     "completed": "最後まで転倒・沈み込みなし（1=成功）",
@@ -41,7 +43,7 @@ def design_summary(report: dict) -> dict:
     ph = report["physics"]
     return {"total_mass_g": ph["total_mass_g"], "com_height_mm": ph["com_height_mm"],
             "support_margin_mm": ph["support_margin_mm"],
-            "trot_rated_ratio": ph["static_estimate"]["2脚支持（トロット）"]["rated_ratio"],
+            "trot_rated_ratio": fewest_support(ph)["rated_ratio"],
             "hold_rated_ratio": ph["sim_hold"]["worst_rated_ratio"],
             "thigh_mm": ph["leg"]["thigh_mm"], "shin_mm": ph["leg"]["shin_mm"],
             "bom_jpy": report["bom"]["estimated_total_jpy"]}

@@ -28,7 +28,7 @@ from q8 import cadex  # noqa: E402
 from q8.clearance import summarise  # noqa: E402
 from q8.manufacturing import bom, printability  # noqa: E402
 from q8.paths import ARTIFACTS, DESIGN_SCRIPT, MESHES, MJCF_DIR, PROJECT, cadex_project  # noqa: E402
-from q8.physics import static_report  # noqa: E402
+from q8.physics import fewest_support, static_report  # noqa: E402
 from q8.robot import model_joints, model_legs  # noqa: E402
 from q8.portable import write_json  # noqa: E402
 from q8.render import render_views  # noqa: E402
@@ -154,7 +154,8 @@ def main() -> int:
                                      ("all_parts_fit_bed", "wall_at_least_4_perimeters", "link_plate_at_least_5mm")),
         "com_inside_support_polygon": phys["support_margin_mm"] > 10.0,
         "stands_in_sim": phys["sim_hold"]["tilt_deg"] < 3.0 and phys["sim_hold"]["body_drop_mm"] < 10.0,
-        "trot_static_torque_within_rated": phys["static_estimate"]["2脚支持（トロット）"]["rated_ratio"] <= 1.0,
+        # 支える脚の最も少ない場合（4脚はトロットの2脚支持、3脚は1脚を上げた2脚支持）
+        "trot_static_torque_within_rated": fewest_support(phys)["rated_ratio"] <= 1.0,
         "within_budget_jpy_10000": report["bom"]["within_budget"],
     }
     out_dir = ARTIFACTS / args.variant

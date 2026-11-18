@@ -168,7 +168,10 @@ for name, sx, sy, hx_leg, yb in LEG_SPECS:
 
 # --- しっぽの付け根（tail_dof >= 1） ---
 # 左右のサーボ: 出力軸はワールドの +Z（上）、ケースの上面（軸の基準点）は胴体の上面と同じ高さ、左右の中央。
-# ロール 180 度でケースは軸から前（胴体の側）へ伸び、リード線の逃げは胴体の後ろの壁へ入る。
+# ロール 180 度でケースは軸から前（胴体の側）へ伸び、リード線の逃げは前（胴体の側）へ向く。
+# 軸の前後の位置: ケースの前端が胴体の後端に来る位置か、タブの先が後ろの股サーボのケースから
+# すきま 2つと壁 1枚ぶん離れる位置の、後ろのほう（mini-r2 の値では後者。前者だとタブが股サーボに重なる）。
+# リード線の逃げの先から後ろの股サーボの収納部まで、通り道を開ける（線は股サーボの収納部から胴体の空洞へ）。
 # サーボは胴体の後端に足した台（箱）の収納部に入る。台は胴体と一体（シャーシとカバーに分かれる）。
 TAIL_DOF = int(round(p.tail_dof))
 if TAIL_DOF not in (0, 1, 2):
@@ -179,9 +182,20 @@ H_SHAFT = (TAB_HALF + CASE_CX) + c + w      # 軸の側（サーボのローカ�
 H_LEAD = (CASE_L - FRONT) + c + LEAD + w    # ケース後端の側（ローカル -X、リード線の余裕まで）
 HW = CASE_W / 2.0 + c + w                   # 台・ハウジングの半幅
 if TAIL:
-    TY = [-BL / 2.0 - (CASE_L - FRONT), 0.0, z_top]   # 左右の軸の基準点（ケース後端が胴体の後端に来る）
+    rear_hip_case = -(p.hip_x + FRONT)                       # 後ろの股サーボ（ロール 180 度）のケースの後ろの面
+    ty_x = min(-BL / 2.0 - (CASE_L - FRONT), rear_hip_case - 2.0 * c - w - (TAB_HALF - CASE_CX))
+    TY = [ty_x, 0.0, z_top]   # 左右の軸の基準点
     tail_yaw_sv = lib.servo(SKU, origin=tuple(TY), direction=(0, 0, 1), roll_degrees=180.0, label="tail_yaw_servo")
     bays.append(tail_yaw_sv.bay(clearance=c, lead_room=LEAD, ledge=4.0))
+    # リード線の通り道: 逃げ（ケースの前の面から LEAD、タブの下 4 mm より下）の先から、股サーボの収納部へ 1 mm 入るまで。
+    # 床（胴体の底の肉厚）は残す。
+    lead_x0 = TY[0] + (CASE_L - FRONT) + c + LEAD - 1.0
+    lead_x1 = rear_hip_case - c + 1.0
+    if lead_x1 > lead_x0:
+        lead_z0 = z_bot + w
+        lead_z1 = z_top + S["mount_hole_z_mm"] - c - 4.0
+        bays.append(part.box(lead_x1 - lead_x0, CASE_W + 2.0 * c, lead_z1 - lead_z0,
+                             origin=[lead_x0, -(CASE_W / 2.0 + c), lead_z0]))
     # 前端は胴体の後端から肉厚ぶん中へ重ねる（胴体の箱と確実につながる）
     tail_mount = part.box((-BL / 2.0 + w) - (TY[0] - H_SHAFT), 2.0 * HW, p.body_height,
                           origin=[TY[0] - H_SHAFT, -HW, z_bot])
@@ -198,6 +212,14 @@ if TRI:
 cav_x = p.hip_x - (CASE_L - FRONT) - c - LEAD
 cavity = part.box(2.0 * cav_x, 2.0 * (W2 - w), p.body_height - 2.0 * w,
                   origin=[-cav_x, -(W2 - w), z_bot + w])
+if TRI:
+    # 後ろの股サーボ hc のリード線の通り道: 逃げ（ケースの前の面から LEAD）の先から胴体の空洞へ 1 mm 入るまで。
+    # 四足の後ろの股サーボは逃げが空洞に届くが、hc は股軸が胴体の後端より後ろなので届かない。
+    # 左右は胴体の側面の壁の内側から、タブの下 4 mm まで（逃げと同じ上限）。高さはサーボの収納部の幅。
+    hc_lead_x0 = HC_X + (CASE_L - FRONT) + c + LEAD - 1.0
+    hc_lead_y1 = HC_YB + S["mount_hole_z_mm"] - c - 4.0
+    bays.append(part.box(-cav_x + 1.0 - hc_lead_x0, hc_lead_y1 + (W2 - w), CASE_W + 2.0 * c,
+                         origin=[hc_lead_x0, -(W2 - w), ZH - CASE_W / 2.0 - c]))
 
 # 制御基板 ESP32-S3-DevKitC-1 の代用品（寸法は推定: 63 x 25.5 x 4 mm）。上面の浅いポケットに載る。
 ESP_L, ESP_W, ESP_H = 63.0, 25.5, 4.0
@@ -219,8 +241,20 @@ for i, bx in enumerate((p.hip_x + CASE_CX, -(p.hip_x + CASE_CX))):
         part.cylinder(lib.tap_drill("m2") / 2.0, THREAD_IN + 1.0, origin=[bx, 0.0, ZH - THREAD_IN - 1.0]),
     ]
 body_cut = part.cut(hull, bays + [cavity, esp_pocket] + bolt_holes)
-upper_half = part.box(BL + 2, 2.0 * W2 + 2, p.body_height, origin=[-BL / 2.0 - 1, -W2 - 1, ZH])
-lower_half = part.box(BL + 2, 2.0 * W2 + 2, p.body_height, origin=[-BL / 2.0 - 1, -W2 - 1, ZH - p.body_height])
+if TAIL or TRI:
+    # しっぽ・3本足の台は胴体の箱の外へはみ出すので、分ける箱を台まで広げる（はみ出しが両方に残らないように）
+    sx0, sy0 = -BL / 2.0, -W2
+    if TAIL:
+        sx0 = min(sx0, TY[0] - H_SHAFT)
+    if TRI:
+        sx0 = min(sx0, HC_X - H_SHAFT)
+        sy0 = min(sy0, HC_YB - hc_depth)
+    split = (BL / 2.0 - sx0 + 2.0, W2 - sy0 + 2.0)
+    upper_half = part.box(split[0], split[1], p.body_height, origin=[sx0 - 1.0, sy0 - 1.0, ZH])
+    lower_half = part.box(split[0], split[1], p.body_height, origin=[sx0 - 1.0, sy0 - 1.0, ZH - p.body_height])
+else:
+    upper_half = part.box(BL + 2, 2.0 * W2 + 2, p.body_height, origin=[-BL / 2.0 - 1, -W2 - 1, ZH])
+    lower_half = part.box(BL + 2, 2.0 * W2 + 2, p.body_height, origin=[-BL / 2.0 - 1, -W2 - 1, ZH - p.body_height])
 chassis = part.cut(body_cut, upper_half, label="chassis")
 cover = part.cut(body_cut, lower_half, label="cover")
 
@@ -401,7 +435,8 @@ if TAIL:
     else:
         # 上下のサーボ: ケース（高さ CASE_H）を y = 0 の中央に。軸の高さはケースが1本目の板の上に載る位置。
         TP_Y = CASE_H / 2.0                                  # 上下のサーボのケース上面（+Y）
-        TP = [-BL / 2.0 - g - H_LEAD, TP_Y, tz0 + t + c + CASE_W / 2.0]
+        # 前後: ハウジングの前端が、左右のサーボのケースの前の面から joint_gap 後ろ（左右の軸と一緒に動く）
+        TP = [TY[0] + (CASE_L - FRONT) - g - H_LEAD, TP_Y, tz0 + t + c + CASE_W / 2.0]
         tail_pitch_sv = lib.servo(SKU, origin=tuple(TP), direction=(0, 1, 0), roll_degrees=180.0,
                                   label="tail_pitch_servo")
         tp_horn = tail_pitch_sv.horn("cross", label="tail_pitch_horn")

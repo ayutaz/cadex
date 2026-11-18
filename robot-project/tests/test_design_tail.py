@@ -204,3 +204,100 @@ def test_しっぽの先端のおもりが0なら作らない():
     assert "c_tail_tip" not in result
     assert all(t.label != "tail_tip" for t in log)
     assert "tail_tip" not in [t.args[0].label for t in of_kind(log, "assembly.randomise")]
+
+
+# --- 実ビルド（Cadex の clearance）で見つかった形の不具合（Task 4） ---
+# サーボの寸法（tests/test_design_battery.py の SERVO_SPEC）から、スクリプトと同じ式でサーボの外形を出す。
+# ロール 180 度・軸の向き ±Y または +Z のサーボのワールドの x の範囲は、ローカルの x の範囲を反転して軸の x に足す。
+_S = {"CASE_L": 22.8, "FRONT": 8.75, "TAB_HALF": 32.5 / 2.0}
+_CASE_CX = _S["FRONT"] - _S["CASE_L"] / 2.0
+
+
+def _servo_x_roll180(axis_x: float) -> dict:
+    """ロール 180 度のサーボの、ケースとタブ（耳）の x の範囲。"""
+    return {"case": (axis_x - _S["FRONT"], axis_x + (_S["CASE_L"] - _S["FRONT"])),
+            "tabs": (axis_x - (_S["TAB_HALF"] + _CASE_CX), axis_x + (_S["TAB_HALF"] - _CASE_CX))}
+
+
+def _servo(log, label):
+    (sv,) = [t for t in of_kind(log, "lib.servo") if t.label == label]
+    return sv
+
+
+def _boxes_of(shape) -> list:
+    """part.fuse / part.cut の木から、材料になる箱（part.box）を集める（cut は最初の引数だけたどる）。"""
+    if shape.kind == "part.box":
+        return [shape]
+    if shape.kind == "part.fuse":
+        return [b for s in shape.args[0] for b in _boxes_of(s)]
+    if shape.kind == "part.cut":
+        return _boxes_of(shape.args[0])
+    return []
+
+
+def _extent(box, axis: int) -> tuple[float, float]:
+    lo = box.kwargs["origin"][axis]
+    return lo, lo + box.args[axis]
+
+
+@pytest.mark.parametrize("overrides", [dict(tail_dof=1.0), dict(tail_dof=2.0), dict(rear_legs=1.0)])
+def test_胴体を上下に分ける箱は後端の台まで覆う(overrides):
+    # 前は分ける箱が胴体の箱（長さ BL + 2）の大きさのままで、しっぽ・3本足の台のはみ出した部分が
+    # chassis と cover の両方に残った（mini-r2-tail1 の実ビルドで重なり 4738 mm³）
+    _, log = run_design(**MINI_R2_P7_EFF, **overrides)
+    (chassis,) = [t for t in of_kind(log, "part.cut") if t.label == "chassis"]
+    (cover,) = [t for t in of_kind(log, "part.cut") if t.label == "cover"]
+    hull_boxes = _boxes_of(chassis.args[0])
+    assert len(hull_boxes) >= 2  # 胴体の箱と台
+    for half in (chassis.args[1], cover.args[1]):
+        for axis in (0, 1):
+            lo, hi = _extent(half, axis)
+            assert lo < min(_extent(b, axis)[0] for b in hull_boxes), (axis, half.kwargs)
+            assert hi > max(_extent(b, axis)[1] for b in hull_boxes), (axis, half.kwargs)
+
+
+@pytest.mark.parametrize("dof", [1.0, 2.0])
+def test_しっぽの左右のサーボは後ろの股サーボから離れる(dof):
+    # 前はしっぽのサーボのタブの先が胴体の中へ入り、後ろの股サーボ（lh・rh）と 42 mm³ ずつ重なった
+    c, w = 0.5, 2.0
+    _, log = run_design(**MINI_R2_P7_EFF, tail_dof=dof, clearance=c, wall=w)
+    tail = _servo_x_roll180(_servo(log, "tail_yaw_servo").origin[0])
+    for leg in ("lh", "rh"):
+        hip = _servo_x_roll180(_servo(log, "hip_servo_" + leg).origin[0])
+        # しっぽのサーボの前の端（タブの先）から、股サーボのケースの後ろの面まで、両方のすきまと壁1枚
+        assert tail["tabs"][1] + c + w + c <= hip["case"][0] + 1e-9, (tail, hip)
+
+
+def test_しっぽの上下のサーボは左右の軸と一緒に動く():
+    # 左右の軸を後ろへずらしても、上下のサーボ（1本目のリンクの上）は左右の軸からの距離を保つ
+    _, log = run_design(**MINI_R2_P7_EFF, tail_dof=2.0, joint_gap=1.0, clearance=0.5, wall=2.0)
+    ty = _servo(log, "tail_yaw_servo").origin[0]
+    tp = _servo(log, "tail_pitch_servo").origin[0]
+    h_lead = (_S["CASE_L"] - _S["FRONT"]) + 0.5 + 6.0 + 2.0
+    assert tp - ty == pytest.approx((_S["CASE_L"] - _S["FRONT"]) - 1.0 - h_lead)
+
+
+def _body_tools(log) -> list:
+    (chassis,) = [t for t in of_kind(log, "part.cut") if t.label == "chassis"]
+    body_cut = chassis.args[0]
+    return [t for t in body_cut.args[1] if t.kind == "part.box"]
+
+
+def _lead_channel(log, x_from, x_to):
+    """胴体から切る箱のうち、x_from から x_to まで（両端を含む）を通すもの。"""
+    return [b for b in _body_tools(log) if _extent(b, 0)[0] <= x_from and _extent(b, 0)[1] >= x_to]
+
+
+@pytest.mark.parametrize("dof", [1.0, 2.0])
+def test_しっぽのサーボのリード線は股サーボの収納部へ抜ける(dof):
+    # 軸を後ろへずらしたので、リード線の逃げ（ケースの前の面から 6 mm）だけでは胴体の中の収納部に届かない
+    c = 0.5
+    _, log = run_design(**MINI_R2_P7_EFF, tail_dof=dof, clearance=c, wall=2.0)
+    tail = _servo_x_roll180(_servo(log, "tail_yaw_servo").origin[0])
+    hip = _servo_x_roll180(_servo(log, "hip_servo_lh").origin[0])
+    lead_end = tail["case"][1] + c + 6.0
+    assert lead_end < hip["case"][0] - c  # 逃げだけでは届かない
+    (ch,) = _lead_channel(log, lead_end, hip["case"][0] - c)
+    # 通り道は左右の中央（しっぽのサーボの幅）で、後ろの股サーボの収納部（|y| >= 胴体の半幅 - ケースの高さ - すきま）に重なる
+    y0, y1 = _extent(ch, 1)
+    assert y0 < -(31.0 - 28.4 - c) and y1 > 31.0 - 28.4 - c

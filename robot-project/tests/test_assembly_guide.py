@@ -255,3 +255,96 @@ def test_print_plan_for_mini_r2_assembles():
     for name in ("thigh_lf", "thigh_rf", "shin_lf", "shin_rf"):
         part = plan["parts"][name]
         assert part["overhang_mm2"] == pytest.approx(part["bridge_mm2"]), name
+
+
+
+# --- 脚と関節をモデルから読む（3本足・しっぽ付きの機体） ---
+
+def _check_layout(lay):
+    """部品・プレート・組立の段の決まり（4脚の定数で確かめているのと同じこと）。"""
+    names = [n for plate in lay["plates"] for n in plate["parts"]]
+    assert sorted(names) == sorted(lay["printed"])
+    seen: set[str] = set()
+    for step in lay["steps"]:
+        assert step["new"], step["key"]
+        assert set(step["new"]) <= set(step["shown"]), step["key"]
+        assert set(step["shown"]) <= set(lay["all"]), step["key"]
+        if not step.get("detail"):
+            assert seen <= set(step["shown"]), step["key"]
+            seen |= set(step["shown"])
+    assert seen == set(lay["all"]) - {"imu"}
+    keys = {(c["part"], c["insert"]) for c in lay["fit_checks"]}
+    assert set(lay["verdict_fits"].values()) <= keys
+    assert set(lay["verdict_voids"].values()) <= {(c["part"], c["insert"]) for c in lay["void_checks"]}
+
+
+def test_layout_の既定は今の4脚の定数と同じ():
+    lay = ag.layout()
+    assert lay["printed"] == ag.PRINTED_PARTS and lay["all"] == ag.ALL_PARTS
+    assert lay["plates"] == ag.PLATES and lay["steps"] == ag.STEPS
+    assert lay["fit_checks"] == ag.FIT_CHECKS and lay["void_checks"] == ag.VOID_CHECKS
+    assert lay["verdict_fits"] == ag.VERDICT_FITS and lay["verdict_voids"] == ag.VERDICT_VOIDS
+    _check_layout(lay)
+
+
+def test_layout_は3本足の後ろの脚の部品と差し込みを並べる():
+    lay = ag.layout(["lf", "rf", "hc"])
+    _check_layout(lay)
+    assert len(lay["printed"]) == 2 + 3 * 3
+    assert {"thigh_hc", "shin_hc", "foot_hc", "hip_servo_hc", "knee_horn_hc"} <= set(lay["all"])
+    assert not {"thigh_lh", "hip_servo_rh"} & set(lay["all"])
+    # 後ろの脚 hc は左前脚と別の場所（胴体の後端の台）に付くので、差し込みとリード線を別に確かめる
+    assert {"hc_hip_servo_into_chassis", "hc_cover_closes", "hc_knee_servo_into_thigh", "hc_hip_horn_into_thigh",
+            "hc_knee_horn_into_shin"} <= set(lay["verdict_fits"])
+    assert {"hc_hip_lead_exits", "hc_knee_lead_exits"} <= set(lay["verdict_voids"])
+    assert "上腿 3本" in [p["title"] for p in lay["plates"]]
+
+
+@pytest.mark.parametrize("tail", [["tail_yaw"], ["tail_yaw", "tail_pitch"]])
+def test_layout_はしっぽの部品と差し込みを並べる(tail):
+    lay = ag.layout(list(ag.LEGS), tail)
+    _check_layout(lay)
+    assert "tail_link_1" in lay["printed"] and "tail_tip" not in lay["printed"]
+    assert {"tail_yaw_servo", "tail_yaw_horn", "tail_tip"} <= set(lay["all"])
+    assert {"tail_yaw_servo_into_body", "tail_yaw_horn_into_link"} <= set(lay["verdict_fits"])
+    assert "tail_yaw_lead_exits" in lay["verdict_voids"]
+    if "tail_pitch" in tail:
+        assert {"tail_link_2", "tail_pitch_servo", "tail_pitch_horn"} <= set(lay["all"])
+        assert {"tail_pitch_servo_into_link", "tail_pitch_horn_into_link"} <= set(lay["verdict_fits"])
+    else:
+        assert "tail_link_2" not in lay["all"]
+
+
+def test_assembly_verdict_は_layout_の判定を使う():
+    lay = ag.layout(["lf", "rf", "hc"])
+    fits = {(c["part"], c["insert"], tuple(c["direction"])): 0.0 for c in lay["fit_checks"]}
+    voids = {(c["part"], c["insert"]): 0.0 for c in lay["void_checks"]}
+    verdict = ag.assembly_verdict(_plan(fits, voids), lay)
+    assert set(verdict) == set(lay["verdict_fits"]) | set(lay["verdict_voids"]) and all(verdict.values())
+    voids[("chassis+cover", "hip_servo_hc")] = 900.0
+    assert ag.assembly_verdict(_plan(fits, voids), lay)["hc_hip_lead_exits"] is False
+
+
+@pytest.mark.skipif(not (ROOT / "robot" / "mjcf" / "tri-r2" / "model-model.xml").exists(),
+                    reason="robot/mjcf/tri-r2 が無い（scripts/build_robot.py --variant tri-r2 で生成する）")
+def test_read_layout_はモデルの脚としっぽを読む():
+    assert ag.read_layout("tri-r2")["legs"] == ["lf", "rf", "hc"]
+    lay = ag.read_layout("mini-r2-p7-eff")
+    assert lay["legs"] == list(ag.LEGS) and lay["tail"] == []
+    if (ROOT / "robot" / "mjcf" / "mini-r2-tail2" / "model-model.xml").exists():
+        assert ag.read_layout("mini-r2-tail2")["tail"] == ["tail_yaw", "tail_pitch"]
+
+
+@pytest.mark.parametrize("variant", ["mini-r2-tail2", "tri-r2"])  # tail1 の部品は tail2 に含まれる
+def test_print_plan_は3本足としっぽ付きの機体でも作れる(variant):
+    mesh_dir = ROOT / "robot" / "meshes" / variant
+    if not (mesh_dir / "chassis.stl").exists():
+        pytest.skip(f"robot/meshes/{variant} の STL が無い")
+    lay = ag.read_layout(variant)
+    plan = ag.print_plan(mesh_dir, lay)
+    json.dumps(plan)
+    assert set(plan["parts"]) == set(lay["printed"])
+    assert set(plan["assembly_verdict"]) == set(lay["verdict_fits"]) | set(lay["verdict_voids"])
+    if variant == "tri-r2":
+        # 3本足の後ろの脚（股サーボは胴体の後端の台、線は通り道から空洞へ）も組める（2026-11-18 の実ビルド）
+        assert all(plan["assembly_verdict"].values()), plan["assembly_verdict"]

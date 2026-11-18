@@ -9,6 +9,7 @@
     "standin/esp32s3": {"name": "ESP32-S3-DevKitC-1 互換ボード（N8R2 など）", "unit_price": 1800, "status": "推定"},
     "standin/imu": {"name": "IMU（MPU-6050 GY-521 / ICM-42688 などのブレークアウト）", "unit_price": 500, "status": "推定"},
     "standin/battery": {"name": "電池（未定。仮置きの質量のみ）", "unit_price": 0, "status": "未定"},
+    "standin/tail_tip": {"name": "しっぽの先端のおもり（5 g 前後の釣り用おもり・鋼球など）", "unit_price": 50, "status": "推定"},
     "extra/horn_screw": {"name": "ホーン固定ネジ（サーボ付属）", "unit_price": 0, "status": "付属"},
     "extra/self_tap_m2x6": {"name": "M2x6 タッピングネジ（ホーンと脚リンクの固定、1関節2本）", "unit_price": 5, "status": "推定"},
     "extra/wiring": {"name": "ジャンパー線・ピンヘッダ・ユニバーサル基板", "unit_price": 500, "status": "推定"},

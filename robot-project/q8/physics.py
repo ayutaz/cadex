@@ -51,6 +51,14 @@ def support_margin(com_xy: np.ndarray, feet_xy: list[np.ndarray]) -> float:
     return margin
 
 
+def fewest_support(physics: dict) -> dict:
+    """static_report の static_estimate のうち、支える脚が最も少ない場合（4脚はトロット、3脚は1脚を上げた最悪）。
+
+    static_estimate は支える脚の多い順に並ぶ（JSON を通しても順は変わらない）。
+    """
+    return list(physics["static_estimate"].values())[-1]
+
+
 def static_report(model: mujoco.MjModel, stall_nm: float, rated_nm: float, settle_s: float = 2.0) -> dict:
     data = mujoco.MjData(model)
     mujoco.mj_resetDataKeyframe(model, data, 0)
