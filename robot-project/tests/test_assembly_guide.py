@@ -138,6 +138,16 @@ def test_steps_add_parts_in_order_and_cover_the_whole_robot():
     assert seen == set(ag.ALL_PARTS) - {"imu"}  # IMU は方策を載せる段階で買うので、組立図には出さない
 
 
+def test_knee_servo_is_drawn_from_both_sides_of_the_thigh():
+    # leg_rev 2 の膝サーボは上腿の内側（左脚では -Y、胴体の側）から差し込むので、内側から見た図も要る。
+    # MuJoCo の方位角 270 は +Y（左脚の外側）から、0〜180 は -Y（左脚の内側）から見る。
+    knee = [s for s in ag.STEPS if s["new"] == ["knee_servo_lf"]]
+    azimuths = sorted(s["view"][0] for s in knee)
+    assert len(knee) == 2, [s["key"] for s in knee]
+    assert 0.0 < azimuths[0] < 180.0 and 180.0 < azimuths[1] < 360.0
+    assert all(s.get("detail") and set(s["shown"]) == {"thigh_lf", "knee_servo_lf"} for s in knee)
+
+
 def test_scene_xml_loads_in_mujoco(tmp_path):
     import mujoco
 

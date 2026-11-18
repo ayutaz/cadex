@@ -68,8 +68,11 @@ STEPS = [
      "shown": _BODY, "new": HIP_SERVOS, "view": (225.0, -35.0), "zoom": 1.05},
     {"key": "step2_cover", "title": "cover を被せて M2x10 を 2本締める",
      "shown": _CLOSED, "new": ["cover"] + BOLTS, "view": (225.0, -35.0), "zoom": 1.05},
-    {"key": "step3_knee_servo", "title": "膝サーボを上腿に入れる（左前脚）", "detail": True,
+    {"key": "step3_knee_servo", "title": "膝サーボを上腿に入れる（左前脚、外側から見た図）", "detail": True,
      "shown": ["thigh_lf", "knee_servo_lf"], "new": ["knee_servo_lf"], "view": (240.0, -20.0), "zoom": 1.15},
+    # leg_rev 2 は膝サーボを内側（胴体の側）から差し込むので、差し込み口とホーンの凹みが見える内側からも描く
+    {"key": "step3b_knee_servo_inside", "title": "膝サーボを上腿に入れる（左前脚、内側から見た図）", "detail": True,
+     "shown": ["thigh_lf", "knee_servo_lf"], "new": ["knee_servo_lf"], "view": (120.0, -20.0), "zoom": 1.15},
     {"key": "step4_hip_horn", "title": "股ホーンを上腿に留め、股サーボの軸に差す（左前脚）", "detail": True,
      "shown": _CLOSED + ["hip_horn_lf", "thigh_lf", "knee_servo_lf"], "new": ["hip_horn_lf", "thigh_lf"],
      "view": (225.0, -15.0), "zoom": 0.9},
