@@ -316,6 +316,33 @@ def fit_checks(mesh_dir: Path) -> list[dict]:
     return out
 
 
+# 組めるかの判定。fit は (part, insert) を、どれか1つの向きから当たらずに入れられれば通る。
+VOID_LIMIT_MM3 = 50.0  # これより小さい閉じた空間は、ネジ穴の底などの隅とみなす（線の出口の有無とは関係ない）
+VERDICT_FITS = {
+    "hip_servo_into_chassis": ("chassis", "hip_servo_lf"),
+    "cover_closes": ("cover", "hip_servo_lf"),
+    "knee_servo_into_thigh": ("thigh_lf", "knee_servo_lf"),
+    "hip_horn_into_thigh": ("thigh_lf", "hip_horn_lf"),
+    "knee_horn_into_shin": ("shin_lf", "knee_horn_lf"),
+}
+VERDICT_VOIDS = {
+    "hip_lead_exits": ("chassis+cover", "hip_servo_lf"),
+    "knee_lead_exits": ("thigh_lf", "knee_servo_lf"),
+}
+
+
+def assembly_verdict(plan: dict) -> dict:
+    """print_plan の fit_checks と enclosed_voids から、組立の要所ごとに組めるか（True/False）。"""
+    best: dict = {}
+    for c in plan["fit_checks"]:
+        key = (c["part"], c["insert"])
+        best[key] = min(best.get(key, 1.0), c["blocked_fraction"])
+    voids = {(v["part"], v["insert"]): v["enclosed_void_mm3"] for v in plan["enclosed_voids"]}
+    out = {name: bool(best[key] <= 0.0) for name, key in VERDICT_FITS.items()}
+    out.update({name: bool(voids[key] < VOID_LIMIT_MM3) for name, key in VERDICT_VOIDS.items()})
+    return out
+
+
 def print_plan(mesh_dir: Path) -> dict:
     """印刷部品ごとの向き・張り出し・体積と、プレートごとの配置・フィラメント量（推定）。"""
     parts = {}
@@ -343,7 +370,7 @@ def print_plan(mesh_dir: Path) -> dict:
         plates.append({**plate, "placed": placed,
                        "filament_g": round(sum(parts[n]["volume_cm3"] for n in plate["parts"])
                                            * EFFECTIVE_DENSITY_G_CM3, 6)})
-    return {
+    plan = {
         "bed_mm": list(BED_MM),
         "effective_density_g_cm3": EFFECTIVE_DENSITY_G_CM3,
         "overhang_deg": OVERHANG_DEG,
@@ -358,6 +385,10 @@ def print_plan(mesh_dir: Path) -> dict:
             np.concatenate([read_stl(mesh_dir / f"{n}.stl") for n in c["part"].split("+")]),
             read_stl(mesh_dir / f"{c['insert']}.stl")), 0)} for c in VOID_CHECKS],
     }
+    plan["assembly_verdict_note"] = ("組立の要所ごとの判定。fit はどれか1つの向きで当たる光線が 0、"
+                                     f"リード線は閉じた空間が {VOID_LIMIT_MM3:g} mm³ 未満なら True。")
+    plan["assembly_verdict"] = assembly_verdict(plan)
+    return plan
 
 
 # ---------------------------------------------------------------------------

@@ -52,6 +52,11 @@ p = params(
     w_effort_rated=num(0.3, min=0.0, max=5.0, step=0.1, label="報酬の罰の重み: 推定連続定格を超えるトルク（4乗）"),
     armature=num(20.0, unit="kg*mm2", min=0.0, max=200.0, step=1.0,
                  label="サーボのロータ慣性（出力軸換算、推定値）"),
+    # 1 は mini までの形（base・leg120・mini などの生成物はこの形）。STL で調べると脚が組めない
+    # （docs/assembly-guide.md §0: 膝サーボのタブが閉じた溝に入る、ホーンの凹みが板の中に閉じている、
+    # 膝サーボのリード線の出口が無い）。2 はそれを直した形（mini-r2）。
+    leg_rev=num(1.0, min=1.0, max=2.0, step=1.0,
+                label="脚の組立の版（1: mini まで、2: 膝サーボを上腿の内側から入れ、ホーンの凹みをサーボ側の面に開ける）"),
 )
 
 SKU = "sg90" if p.servo_sg90 >= 0.5 else "mg90s"
@@ -86,6 +91,7 @@ CASE_CX = FRONT - CASE_L / 2.0  # 軸から見たケース中心（サーボの�
 SPLINE_R = S["spline_dia_mm"] / 2.0
 SPLINE_H = S["spline_height_mm"]
 LEAD = 6.0
+R2 = p.leg_rev >= 1.5
 STALL = [e["kg_cm"] for e in S["stall_torque"] if abs(e["volts"] - VOLT) < 1e-6][0] * 98.0665
 SPEED = [e["s_per_60_deg"] for e in S["speed"] if abs(e["volts"] - VOLT) < 1e-6][0]
 
@@ -158,6 +164,65 @@ def y_slab(y_in, thick, sy):
     return lo, thick
 
 
+def horn_seat(horn):
+    """leg_rev 2: サーボのケース上面から、ホーンを受けるリンクの内面までの距離。
+
+    ホーン（CAD はスプラインの先端に載る形。腕はハブの外側の端にある）の外面から、
+    腕の厚み + すきま だけサーボ側にリンクの内面を置き、凹みをその面に開ける。
+    実物のホーンはスプラインにかぶさるので CAD よりサーボ側に寄る（最大でスプラインの高さ、推定）。
+    そのときはリンクがホーンと一緒に寄るだけで、凹みの形は変わらない。
+    """
+    return max(g, SPLINE_H + horn.spec["hub_height_mm"] - (horn.spec["arm_thickness_mm"] + c))
+
+
+def horn_pocket(horn, axis_xz, y_floor, y_face, sy):
+    """leg_rev 2: 十字ホーンが収まる凹み（すきま込み）。底は y_floor（ホーンの外面）、y_face（リンクの内面）の
+    外まで抜ける（絶対値、符号 sy 側）。ホーンの腕はワールドの X と Z に沿う（lib のホーンはサーボのロールに依らない）。
+    腕の外側の穴（半径が最大の穴）2つに、ホーン側から締めるタッピングネジの下穴を通す。
+    """
+    hs = horn.spec
+    x, z = axis_xz
+    reach = hs["arm_reach_mm"] + c
+    aw = hs["arm_width_mm"] / 2.0 + c
+    lo = y_face - 1.0
+    y0, dy = y_slab(lo, y_floor - lo, sy)
+    tools = [part.box(2.0 * reach, dy, 2.0 * aw, origin=[x - reach, y0, z - aw]),
+             part.box(2.0 * aw, dy, 2.0 * reach, origin=[x - aw, y0, z - reach]),
+             part.cylinder(hs["hub_dia_mm"] / 2.0 + c, dy, origin=[x, y0, z], direction=[0, 1, 0])]
+    r_hole = max(hs["hole_radii_mm"])
+    yh, dyh = y_slab(lo, t + 2.0, sy)
+    for dx in (-r_hole, r_hole):
+        tools.append(part.cylinder(lib.tap_drill("m2") / 2.0, dyh, origin=[x + dx, yh, z], direction=[0, 1, 0]))
+    return tools
+
+
+def knee_bay_opening(hx, y_kt_abs, depth, sy):
+    """leg_rev 2: 膝サーボを上腿の内側から差し込む通り道（上腿を真下に伸ばした姿勢で作る）。
+
+    v1 の収納部は、タブ（ケースの両端の耳）がハウジングの中の閉じた溝に入り、外からも内からも入らなかった。
+    ハウジングの内側の壁を、ケース・タブ・リード線の逃げの外形で抜き、タブはその上の材料（外側の板）に当てて、
+    タブの穴から内側へタッピングネジ（M2）で留める。リード線はこの開口から胴体の側へ出る。
+    この姿勢でサーボのローカル +X（股側）はワールドの +Z、膝軸は z = ZH - L1。
+    """
+    kz0 = ZH - L1
+    half_w = CASE_W / 2.0 + c
+    open_lo = y_kt_abs - depth - 1.0                   # ハウジングの内側の面より内
+    tab_top = S["mount_hole_z_mm"] + S["tab_thickness_mm"] + c   # ケース上面からタブの上面（すきま込み、負）
+    tab_lo = kz0 + CASE_CX - TAB_HALF - c
+    tab_hi = kz0 + CASE_CX + TAB_HALF + c
+    lead_lo = kz0 + (FRONT - CASE_L) - c - LEAD       # ケース後端の先のリード線の逃げの端
+    y0, dy = y_slab(open_lo, (y_kt_abs + tab_top) - open_lo, sy)
+    y1, dy1 = y_slab(open_lo, (y_kt_abs - CASE_H - c + 0.01) - open_lo, sy)
+    tools = [part.box(2.0 * half_w, dy, tab_hi - tab_lo, origin=[hx - half_w, y0, tab_lo]),
+             part.box(2.0 * half_w, dy1, tab_hi - lead_lo, origin=[hx - half_w, y1, lead_lo])]
+    # タブのネジの下穴: タブの上面から外へ 5 mm（外面に 2 mm 残す）
+    yp, dyp = y_slab(y_kt_abs + tab_top - 0.01, 5.0, sy)
+    for side in (-1.0, 1.0):
+        zc = kz0 + CASE_CX + side * S["hole_spacing_mm"] / 2.0
+        tools.append(part.cylinder(lib.tap_drill("m2") / 2.0, dyp, origin=[hx, yp, zc], direction=[0, 1, 0]))
+    return tools
+
+
 result = {"chassis": chassis, "cover": cover, "esp32": esp32, "imu": imu}
 if HAS_BAT:
     result["battery"] = battery
@@ -167,8 +232,8 @@ for name, sx, sy in (("lf", 1, 1), ("rf", 1, -1), ("lh", -1, 1), ("rh", -1, -1))
     hx = hip[0]
     hsv = hip_servos[name]
     hhorn = hsv.horn("cross", label="hip_horn_" + name)
-    # 上腿の板: 胴体の側面から joint_gap 離して外側に置く。
-    y_th_in = W2 + g
+    # 上腿の板: 胴体の側面から joint_gap 離して外側に置く（leg_rev 2 はホーンの腕の下に内面を置く）。
+    y_th_in = W2 + (horn_seat(hhorn) if R2 else g)
     y_lo, _ = y_slab(y_th_in, t, sy)
     y_kt = sy * (y_th_in + t)  # 膝サーボのケース上面 = 上腿の外面
     kx = hx - L1 * math.sin(th_r)
@@ -195,11 +260,14 @@ for name, sx, sy in (("lf", 1, 1), ("rf", 1, -1), ("lh", -1, 1), ("rh", -1, -1))
     HUB_H = hhorn.spec["hub_height_mm"]
     spline_gap = part.cylinder(SPLINE_R + c, SPLINE_H + HUB_H, origin=[hx, sy * W2, ZH], direction=[0, sy, 0])
     hip_access = part.cylinder(p.screw_hole / 2.0 + 0.8, t + 2.0, origin=[hx, sy * (y_th_in - 1.0), ZH], direction=[0, sy, 0])
-    thigh = part.cut(thigh_raw, [ksv.bay(clearance=c, lead_room=LEAD, ledge=4.0), hhorn.body, spline_gap, hip_access],
-                     label="thigh_" + name)
+    thigh_tools = [ksv.bay(clearance=c, lead_room=LEAD, ledge=4.0), hhorn.body, spline_gap, hip_access]
+    if R2:
+        thigh_tools += horn_pocket(hhorn, (hx, ZH), W2 + SPLINE_H + HUB_H, y_th_in, sy)
+        thigh_tools += [rot_y(tool, th, hip) for tool in knee_bay_opening(hx, abs(y_kt), depth, sy)]
+    thigh = part.cut(thigh_raw, thigh_tools, label="thigh_" + name)
 
     # 下腿: 膝ホーンの外側の板。真下に伸びた姿勢で作り、膝軸まわりに psi 回す。
-    y_sh_in = abs(y_kt) + g
+    y_sh_in = abs(y_kt) + (horn_seat(khorn) if R2 else g)
     ys_lo, _ = y_slab(y_sh_in, t, sy)
     knee = [kx, 0.0, kz]
     s_hub = part.cylinder(R, t, origin=[kx, ys_lo, kz], direction=[0, 1, 0])
@@ -212,9 +280,12 @@ for name, sx, sy in (("lf", 1, 1), ("rf", 1, -1), ("lh", -1, 1), ("rh", -1, -1))
     foot = part.sphere(p.foot_radius, center=[fx, fy, fz], label="foot_" + name)
     k_spline_gap = part.cylinder(SPLINE_R + c, SPLINE_H + HUB_H, origin=[kx, y_kt, kz], direction=[0, sy, 0])
     k_access = part.cylinder(p.screw_hole / 2.0 + 0.8, t + 2.0, origin=[kx, sy * (y_sh_in - 1.0), kz], direction=[0, sy, 0])
-    shin = part.cut(shin_raw, [khorn.body, k_spline_gap, k_access, foot], label="shin_" + name)
+    shin_tools = [khorn.body, k_spline_gap, k_access, foot]
+    if R2:
+        shin_tools += horn_pocket(khorn, (kx, kz), abs(y_kt) + SPLINE_H + HUB_H, y_sh_in, sy)
+    shin = part.cut(shin_raw, shin_tools, label="shin_" + name)
 
-    legs[name] = {"sx": sx, "sy": sy, "hip": hip, "knee": knee, "foot": [fx, fy, fz],
+    legs[name] = {"sx": sx, "sy": sy, "hip": hip, "knee": knee, "foot": [fx, fy, fz], "y_th_in": y_th_in,
                   "hsv": hsv, "hhorn": hhorn, "ksv": ksv, "khorn": khorn,
                   "thigh": thigh, "shin": shin, "foot_shape": foot}
     result["hip_servo_" + name] = hsv.body
@@ -327,7 +398,7 @@ for name in ("lf", "rf", "lh", "rh"):
     knee = L["knee"]
     ft = L["foot"]
     sy = L["sy"]
-    th_mid = [(hip[0] + knee[0]) / 2.0, sy * (W2 + g + t / 2.0), (hip[2] + knee[2]) / 2.0]
+    th_mid = [(hip[0] + knee[0]) / 2.0, sy * (L["y_th_in"] + t / 2.0), (hip[2] + knee[2]) / 2.0]
     sh_mid = [(knee[0] + ft[0]) / 2.0, ft[1], (knee[2] + ft[2]) / 2.0]
     bodies += [
         assembly.body(c_hsv, density_kg_m3=L["hsv"].spec["effective_density_kg_m3"]),

@@ -14,6 +14,7 @@ from q8.stl import write_binary_stl  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 MINI_MESHES = ROOT / "robot" / "meshes" / "mini"
+MINI_R2_MESHES = ROOT / "robot" / "meshes" / "mini-r2"
 
 
 def _box(lo, hi):
@@ -199,3 +200,48 @@ def test_print_plan_for_mini(tmp_path):
     assert ("thigh_lf", "knee_servo_lf") in voids
     total = sum(p["filament_g"] for p in plan["plates"])
     assert total == pytest.approx(0.8 * sum(parts[n]["volume_cm3"] for n in parts), rel=1e-6)
+    # mini の脚は組めない（docs/assembly-guide.md §0）: 胴体と股サーボだけが通る
+    verdict = ag.assembly_verdict(plan)
+    assert verdict == {"hip_servo_into_chassis": True, "cover_closes": True, "hip_lead_exits": True,
+                       "knee_servo_into_thigh": False, "hip_horn_into_thigh": False,
+                       "knee_horn_into_shin": False, "knee_lead_exits": False}
+    assert plan["assembly_verdict"] == verdict
+
+
+def _plan(fits, voids):
+    return {"fit_checks": [{"part": p, "insert": i, "direction": list(d), "blocked_fraction": f}
+                           for (p, i, d), f in fits.items()],
+            "enclosed_voids": [{"part": p, "insert": i, "enclosed_void_mm3": v} for (p, i), v in voids.items()]}
+
+
+def test_assembly_verdict_needs_one_open_direction_and_no_sealed_room():
+    fits = {(c["part"], c["insert"], tuple(c["direction"])): 0.0 for c in ag.FIT_CHECKS}
+    voids = {(c["part"], c["insert"]): 0.0 for c in ag.VOID_CHECKS}
+    assert all(ag.assembly_verdict(_plan(fits, voids)).values())
+    # 膝サーボは外側か内側のどちらか一方から入れば組める
+    fits[("thigh_lf", "knee_servo_lf", (0, -1, 0))] = 0.24
+    assert ag.assembly_verdict(_plan(fits, voids))["knee_servo_into_thigh"] is True
+    fits[("thigh_lf", "knee_servo_lf", (0, 1, 0))] = 0.02
+    assert ag.assembly_verdict(_plan(fits, voids))["knee_servo_into_thigh"] is False
+    # 閉じた空間が残れば、リード線は出られない
+    voids[("thigh_lf", "knee_servo_lf")] = 1035.0
+    assert ag.assembly_verdict(_plan(fits, voids))["knee_lead_exits"] is False
+
+
+@pytest.mark.skipif(not (MINI_R2_MESHES / "chassis.stl").exists(),
+                    reason="robot/meshes/mini-r2 の STL が無い（scripts/build_robot.py --variant mini-r2 で生成する）")
+def test_print_plan_for_mini_r2_assembles():
+    plan = ag.print_plan(MINI_R2_MESHES)
+    verdict = ag.assembly_verdict(plan)
+    assert all(verdict.values()), verdict
+    fits = {(c["part"], c["insert"], tuple(c["direction"])): c["blocked_fraction"] for c in plan["fit_checks"]}
+    # 膝サーボは上腿の内側から、ホーンは上腿・下腿のサーボ側（内側）の面から入る
+    assert fits[("thigh_lf", "knee_servo_lf", (0, 1, 0))] == pytest.approx(0.0)
+    assert fits[("thigh_lf", "hip_horn_lf", (0, 1, 0))] == pytest.approx(0.0)
+    assert fits[("shin_lf", "knee_horn_lf", (0, 1, 0))] == pytest.approx(0.0)
+    voids = {(v["part"], v["insert"]): v["enclosed_void_mm3"] for v in plan["enclosed_voids"]}
+    assert voids[("thigh_lf", "knee_servo_lf")] < 50.0
+    # 印刷部品はベッドに載り、上腿・下腿はサポート無し（張り出しは橋渡しだけ）で刷れる向きがある
+    for name in ("thigh_lf", "thigh_rf", "shin_lf", "shin_rf"):
+        part = plan["parts"][name]
+        assert part["overhang_mm2"] == pytest.approx(part["bridge_mm2"]), name

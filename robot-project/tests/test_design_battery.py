@@ -19,6 +19,7 @@ DESIGN = Path(__file__).resolve().parents[1] / "robot" / "design" / "quadruped8.
 SERVO_SPEC = {
     "body_length_mm": 22.8, "body_width_mm": 12.2, "case_height_mm": 28.4, "overall_tab_length_mm": 32.5,
     "shaft_offset_from_front_mm": 8.75, "spline_dia_mm": 4.9, "spline_height_mm": 4.0,
+    "tab_thickness_mm": 2.4, "hole_spacing_mm": 29.0, "mount_hole_z_mm": -9.9,
     "stall_torque": [{"volts": 4.8, "kg_cm": 1.8}], "speed": [{"volts": 4.8, "s_per_60_deg": 0.10}],
     "effective_density_kg_m3": 1500.0,
 }
@@ -64,7 +65,9 @@ class FakeServo:
         return Thing("servo.bay", (), kwargs)
 
     def horn(self, kind, label=None):
-        h = SimpleNamespace(spec={"hub_height_mm": 2.5, "density_kg_m3": 1200.0},
+        h = SimpleNamespace(spec={"hub_height_mm": 2.5, "hub_dia_mm": 6.9, "arm_thickness_mm": 1.5,
+                                  "arm_width_mm": 4.0, "arm_reach_mm": 10.2, "hole_radii_mm": [4.0, 6.0, 8.0],
+                                  "density_kg_m3": 1200.0},
                             body=Thing("servo.horn", (kind,), {"label": label}))
         self._log.append(h.body)
         return h
