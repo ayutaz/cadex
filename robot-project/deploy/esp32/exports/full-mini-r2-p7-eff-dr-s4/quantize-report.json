@@ -1,0 +1,59 @@
+{
+  "layer_sizes": [
+    26,
+    128,
+    64,
+    8
+  ],
+  "activation": "swish",
+  "unit": "deg",
+  "calibration_count": 1024,
+  "evaluation_count": 1024,
+  "per_channel": true,
+  "percentile": 100.0,
+  "modes": {
+    "float32": {
+      "max_abs_deg": 2.1806376286903628e-05,
+      "mean_abs_deg": 2.492814928560874e-06,
+      "p99_abs_deg": 9.570507712428623e-06,
+      "max_rel_range": 2.601380324826699e-07
+    },
+    "w8": {
+      "max_abs_deg": 0.5962998893503659,
+      "mean_abs_deg": 0.0782739432462544,
+      "p99_abs_deg": 0.30998586302454467,
+      "max_rel_range": 0.005812928842036369
+    },
+    "w8a8_lut": {
+      "max_abs_deg": 3.26440565073353,
+      "mean_abs_deg": 0.3855051807607089,
+      "p99_abs_deg": 1.5232014443082353,
+      "max_rel_range": 0.03108957762603362
+    },
+    "w8a8_lut_per_layer": {
+      "max_abs_deg": 2.9393771247356817,
+      "mean_abs_deg": 0.3968741927098114,
+      "p99_abs_deg": 1.6032295773808332,
+      "max_rel_range": 0.02799406785462554
+    },
+    "float_hard_swish": {
+      "max_abs_deg": 15.969562151564523,
+      "mean_abs_deg": 1.9979292884664241,
+      "p99_abs_deg": 7.105212301413708,
+      "max_rel_range": 0.1520910681101383
+    },
+    "float_pwl_swish": {
+      "max_abs_deg": 1.8897466851963687,
+      "mean_abs_deg": 0.19088938315236065,
+      "p99_abs_deg": 0.9158898527587955,
+      "max_rel_range": 0.017997587478060652
+    },
+    "float_pwl8_swish": {
+      "max_abs_deg": 16.084969865553926,
+      "mean_abs_deg": 1.4411487739033384,
+      "p99_abs_deg": 6.65123351868331,
+      "max_rel_range": 0.15319018919575167
+    }
+  },
+  "samples": "synthetic_normal"
+}
