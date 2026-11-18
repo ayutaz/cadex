@@ -485,6 +485,25 @@ def test_しっぽと3本足の設定は_dr_の設定と機体だけ違う(varia
     assert other["instance"]["label"] == f"q8-full-{variant}"
 
 
+def test_tri_r2_dyn_dr_は_wave_dr_と機体_名前_ラベル_entropy_だけが違う():
+    # 3本足の直し（後ろ足の足先を真ん中に、速さを重心で測る、波の遊脚を短く）。バンドルは tri-dyn が作る
+    ref = json.loads((ROOT / "configs" / "train_full_tri-r2-wave-dr.json").read_text(encoding="utf-8"))
+    other = json.loads((ROOT / "configs" / "train_full_tri-r2-dyn-dr.json").read_text(encoding="utf-8"))
+    assert other["name"] == "full-tri-r2-dyn-dr"
+    assert other["bundle"] == "artifacts/tri-r2-dyn-dr/cut/walk-task.json"
+    assert other["trainer"]["label"] == "q8 vast.ai full tri-r2-dyn-dr"
+    assert other["instance"]["label"] == "q8-full-tri-r2-dyn-dr"
+    assert other["trainer"]["entropy"] == 0.02
+    ignore = {"_comment", "name", "bundle", "trainer", "instance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == \
+        {k: v for k, v in ref.items() if k not in ignore}
+    skip = {"label", "entropy"}
+    assert {k: v for k, v in other["trainer"].items() if k not in skip} == \
+        {k: v for k, v in ref["trainer"].items() if k not in skip}
+    assert {k: v for k, v in other["instance"].items() if k != "label"} == \
+        {k: v for k, v in ref["instance"].items() if k != "label"}
+
+
 @pytest.mark.parametrize("variant", TAIL_TRI_DR_BUILT)
 def test_しっぽと3本足の_dr_のバンドルは今の機体に_dr_を足したもの(variant, tmp_path):
     from q8 import dr_bundle
