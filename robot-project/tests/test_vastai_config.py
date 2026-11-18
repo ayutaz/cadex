@@ -452,3 +452,54 @@ def test_DR_の反復2000回の案は_DR_の案と反復回数と名前だけが
         {k: v for k, v in ref["trainer"].items() if k not in ("label", "iterations")}
     assert {k: v for k, v in other["instance"].items() if k != "label"} == \
         {k: v for k, v in ref["instance"].items() if k != "label"}
+
+
+#: しっぽ付き四足と3本足の案（計画 2026-11-18-tripod-and-tail、Task 5）。学習設定は mini-r2-p7-eff-dr と
+#: 名前・機体（bundle）だけが違う。バンドルは各機体のカットモデルに q8/dr_bundle.py で同じ DR を足したもの
+#: （artifacts/<案>/cut/）。値は、DR を足す元の機体（robot/mjcf/<機体>/cut/）。tri-r2-free は tri-r2
+#: （gait_mode=0、歩き方を決めない）、tri-r2-wave は gait_mode=1（波）。
+TAIL_TRI_DR = {
+    "mini-r2-tail1-dr": "mini-r2-tail1",
+    "mini-r2-tail2-dr": "mini-r2-tail2",
+    "tri-r2-free-dr": "tri-r2",
+    "tri-r2-wave-dr": "tri-r2-wave",
+}
+#: バンドルを作り終えた案（Task 4 の機体の形が固まってから、作ったものを足す）
+TAIL_TRI_DR_BUILT: tuple[str, ...] = ()
+
+
+@pytest.mark.parametrize("variant", sorted(TAIL_TRI_DR))
+def test_しっぽと3本足の設定は_dr_の設定と機体だけ違う(variant):
+    ref = json.loads((ROOT / "configs" / "train_full_mini-r2-p7-eff-dr.json").read_text(encoding="utf-8"))
+    other = json.loads((ROOT / "configs" / f"train_full_{variant}.json").read_text(encoding="utf-8"))
+    assert other["bundle"] == f"artifacts/{variant}/cut/walk-task.json"
+    assert other["name"] == f"full-{variant}"
+    ignore = {"_comment", "name", "bundle", "trainer", "instance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == \
+        {k: v for k, v in ref.items() if k not in ignore}
+    assert {k: v for k, v in other["trainer"].items() if k != "label"} == \
+        {k: v for k, v in ref["trainer"].items() if k != "label"}
+    assert other["trainer"]["label"] == f"q8 vast.ai full {variant}"
+    assert {k: v for k, v in other["instance"].items() if k != "label"} == \
+        {k: v for k, v in ref["instance"].items() if k != "label"}
+    assert other["instance"]["label"] == f"q8-full-{variant}"
+
+
+@pytest.mark.parametrize("variant", TAIL_TRI_DR_BUILT)
+def test_しっぽと3本足の_dr_のバンドルは今の機体に_dr_を足したもの(variant, tmp_path):
+    from q8 import dr_bundle
+
+    source = ROOT / "robot" / "mjcf" / TAIL_TRI_DR[variant] / "cut"
+    out = ROOT / "artifacts" / variant / "cut"
+    # 今の機体のカットモデルから作り直すと、置いてあるバンドルと1バイトも違わない（機体を作り直したら作り直す）
+    dr_bundle.build(source, tmp_path)
+    for name in ("cut.xml", "walk-task.json", "dr.json"):
+        assert (tmp_path / name).read_bytes() == (out / name).read_bytes(), name
+    ref = _task(TAIL_TRI_DR[variant])
+    other = json.loads((out / "walk-task.json").read_text(encoding="utf-8"))
+    ignore = {"model", "randomisation", "disturbance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == {k: v for k, v in ref.items() if k not in ignore}
+    assert other["randomisation"][:len(ref["randomisation"])] == ref["randomisation"]
+    # サーボの剛性のランダム化は、全部のアクチュエータに1つずつ（3本足は 6、しっぽ付きは 9・10）
+    kp = [r for r in other["randomisation"] if r["label"].startswith("dr_servo_kp_")]
+    assert len(kp) == len(ref["actions"])
