@@ -2,7 +2,7 @@
 同じ成功条件・同じシード・同じ指標計算（CadexEvaluation）で並べる。
 
 出力: artifacts/<variant>/evaluation/
-  fixed_gait.json   固定歩容のシードごとの判定と指標
+  fixed_gait.json   固定歩容のシードごとの判定と指標（四足でない機体では {"skipped": 理由}）
   policy/           cadex evaluate の出力（evaluation.json、シードごとのトレース、動画）
   summary.json      設計値・合格率・主要指標の平均/最小/最大
   metrics.csv       シードごとの主要指標（固定歩容と方策を縦に並べる）
@@ -29,9 +29,14 @@ from q8.evaluation import evaluate_fixed_gait, metrics_table  # noqa: E402
 from q8.gait import TrotParams, trot_targets  # noqa: E402
 from q8.paths import ARTIFACTS, CADEX_CLI, MJCF_DIR, cadex_project  # noqa: E402
 from q8.portable import portable_text, scrub_tree, write_json  # noqa: E402
-from q8.robot import leg_geometry  # noqa: E402
+from q8.robot import LEGS, leg_geometry, model_legs  # noqa: E402
 
 FIXED = {"period_s": 0.5, "stride_m": 0.04, "lift_m": 0.008}   # simulation/fixed_gait.py の探索で決めた値
+# 固定歩容は四足のトロット（q8/gait.py の trot_targets、lf/rf/lh/rh）の目標しか作らない。脚の組が違う機体
+# （3本足の lf/rf/hc など）で回すと、無い脚の目標は捨てられ、ある脚（hc）は 0 のまま固定されて、四足の
+# トロットとして黙って記録される。そこで評価せずに飛ばし、その理由を出力に残す。しっぽは脚に入らないので
+# しっぽ付きの四足は評価する（しっぽの関節は目標が無いので 0 = 立位のまま）。
+SKIP_NOT_QUADRUPED = "四足でないため（固定歩容は lf/rf/lh/rh のトロット専用）"
 
 
 def fixed_gait_target(model, *, period_s: float, stride_m: float, lift_m: float):
@@ -67,24 +72,31 @@ def evaluate_variant(variant: str, *, policy: Path | None, out_dir: Path | None 
     seeds = task["success"]["seeds"]
     seconds = seconds or task["success"]["episode"]["episode_seconds"]
     model = mujoco.MjModel.from_xml_path(str(model_xml))
-    target, nominal = fixed_gait_target(model, **FIXED)
-    fixed = evaluate_fixed_gait(model, task, target_fn=target, seeds=seeds, seconds=seconds, command_mm_s=nominal)
-    fixed["gait"] = {**FIXED, "nominal_speed_mm_s": nominal, "seconds": seconds}
-    write_json(out_dir / "fixed_gait.json", fixed, indent=2, default=str)
+    legs = model_legs(model)
+    if sorted(legs) != sorted(LEGS):
+        fixed = {"skipped": SKIP_NOT_QUADRUPED}
+        write_json(out_dir / "fixed_gait.json", {**fixed, "legs": legs}, indent=2)
+    else:
+        target, nominal = fixed_gait_target(model, **FIXED)
+        fixed = evaluate_fixed_gait(model, task, target_fn=target, seeds=seeds, seconds=seconds,
+                                    command_mm_s=nominal)
+        fixed["gait"] = {**FIXED, "nominal_speed_mm_s": nominal, "seconds": seconds}
+        write_json(out_dir / "fixed_gait.json", fixed, indent=2, default=str)
     pol = None
     if policy is not None:
         pol = run_cadex_evaluate(variant, policy, out_dir / "policy", video=video)
         pol["weights"] = portable_text(str(policy))
     design = json.loads((ARTIFACTS / variant / "design_report.json").read_text())
     summary = {"variant": variant, "design": design_summary(design),
-               "fixed_gait": summarise_seeds(fixed, KEY_METRICS), "policy": summarise_seeds(pol, KEY_METRICS),
+               "fixed_gait": fixed if "skipped" in fixed else summarise_seeds(fixed, KEY_METRICS),
+               "policy": summarise_seeds(pol, KEY_METRICS),
                "metric_labels": KEY_METRICS}
     write_json(out_dir / "summary.json", summary, indent=2)
-    rows = metrics_table(fixed, label="fixed_gait", keys=list(KEY_METRICS))
+    rows = [] if "skipped" in fixed else metrics_table(fixed, label="fixed_gait", keys=list(KEY_METRICS))
     if pol is not None:
         rows += metrics_table(pol, label="policy", keys=list(KEY_METRICS))
     with (out_dir / "metrics.csv").open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w = csv.DictWriter(fh, fieldnames=["label", "seed", "pass", *KEY_METRICS])
         w.writeheader()
         w.writerows(rows)
     return {"design": summary["design"], "fixed_gait": fixed, "policy": pol, "summary": summary}
@@ -98,7 +110,7 @@ def main() -> int:
     args = ap.parse_args()
     res = evaluate_variant(args.variant, policy=args.policy, video=not args.no_video)
     s = res["summary"]
-    print(json.dumps({"fixed_gait_pass_rate": s["fixed_gait"]["pass_rate"],
+    print(json.dumps({"fixed_gait_pass_rate": s["fixed_gait"].get("pass_rate", s["fixed_gait"].get("skipped")),
                       "policy_pass_rate": None if s["policy"] is None else s["policy"]["pass_rate"]}, ensure_ascii=False))
     return 0
 

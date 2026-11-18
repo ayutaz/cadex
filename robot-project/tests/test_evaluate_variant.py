@@ -47,3 +47,28 @@ def test_reads_an_engine_evaluation(tmp_path):
         "wall_time_s": 3.0}))
     ev = read_cadex_evaluation(tmp_path)
     assert ev["seeds"][0]["seed"] == 1 and ev["verdict"] == "fail"
+
+
+def test_四足でない機体では固定歩容を飛ばして理由を残す(tmp_path):
+    # 固定歩容は四足のトロット（lf/rf/lh/rh）の目標しか作らない。3本足で回すと hc が 0 に固定されたまま
+    # 四足のトロットとして黙って記録されるので、評価せずに飛ばしたことを出力に残す（final-review I2）。
+    if not list((ROOT / "robot" / "mjcf" / "tri-r2").glob("*-model.xml")):
+        pytest.skip("robot/mjcf/tri-r2 の MJCF が無い")
+    out = evaluate_variant("tri-r2", policy=None, out_dir=tmp_path, seconds=1.0)
+    reason = out["fixed_gait"]["skipped"]
+    assert "四足" in reason
+    assert "seeds" not in out["fixed_gait"]
+    assert json.loads((tmp_path / "fixed_gait.json").read_text())["skipped"] == reason
+    summary = json.loads((tmp_path / "summary.json").read_text())
+    assert summary["fixed_gait"] == {"skipped": reason}
+    rows = list(csv.DictReader((tmp_path / "metrics.csv").open()))
+    assert not any(r["label"] == "fixed_gait" for r in rows)
+
+
+def test_飛ばした固定歩容は比較で未評価になる():
+    from q8.compare import compare
+
+    skipped = {"skipped": "四足でないため"}
+    c = compare({"design": {}, "fixed_gait": skipped, "policy": None},
+                {"design": {}, "fixed_gait": skipped, "policy": None})
+    assert c["fixed_gait"] is None

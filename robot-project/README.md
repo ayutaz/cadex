@@ -213,7 +213,7 @@ cd ..   # リポジトリのルート
 | `artifacts/<variant>/design_report.json` | パラメータ、質量・重心・支持余裕、静的トルク見積り、MuJoCo での立位保持、干渉、印刷可否、BOM、判定 |
 | `artifacts/<variant>/renders/` | 5視点の静止画（`*_collision.png` は衝突形状を重ねたもの） |
 | `artifacts/base/fixed_gait/` | 固定モーションの判定（`fixed_gait.json`）、時系列 CSV、動画（`stand.mp4`、`trot.mp4`、`turn.mp4`、`joint_sweep_hip_lf.mp4`） |
-| `artifacts/<variant>/evaluation/` | 評価の要約（`summary.json`）、シードごとの指標（`metrics.csv`）、固定歩容の詳細（`fixed_gait.json`） |
+| `artifacts/<variant>/evaluation/` | 評価の要約（`summary.json`）、シードごとの指標（`metrics.csv`）、固定歩容の詳細（`fixed_gait.json`。四足でない機体では評価を飛ばし、`{"skipped": 理由}` だけを書く） |
 | `artifacts/<variant>/evaluation-seeds/` | GPU 学習の学習シードごとの評価 |
 | `artifacts/<案>/robustness/<run>/` | 実機との差を入れた評価（`robustness.json`、`summary.md`） |
 | `artifacts/mini-r2/assembly/` | 印刷の計画（`print_plan.json`。組立の判定 `assembly_verdict` を含む）と組立の段階図 |

@@ -175,3 +175,12 @@ def test_settings_registers_hook():
     assert bash
     cmds = [h["command"] for e in bash for h in e["hooks"]]
     assert any("guard_bash.py" in c and "python3" in c and "$CLAUDE_PROJECT_DIR" in c for c in cmds)
+
+
+def test_settings_denies_reading_env_with_the_read_tool():
+    # hook は Bash しか見ないので、Read ツールで .env を開く経路は permissions の deny で止める（final-review I4）。
+    # .env.example は鍵を持たないので止めない。
+    deny = json.loads(SETTINGS.read_text())["permissions"]["deny"]
+    assert "Read(**/.env)" in deny
+    assert "Read(.env)" in deny
+    assert not any("example" in rule or ".env.*" in rule or ".env*" in rule for rule in deny)

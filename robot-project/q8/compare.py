@@ -60,7 +60,8 @@ def _row(a, b, labels):
 
 
 def _section(a: dict | None, b: dict | None, labels) -> dict | None:
-    if not a or not b:
+    # 片方でも評価を飛ばした（{"skipped": 理由}、四足でない機体の固定歩容）なら、比べずに未評価にする
+    if not a or not b or "skipped" in a or "skipped" in b:
         return None
     sa, sb = summarise_seeds(a, KEY_METRICS), summarise_seeds(b, KEY_METRICS)
     out = {"pass_rate": _row(sa["pass_rate"], sb["pass_rate"], labels)}
