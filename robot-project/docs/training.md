@@ -16,7 +16,7 @@ GPU（vast.ai）での実行手順は [training-vastai.md](training-vastai.md)�
 数えられず（合格率 0.00〜0.40）、実機を想定した幅で全部を変えると 0.58 だった。足の摩擦・サーボの遅れと剛性とトルク・重心・押しを
 学習に入れた **`mini-r2-p7-eff-dr`**（§5.2）は、普通の評価で5回とも 10/10、トルク比 0.61、滑り 0.27、実機を想定した幅で 0.84 ± 0.02
 （元の案 0.60 ± 0.12、幅は重ならない）。押しへの強さはほとんど変わらなかった。反復を 2000 にした案は、はっきりとは良くならなかった。
-**実機の候補を `artifacts/training/full-mini-r2-p7-eff-dr-s4/walk.cxpolicy` に替えることを提案している**
+**実機の候補を `artifacts/training/full-mini-r2-p7-eff-dr-s4/walk.cxpolicy` に替えた**
 （ESP32 向けの書き出しは `deploy/esp32/exports/full-mini-r2-p7-eff-dr-s4/`）。実機では未確認。
 
 ## 1. タスクの在りか

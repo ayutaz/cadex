@@ -32,6 +32,9 @@
   載せた `mini-r2-p7-eff` を GPU で学習シード5回学習し（合格率 0.90、[experiment-results.md](experiment-results.md) §9）、
   評価の最も良い乱数 3 の回（合格 10/10）を `deploy/esp32/exports/full-mini-r2-p7-eff-s3/` に float32 で書き出した。
   シミュレーションの結果で、実機では未確認。
+- **実機の候補は、実機との差に強くした `mini-r2-p7-eff-dr` の乱数 4 の回に替えた**（2026-11-18、
+  [experiment-results.md](experiment-results.md) §11）。書き出しは `deploy/esp32/exports/full-mini-r2-p7-eff-dr-s4/`（float32）。
+  実機を想定した幅の評価で合格率 0.86（s3 は 0.58）。s3 の書き出しは比べるために残す。どちらも `firmware/main/` には置いていない。
 - `export_c --task` はタスクバンドルの sha256 を照合するので、方策は学習したタスク
   （`robot/mjcf/<variant>/cut/walk-task.json`）と組で書き出す。base の書き出し（`exports/full-base-s0/`）は mini-r2 には使えない。
 - どちらの書き出しも `firmware/main/` には置いていない。同梱の `firmware/main/policy_weights.h` は合成ポリシーのままで、
@@ -446,3 +449,4 @@ RMSトルク / 推定連続定格（0.67）と滑り（0.25）がどちらも最
 
   int8 版の最大の誤差は base の方策（4.65°）より大きい。重みは float32 でも内部 SRAM に載るので、**float32 を使う**。
 - 未確認: ESP-IDF でのビルドと推論時間の実測、IMU とサーボの較正、実機での歩行。推定連続定格（失速の40%）も推定値のまま。
+- **この後、実機の候補は `full-mini-r2-p7-eff-dr-s4` に替えた**（今の状態、experiment-results.md §11）。層構成と書き出しの手順は同じ。
