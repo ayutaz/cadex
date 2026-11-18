@@ -1,6 +1,6 @@
 # ESP32-S3 へのポリシー配備（技術検証）
 
-最終確認日: 2026-11-17。対象: MG90S × 8 の 8 自由度四足、制御基板 ESP32-S3、IMU（MPU-6050 相当）。
+最終確認日: 2026-11-18。対象: MG90S × 8 の 8 自由度四足、制御基板 ESP32-S3、IMU（MPU-6050 相当）。
 
 作る機体は小型機 `mini`（電池なし、外部 5V 給電）です。この文書の書き出しの確認は、基準機体 `base` の方策で行いました。
 **mini の学習済み方策はまだありません**（再調整の結果待ち。下の「今の状態」）。
@@ -25,14 +25,17 @@
   シミュレーションでは歩けた（GPU で学習、二機体 × 学習シード5回の合格率は 0.92 と 1.00。
   [experiment-results.md](experiment-results.md) §5、本書 §12）。実機では未確認。
 
-### 今の状態（2026-11-17）
+### 今の状態（2026-11-18）
 
 - 書き出しの道具（`cxpolicy_io`、`quantize`、`export_c`、`budget`）と、ホストでの C の照合は、base の方策で通した（§12）。
-- 作る機体 mini の方策は、まだ ESP32 に載せられる段階にない。GPU で学習シード5回学習した mini の方策は、
-  転ばず指令速度で進むが、足を上げずに滑る（合格率 0.24、滑り 0.83。[experiment-results.md](experiment-results.md) §6）。
-  指令速度や報酬の重みを小型機に合わせる再調整（`mini-cmd`、`mini-v3`、`mini-lift`）を GPU で比べている最中で、結果は未確定。
-- `export_c --task` はタスクバンドルの sha256 を照合するので、mini の方策は mini（または採用した再調整の案）の
-  `robot/mjcf/<variant>/cut/walk-task.json` と組で書き出す。base の書き出し（`exports/full-base-s0/`）は mini には使えない。
+- **作る機体 mini-r2 の方策を書き出した**（§13）。mini の脚を組めるように直した `mini-r2` に、mini の再調整で良かった報酬を
+  載せた `mini-r2-p7-eff` を GPU で学習シード5回学習し（合格率 0.90、[experiment-results.md](experiment-results.md) §9）、
+  評価の最も良い乱数 3 の回（合格 10/10）を `deploy/esp32/exports/full-mini-r2-p7-eff-s3/` に float32 で書き出した。
+  シミュレーションの結果で、実機では未確認。
+- `export_c --task` はタスクバンドルの sha256 を照合するので、方策は学習したタスク
+  （`robot/mjcf/<variant>/cut/walk-task.json`）と組で書き出す。base の書き出し（`exports/full-base-s0/`）は mini-r2 には使えない。
+- どちらの書き出しも `firmware/main/` には置いていない。同梱の `firmware/main/policy_weights.h` は合成ポリシーのままで、
+  `main.c` はサーボに出力しない。サーボの換算（`servo.json`）と IMU の較正を決めてから置く。
 - ESP32-S3 のボードは依頼者の手元にあるが、**型番・寸法・USB 端子は未確認**。設計は 63 × 25.5 mm の
   ESP32-S3-DevKitC-1 を想定している（§8 の電源と配線、§10 のリスク）。
 - ファームウェアは ESP-IDF でまだビルドしていない。
@@ -397,3 +400,31 @@ cd robot-project
   合成ポリシー（§5）より誤差が大きい。重みは float32 で 47.8 KB と内部 SRAM に載るので、**float32 を使う**。
 - 未確認: ESP-IDF でのビルドと推論時間の実測、IMU とサーボの較正、実機での歩行。
 - この書き出しは base の方策なので、作る機体 mini には使わない（mini の方策は再調整の結果待ち）。
+
+## 13. 作る機体 mini-r2 の方策の書き出し（2026-11-18）
+
+[experiment-results.md](experiment-results.md) §9 で選んだ `mini-r2-p7-eff` の学習シード5回から、
+`artifacts/training/full-mini-r2-p7-eff-s3/walk.cxpolicy` を選んだ。選び方: 合格 10/10 の4回（乱数 0〜3）のうち、
+RMSトルク / 推定連続定格（0.67）と滑り（0.25）がどちらも最小の回。
+
+- 層構成 26-128-64-8（swish）。`cadex evaluate` で 10/10、平均前進速度 74.3 mm/s（速度比 0.99）、追従誤差 RMS 7.6 mm/s、
+  最大傾斜 9.5°、向きのずれ 5.7°。学習の受領書は device=gpu。
+- witness の照合（`cxpolicy_io check`）: 最大相対誤差 1.2e-7（許容 1e-4）で一致。
+- 書き出し: `deploy/esp32/exports/full-mini-r2-p7-eff-s3/policy_weights.h`
+  （`export_c --task robot/mjcf/mini-r2-p7-eff/cut/walk-task.json`、task.sha256 `72e34b70…`）。
+  ヘッダ 263 KB（テキスト）、重みは float32 で 47.8 KB（12,232 個）、int8 で 13.8 KB。歩容の位相クロックの周期は
+  タスクから 0.7 s（`POLICY_CLOCK_PERIOD_S`）。初期指令は学習のリセットと同じ全関節 0°。
+  サーボの換算は既定値のまま（`servo.json` が無い）なので、`firmware/main/` には置いていない。
+- 推論時間の見積り（`budget`、推定）: float32 の手書き C で 186〜505 µs、50 Hz の制御周期（20 ms）の 1〜3 %。
+- ホストの C での照合（`tests/test_esp32_export_c.py::test_real_policy_end_to_end`、mini-r2 の10個の方策すべて）: float32 版は
+  参照との差が行動範囲の 1e-5 未満、int8 版は tanh 手前の値がビット一致。
+- 量子化の誤差（`exports/full-mini-r2-p7-eff-s3/quantize-report.json`、標本は正規化統計からの合成。単位は度）:
+
+| 方式 | 最大 | 平均 | 99%点 |
+|---|---|---|---|
+| float32（C の float 版） | 0.000 | 0.000 | 0.000 |
+| 重みだけ int8 | 1.58 | 0.11 | 0.59 |
+| 重み・活性値 int8 + LUT（C の int8 版） | 8.86 | 0.58 | 2.78 |
+
+  int8 版の最大の誤差は base の方策（4.65°）より大きい。重みは float32 でも内部 SRAM に載るので、**float32 を使う**。
+- 未確認: ESP-IDF でのビルドと推論時間の実測、IMU とサーボの較正、実機での歩行。推定連続定格（失速の40%）も推定値のまま。

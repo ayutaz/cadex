@@ -6,9 +6,11 @@
 新しく書いたのは、タスクの定義（設計スクリプトの `assembly.task`）と、それを回す周辺スクリプトだけ。
 GPU（vast.ai）での実行手順は [training-vastai.md](training-vastai.md)。結果は [experiment-results.md](experiment-results.md)。
 
-**今の状態（2026-11-18）**: 作る機体は小型機 `mini`。mini を GPU で学習シード5回学習した結果は、転ばず指令速度で進むが、
-足を上げずに滑る（合格率 0.24、滑り 0.83。experiment-results.md §6）。報酬の重みとトルクの罰、歩容の周期を小型機に合わせる
-再調整で、`mini-p7-eff` が3回で合格率 0.97 になった（5回での確認はまだ。§8）。
+**今の状態（2026-11-18）**: 作る機体は、小型機 mini の脚を組めるように直した `mini-r2`。学習タスクは、mini の再調整
+（experiment-results.md §6〜§8）で良かった報酬を載せた **`mini-r2-p7-eff`**（指令 30〜120 mm/s、接地位相 1.0、足上げ 1.5、
+定格を超えるトルクの罰 1.0、歩容の周期 0.7 s）に決めた。GPU で学習シード5回学習し、合格率 0.90 ± 0.22、RMSトルク / 推定連続定格
+0.75 ± 0.10（§9）。周期 0.5 s の `mini-r2-eff` は合格率 0.50 で、mini-eff（0.88）より悪かった。実機に載せる候補は
+`artifacts/training/full-mini-r2-p7-eff-s3/walk.cxpolicy`（合格 10/10）。実機では未確認。
 
 ## 1. タスクの在りか
 
