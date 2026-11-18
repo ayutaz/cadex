@@ -366,6 +366,7 @@ def render_header(policy: cx.CxPolicy, qpolicy: qz.QuantPolicy | None, *,
                   layout: Sequence[ObsSource], servos: Sequence[ServoConfig] | None = None,
                   initial_command: Sequence[float] | None = None, source: str = "",
                   clock_period_s: float | None = None) -> str:
+    cx.require_joint_count(policy)
     sizes = policy.layer_sizes
     n_layers = len(policy.layers)
     servos = list(servos or [ServoConfig()] * len(policy.actions))

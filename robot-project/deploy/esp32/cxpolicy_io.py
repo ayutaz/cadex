@@ -53,6 +53,14 @@ WITNESS_TOLERANCE = 1.0e-4
 DEFAULT_JOINTS = ("hip_lf", "knee_lf", "hip_rf", "knee_rf",
                   "hip_lh", "knee_lh", "hip_rh", "knee_rh")
 
+
+
+def require_joint_count(policy: "CxPolicy", expected: int = len(DEFAULT_JOINTS)) -> None:
+    """配備側（ESP32 の書き出し）は関節の数が決め打ち。行動の数が合わなければ止める。"""
+    if len(policy.actions) != expected:
+        raise ValueError(f"この書き出しは関節 {expected} 個の機体向け、方策の行動は {len(policy.actions)} 個")
+
+
 #: 合成ポリシーの既定の観測チャネル（実機で観測できるものだけ、計 20）。
 #: 実物の .cxpolicy ではタスクが決めた名前になるので、配備側はこの名前を当てにせず
 #: ヘッダの ``observations`` を読むこと（export_c.resolve_layout がそれをする）。

@@ -78,8 +78,11 @@ def dr_model_xml(source_xml: str) -> str:
     xml = source_xml
     # 1) アクチュエータを一次遅れに
     generals = re.findall(r"<general [^>]*/>", xml)
-    if len(generals) != 8:
-        raise ValueError(f"<general> が 8 つではない（{len(generals)}）")
+    # アクチュエータの数はモデルで決まる（脚だけなら 8、しっぽ付きなら 10）。<general> の書式が
+    # 想定どおり（1 行・自己閉じ）でない行があれば、数が合わないので止める。
+    n_act = source_xml.count("<general ")
+    if n_act == 0 or len(generals) != n_act:
+        raise ValueError(f"<general> が書式どおりに読めない（{len(generals)} / {n_act}）")
     for line in generals:
         if "dyntype=" in line:
             raise ValueError("元のモデルにすでに dyntype がある")

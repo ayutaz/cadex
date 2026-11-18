@@ -29,6 +29,7 @@ from q8.clearance import summarise  # noqa: E402
 from q8.manufacturing import bom, printability  # noqa: E402
 from q8.paths import ARTIFACTS, DESIGN_SCRIPT, MESHES, MJCF_DIR, PROJECT, cadex_project  # noqa: E402
 from q8.physics import static_report  # noqa: E402
+from q8.robot import model_joints, model_legs  # noqa: E402
 from q8.portable import write_json  # noqa: E402
 from q8.render import render_views  # noqa: E402
 from q8.stl import read_stl, write_binary_stl  # noqa: E402
@@ -38,11 +39,17 @@ from q8.visual import add_visual_meshes  # noqa: E402
 LEGS = ("lf", "rf", "lh", "rh")
 
 
-def intended_contacts() -> set[frozenset]:
+def intended_contacts(model=None) -> set[frozenset]:
+    """サーボとホーンの意図した接触。脚としっぽ（tail_yaw・tail_pitch）はモデルから読む。"""
+    legs = model_legs(model) if model is not None else LEGS
     pairs = set()
-    for leg in LEGS:
+    for leg in legs:
         for j in ("hip", "knee"):
             pairs.add(frozenset((f"c_{j}_servo_{leg}", f"c_{j}_horn_{leg}")))
+    if model is not None:
+        for j in model_joints(model):
+            if j.startswith("tail_"):
+                pairs.add(frozenset((f"c_{j}_servo", f"c_{j}_horn")))
     return pairs
 
 
@@ -128,7 +135,7 @@ def main() -> int:
         "servo": {"stall_torque_nmm": round(stall * 1000, 1), "rated_torque_nmm_estimate": round(rated * 1000, 1),
                   "source": "CadexCatalog.py の SERVOS（TowerPro公表値 4.8 V）。連続定格は失速の40%とした推定"},
         "physics": static_report(model, stall, rated),
-        "clearance": summarise(project, intended_contacts()),
+        "clearance": summarise(project, intended_contacts(model)),
         "printability": printability(mesh_out, params),
         "joints": {mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, j): [round(float(v) * 57.29578, 2) for v in model.jnt_range[j]]
                    for j in range(1, model.njnt)},

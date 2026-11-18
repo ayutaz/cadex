@@ -14,6 +14,29 @@ import numpy as np
 
 LEGS = ("lf", "rf", "lh", "rh")
 JOINTS = [f"{kind}_{leg}" for leg in LEGS for kind in ("hip", "knee")]
+
+
+def model_legs(model: mujoco.MjModel) -> list[str]:
+    """モデルの関節名 ``hip_<leg>`` から脚の名前を、関節の並びの順に出す（しっぽは脚に入らない）。"""
+    legs = []
+    for j in range(model.njnt):
+        name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, j)
+        if name and name.startswith("hip_"):
+            legs.append(name[4:])
+    return legs
+
+
+def model_joints(model: mujoco.MjModel) -> list[str]:
+    """アクチュエータの順の関節名（脚の hip・knee のあとに、しっぽなら tail_yaw・tail_pitch）。"""
+    return [mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, int(model.actuator_trnid[a][0]))
+            for a in range(model.nu)]
+
+
+def model_feet(model: mujoco.MjModel) -> list[str]:
+    """足の部品名 ``c_foot_<leg>`` を、脚の順に出す。"""
+    return [f"c_foot_{leg}" for leg in model_legs(model)]
+
+
 # トロットの対角ペア
 TROT_PHASE = {"lf": 0.0, "rh": 0.0, "rf": 0.5, "lh": 0.5}
 
@@ -68,7 +91,7 @@ def leg_geometry(model: mujoco.MjModel) -> LegGeometry:
 
 def joint_ids(model: mujoco.MjModel) -> dict[str, dict[str, int]]:
     out = {}
-    for name in JOINTS:
+    for name in model_joints(model):
         jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name)
         aid = next(a for a in range(model.nu) if model.actuator_trnid[a][0] == jid)
         out[name] = {"joint": jid, "qpos": int(model.jnt_qposadr[jid]), "dof": int(model.jnt_dofadr[jid]),

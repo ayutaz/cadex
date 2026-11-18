@@ -20,7 +20,7 @@ import mujoco
 import numpy as np
 
 from .paths import CADEX_REPO
-from .robot import JOINTS, joint_ids, joint_ranges, quat_tilt_deg
+from .robot import joint_ids, joint_ranges, model_feet, model_joints, quat_tilt_deg
 
 FEET = ["c_foot_lf", "c_foot_rf", "c_foot_lh", "c_foot_rh"]
 
@@ -36,9 +36,10 @@ def cadex_modules():
     return CadexDynamics, CadexEvaluation
 
 
-def success_spec(task: dict) -> dict:
+def success_spec(task: dict, model: mujoco.MjModel | None = None) -> dict:
     s = task["success"]
-    return {"predicates": s["predicates"], "seeds": s.get("seeds") or [], "feet": s.get("feet") or FEET,
+    feet = model_feet(model) if model is not None else FEET
+    return {"predicates": s["predicates"], "seeds": s.get("seeds") or [], "feet": s.get("feet") or feet,
             "episode_seconds": (s.get("episode") or {}).get("episode_seconds", 8.0)}
 
 
@@ -46,7 +47,7 @@ def _channels(model: mujoco.MjModel, rated_fraction: float) -> list[dict]:
     ids = joint_ids(model)
     ranges = joint_ranges(model)
     out = []
-    for name in JOINTS:
+    for name in model_joints(model):
         a = ids[name]["actuator"]
         stall = float(model.actuator_forcerange[a][1]) * 1000.0
         lo, hi = (math.degrees(v) for v in ranges[name])
@@ -89,6 +90,7 @@ def record_episode(model: mujoco.MjModel, target_fn: Callable[[float], dict], *,
     mujoco.mj_forward(model, data)
     ids = joint_ids(model)
     ranges = joint_ranges(model)
+    joints = model_joints(model)
     substeps = max(1, int(round(1.0 / (control_hz * model.opt.timestep))))
     steps = int(round(seconds * control_hz))
     z0 = float(data.qpos[2])
@@ -99,9 +101,9 @@ def record_episode(model: mujoco.MjModel, target_fn: Callable[[float], dict], *,
     def frame(k: int) -> dict:
         t = k / control_hz
         phase = 2.0 * math.pi * t / clock_period_s
-        q = [math.degrees(float(data.qpos[ids[n]["qpos"]])) for n in JOINTS]
-        v = [math.degrees(float(data.qvel[ids[n]["dof"]])) for n in JOINTS]
-        eff = [float(data.actuator_force[ids[n]["actuator"]]) * 1000.0 for n in JOINTS]
+        q = [math.degrees(float(data.qpos[ids[n]["qpos"]])) for n in joints]
+        v = [math.degrees(float(data.qvel[ids[n]["dof"]])) for n in joints]
+        eff = [float(data.actuator_force[ids[n]["actuator"]]) * 1000.0 for n in joints]
         out = {"frame_index": k + 1, "frame_kind": "solver_output", "nominal_time_s": round(t, 6),
                "component_placements": _placements(model, data), "joint_positions": q, "joint_velocities": v,
                "goal": [command_mm_s, math.sin(phase), math.cos(phase)]}
@@ -116,7 +118,7 @@ def record_episode(model: mujoco.MjModel, target_fn: Callable[[float], dict], *,
         t = k / control_hz
         targets = target_fn(t)
         cmd_rad = []
-        for n in JOINTS:
+        for n in joints:
             lo, hi = ranges[n]
             q = min(max(float(targets.get(n, 0.0)), lo), hi)
             data.ctrl[ids[n]["actuator"]] = q
