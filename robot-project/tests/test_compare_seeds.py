@@ -74,3 +74,26 @@ def test_two_variants_are_required(tmp_path):
     (d / "walk.cxpolicy").write_bytes(b"x")
     with pytest.raises(ValueError):
         compare_seeds.run([("base", d)], artifacts=tmp_path / "a", evaluate=_fake_evaluate([]))
+
+
+def test_a_label_can_be_evaluated_as_another_variant(tmp_path):
+    # 学習だけを変えた案（例: ドメインランダム化）は、元の機体のモデルとタスクで評価し、置き場所は案の名前にする
+    runs = []
+    for label in ("base", "base-dr"):
+        d = tmp_path / "training" / f"{label}-s0"
+        d.mkdir(parents=True)
+        (d / "walk.cxpolicy").write_bytes(b"x")
+        runs.append((label, d))
+    calls = []
+    result = compare_seeds.run(runs, artifacts=tmp_path / "a", evaluate=_fake_evaluate(calls),
+                               evaluate_as={"base-dr": "base"})
+    assert [c[0] for c in calls] == ["base", "base"]
+    assert calls[1][2] == tmp_path / "a" / "base-dr" / "evaluation-seeds" / "base-dr-s0"
+    assert result["labels"] == ["base", "base-dr"]
+    assert (tmp_path / "a" / "compare" / "seeds_base_vs_base-dr.md").exists()
+
+
+def test_parse_evaluate_as():
+    assert compare_seeds.parse_as(["base-dr=base"]) == {"base-dr": "base"}
+    with pytest.raises(ValueError):
+        compare_seeds.parse_as(["base-dr"])

@@ -4,6 +4,9 @@
 artifacts/<variant>/evaluation-seeds/<run>/ に置く。評価済み（summary.json がある）の回は評価し直さない。
 q8.seeds で学習シード方向に集め、artifacts/compare/seeds_<a>_vs_<b>.{json,md} に書く。
 
+学習だけを変えた案（機体のモデルと評価のタスクは元の機体のまま。例: ドメインランダム化）は、
+`--as <案>=<機体>` で元の機体として評価する。置き場所は案の名前（artifacts/<案>/evaluation-seeds/）。
+
 例:
   uv run python scripts/compare_seeds.py \
       base=artifacts/training/full-base-s0 base=artifacts/training/full-base-s1 ... \
@@ -39,8 +42,19 @@ def parse_run(text: str) -> tuple[str, Path]:
     return variant, path
 
 
+def parse_as(items: list[str] | None) -> dict[str, str]:
+    out = {}
+    for text in items or ():
+        if "=" not in text:
+            raise ValueError(f"--as は <案>=<評価に使う機体> の形で渡す: {text!r}")
+        label, variant = text.split("=", 1)
+        out[label] = variant
+    return out
+
+
 def run(runs: list[tuple[str, Path]], *, artifacts: Path = ARTIFACTS,
-        evaluate: Callable | None = None, video: bool = False) -> dict:
+        evaluate: Callable | None = None, video: bool = False,
+        evaluate_as: dict[str, str] | None = None) -> dict:
     variants = list(dict.fromkeys(v for v, _ in runs))
     if len(variants) != 2:
         raise ValueError(f"比べる機体は2つ（渡されたのは {variants}）")
@@ -53,7 +67,8 @@ def run(runs: list[tuple[str, Path]], *, artifacts: Path = ARTIFACTS,
         saved = out_dir / "summary.json"
         if not saved.exists():
             # 戻り値は summary.json と形が違う（variant を含まない）ので、書かれたファイルを読む
-            evaluate(variant, policy=folder / POLICY_FILE, out_dir=out_dir, video=video)
+            evaluate((evaluate_as or {}).get(variant, variant), policy=folder / POLICY_FILE, out_dir=out_dir,
+                     video=video)
         summary = json.loads(saved.read_text(encoding="utf-8"))
         summaries[variant].append(summary)
         names[variant].append(folder.name)
@@ -70,8 +85,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("runs", nargs="+", help="<機体>=<学習の回のフォルダ>")
     parser.add_argument("--video", action="store_true")
+    parser.add_argument("--as", dest="evaluate_as", action="append",
+                        help="<案>=<機体>: その案を、この機体のモデルとタスクで評価する（繰り返し可）")
     args = parser.parse_args()
-    result = run([parse_run(r) for r in args.runs], video=args.video)
+    result = run([parse_run(r) for r in args.runs], video=args.video, evaluate_as=parse_as(args.evaluate_as))
     print(seeds.to_markdown(result))
     return 0
 

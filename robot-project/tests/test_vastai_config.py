@@ -399,3 +399,56 @@ def test_mini_r2_の案は機体のモデルが_mini_r2_で報酬が対応する
     assert _task_without_model(other) == _task_without_model(ref)
     # mini-r2 は既定の報酬（指令 40〜160 mm/s）のままなので、タスクは違う
     assert _task_without_model(other) != _task_without_model(r2)
+
+
+#: 実機との差に強くする案（段階A-2）。機体のモデルとタスクは mini-r2-p7-eff に DR を足したもの
+#: （q8/dr_bundle.py、docs/experiment-results.md §11）。学習設定は、名前・機体（bundle）と、
+#: 学習器のランダム化のフラグ（足の摩擦とサーボのトルク）だけが mini-r2-p7-eff と違う。
+DR_TUNING = {"mini-r2-p7-eff-dr": "mini-r2-p7-eff"}
+DR_FLAGS = {"randomise_friction": [0.35, 1.25], "randomise_drive_torque": [0.8, 1.1]}
+
+
+@pytest.mark.parametrize("variant", sorted(DR_TUNING))
+def test_DR_の案の本番設定は元の案と機体とランダム化のフラグだけが違う(variant):
+    ref = json.loads((ROOT / "configs" / f"train_full_{DR_TUNING[variant]}.json").read_text(encoding="utf-8"))
+    other = json.loads((ROOT / "configs" / f"train_full_{variant}.json").read_text(encoding="utf-8"))
+    assert other["bundle"] == f"artifacts/{variant}/cut/walk-task.json"
+    assert (ROOT / other["bundle"]).exists()
+    assert other["name"] == f"full-{variant}"
+    ignore = {"_comment", "name", "bundle", "trainer", "instance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == \
+        {k: v for k, v in ref.items() if k not in ignore}
+    trainer = {k: v for k, v in other["trainer"].items() if k not in ("label", *DR_FLAGS)}
+    assert trainer == {k: v for k, v in ref["trainer"].items() if k != "label"}
+    assert {k: other["trainer"][k] for k in DR_FLAGS} == DR_FLAGS
+    assert other["trainer"]["label"] == f"q8 vast.ai full {variant}"
+    assert {k: v for k, v in other["instance"].items() if k != "label"} == \
+        {k: v for k, v in ref["instance"].items() if k != "label"}
+    assert other["instance"]["label"] == f"q8-full-{variant}"
+
+
+@pytest.mark.parametrize("variant", sorted(DR_TUNING))
+def test_DR_の案のタスクは元の案に_DR_を足しただけ(variant):
+    ref = _task(DR_TUNING[variant])
+    other = json.loads((ROOT / "artifacts" / variant / "cut" / "walk-task.json").read_text(encoding="utf-8"))
+    ignore = {"model", "randomisation", "disturbance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == {k: v for k, v in ref.items() if k not in ignore}
+    # _task は機体の cut のタスク。DR の案はそれに足すだけで、元のランダム化を消さない
+    assert other["randomisation"][:len(ref["randomisation"])] == ref["randomisation"]
+    assert other["model"]["sha256"] != ref["model"]["sha256"]
+
+
+def test_DR_の反復2000回の案は_DR_の案と反復回数と名前だけが違う():
+    ref = json.loads((ROOT / "configs" / "train_full_mini-r2-p7-eff-dr.json").read_text(encoding="utf-8"))
+    other = json.loads((ROOT / "configs" / "train_full_mini-r2-p7-eff-dr-2k.json").read_text(encoding="utf-8"))
+    assert other["name"] == "full-mini-r2-p7-eff-dr-2k"
+    assert other["bundle"] == ref["bundle"]
+    assert other["trainer"]["iterations"] == 2000
+    assert other["trainer"]["label"] == "q8 vast.ai full mini-r2-p7-eff-dr-2k"
+    assert other["instance"]["label"] == "q8-full-mini-r2-p7-eff-dr-2k"
+    ignore = {"_comment", "name", "trainer", "instance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == {k: v for k, v in ref.items() if k not in ignore}
+    assert {k: v for k, v in other["trainer"].items() if k not in ("label", "iterations")} == \
+        {k: v for k, v in ref["trainer"].items() if k not in ("label", "iterations")}
+    assert {k: v for k, v in other["instance"].items() if k != "label"} == \
+        {k: v for k, v in ref["instance"].items() if k != "label"}
