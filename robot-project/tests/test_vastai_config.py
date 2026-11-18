@@ -300,6 +300,8 @@ MINI_V3_TUNING = {
     "mini-p6": {"period_s": 0.6, "w_effort": 0.5, "w_effort_rated": 0.3},
     "mini-p7": {"period_s": 0.7, "w_effort": 0.5, "w_effort_rated": 0.3},
     "mini-eff": {"period_s": 0.5, "w_effort": 0.5, "w_effort_rated": 1.0},
+    # 上の3案の結果（§8）から、合格率の高い2つ（周期 0.7、罰 1.0）を合わせた案
+    "mini-p7-eff": {"period_s": 0.7, "w_effort": 0.5, "w_effort_rated": 1.0},
 }
 
 

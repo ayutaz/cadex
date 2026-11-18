@@ -1,14 +1,14 @@
 # 強化学習環境（Phase 5）
 
-最終確認日: 2026-11-17
+最終確認日: 2026-11-18
 
 学習器は Cadex 同梱の `training/cadex_train.py`（Brax PPO、MuJoCo MJX、JAX）をそのまま使う。
 新しく書いたのは、タスクの定義（設計スクリプトの `assembly.task`）と、それを回す周辺スクリプトだけ。
 GPU（vast.ai）での実行手順は [training-vastai.md](training-vastai.md)。結果は [experiment-results.md](experiment-results.md)。
 
-**今の状態（2026-11-17）**: 作る機体は小型機 `mini`。mini を GPU で学習シード5回学習した結果は、転ばず指令速度で進むが、
-足を上げずに滑る（合格率 0.24、滑り 0.83。experiment-results.md §6）。指令速度や報酬の重みを小型機に合わせる再調整中で、
-結果は未確定（§8）。
+**今の状態（2026-11-18）**: 作る機体は小型機 `mini`。mini を GPU で学習シード5回学習した結果は、転ばず指令速度で進むが、
+足を上げずに滑る（合格率 0.24、滑り 0.83。experiment-results.md §6）。報酬の重みとトルクの罰、歩容の周期を小型機に合わせる
+再調整で、`mini-p7-eff` が3回で合格率 0.97 になった（5回での確認はまだ。§8）。
 
 ## 1. タスクの在りか
 
@@ -62,7 +62,9 @@ GPU（vast.ai）での実行手順は [training-vastai.md](training-vastai.md)�
 | trot_contact | tanh(5·clock_sin)·((LF+RH接地)−(RF+LH接地)) | +0.5 | 対角ペアを交互に接地させる |
 | swing_lift | 遊脚の足先の高さ（tanh、10 mmまで） | +0.5 | すり足を防ぐ |
 | action_rate | Σ(指令の変化率/600)²/8 | −0.5 | 滑らかさ |
-| effort | Σ(トルク/失速トルク)²/8 | −0.5 | サーボの負荷 |
+| effort | Σ(トルク/失速トルク)²/8 | −0.5（`w_effort`） | サーボの負荷 |
+| effort_rated | Σ(トルク/推定連続定格)⁴/8 | −0.3（`w_effort_rated`） | 推定連続定格（失速の40%）を超える区間を強く罰する |
+| tilt | (qx²+qy²)/0.0019 | −0.1 | 胴体の傾き（5度で1） |
 
 **Cadexの歩容リファレンス（`assembly.gait`）は使えなかった。** 1脚に3関節以上が必要で、「leg LF has 2 joints of its own; placing a foot in space takes at least 3」として拒否された。
 代わりに位相クロックを方策に与え、トロットのリズムを報酬で教えている。
@@ -134,16 +136,28 @@ uv run python evaluation/evaluate_variant.py --variant base --policy artifacts/r
 [training-vastai.md](training-vastai.md)。学習シード違いの複数回は `scripts/compare_seeds.py` で評価し、
 平均 ± 標準偏差（最小〜最大）で比べる。
 
-## 8. 小型機 mini の再調整（作業中）
+## 8. 小型機 mini の再調整
 
 mini は、base・leg120 と同じタスク（指令 40〜160 mm/s、報酬 v2）のままでは、足を上げずに滑って進んだ
-（experiment-results.md §6）。小型機に合わせた3案を作り、GPU で比べている最中で、**結果は未確定**。
+（experiment-results.md §6）。タスクの値（設計スクリプトの params）だけを変えた案を作り、GPU で学習シード違いの複数回で比べた。
+どの案も機体の形は mini と同じで、学習設定は機体（`bundle`）と名前以外は元の案と同じ。差が意図した項目だけであることは
+`tests/test_vastai_config.py`（`MINI_TUNING`、`MINI_V3_TUNING`）で固定している。
 
-| 案 | 機体 / 設定 | mini からの差（`artifacts/<案>/design_report.json` の `params`） |
-|---|---|---|
-| `mini-cmd` | `robot/mjcf/mini-cmd/`、`configs/train_full_mini-cmd.json` | 指令速度 `cmd_min`/`cmd_max` を 40/160 から 30/120 mm/s に縮める |
-| `mini-v3` | `robot/mjcf/mini-v3/`、`configs/train_full_mini-v3.json` | `mini-cmd` に加え、v3 の報酬の重み（`w_trot` 0.5→1.0、`w_swing` 0.5→1.5） |
-| `mini-lift` | `robot/mjcf/mini-lift/`、`configs/train_full_mini-lift.json` | `mini-v3` に加え、足上げ高さ `gait_lift` を 10 から 7.5 mm に縮める |
+| 案 | 元の案からの差（`artifacts/<案>/design_report.json` の `params`） | 合格率 | RMSトルク / 推定定格 |
+|---|---|---|---|
+| mini | — | 0.24 ± 0.36（5回） | 0.67 |
+| `mini-cmd` | mini の指令速度 `cmd_min`/`cmd_max` を 40/160 から 30/120 mm/s に縮める | 0.03 ± 0.06（3回） | 0.64 |
+| `mini-v3` | `mini-cmd` に加え、v3 の報酬の重み（`w_trot` 0.5→1.0、`w_swing` 0.5→1.5） | 0.48 ± 0.13（5回） | 1.06 |
+| `mini-lift` | `mini-v3` に加え、足上げ高さ `gait_lift` を 10 から 7.5 mm に縮める | 0.40 ± 0.00（3回） | 1.10 |
+| `mini-p6` | `mini-v3` の周期 `gait_period` を 0.5 から 0.6 s に延ばす | 0.30 ± 0.10（3回） | 1.11 |
+| `mini-p7` | `mini-v3` の周期を 0.7 s に延ばす | 0.57 ± 0.40（3回） | 0.99 |
+| `mini-eff` | `mini-v3` の定格を超えるトルクの罰 `w_effort_rated` を 0.3 から 1.0 に強める | 0.88 ± 0.18（5回） | 0.80 |
+| **`mini-p7-eff`** | `mini-v3` の周期を 0.7 s に、`w_effort_rated` を 1.0 に | **0.97 ± 0.06（3回）** | 0.76 |
 
-3案とも機体の形は mini と同じ。学習設定は、機体（`bundle`）と名前以外は `train_full_mini.json` と同じ。
-mini とタスクの差が意図した項目だけであることはテストで固定している。
+- 足を上げて歩くようになったのは、報酬の重みを v3 にしてから（mini-v3。experiment-results.md §7）。
+  ただし、トルクが推定連続定格を超え、不合格はすべてそのため。
+- トルクの罰を強めると（mini-eff）、歩き方を保ったままトルクが定格の内側に寄り、合格率が 0.88 に上がった。
+  周期 0.7 s と合わせた mini-p7-eff は3回で 0.97 で、今の第一候補（experiment-results.md §8）。滑りは mini-eff より多い。
+- **残り**: mini-p7-eff を学習シード 3・4 で5回に増やして確かめる。推定連続定格を実機で確かめる。
+- 周期を延ばすと、評価の「歩数」の条件（1歩の前進が腰の高さの 0.15 倍以上、4歩以上）はゆるむ方向に効く（1歩が長くなり、
+  回数は減る）。今回の案では歩数の条件で落ちた評価は無い（experiment-results.md §8「比べ方は公平か」）。
