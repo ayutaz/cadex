@@ -35,10 +35,15 @@
 - `export_c --task` はタスクバンドルの sha256 を照合するので、方策は学習したタスク
   （`robot/mjcf/<variant>/cut/walk-task.json`）と組で書き出す。base の書き出し（`exports/full-base-s0/`）は mini-r2 には使えない。
 - どちらの書き出しも `firmware/main/` には置いていない。同梱の `firmware/main/policy_weights.h` は合成ポリシーのままで、
-  `main.c` はサーボに出力しない。サーボの換算（`servo.json`）と IMU の較正を決めてから置く。
+  方策の制御ループはサーボに出力しない。サーボの換算（`servo.json`）と IMU の較正を決めてから置く。
+- **サーボの試験・較正モードを作った**（[servo-calibration.md](servo-calibration.md)）。ファームウェアは既定でこのモードで起動し、
+  方策を動かさない（方策の制御ループは `Q8_RUN_POLICY=1` のときだけ）。シリアルのコマンドで関節を1つずつ選び、
+  中立・向き・範囲を測って NVS に保存する。パソコン側の `deploy/esp32/servo_calibration.py` が結果を受け取り、
+  検査して `servo.json`（`export_c --servo` 用）と `firmware/main/servo_map.h` を作る。
+  確かめたのはホストのテストだけ（ロジックはホストの clang、ESP-IDF 用の層は仮のヘッダで構文と型）。実機では未確認。
 - ESP32-S3 のボードは依頼者の手元にあるが、**型番・寸法・USB 端子は未確認**。設計は 63 × 25.5 mm の
   ESP32-S3-DevKitC-1 を想定している（§8 の電源と配線、§10 のリスク）。
-- ファームウェアは ESP-IDF でまだビルドしていない。
+- ファームウェアは ESP-IDF でまだビルドしていない（ESP-IDF も入れていない）。
 
 ### 実物での確認（2026-11-17、`artifacts/runs/cpu-a/walk.000050.cxpolicy`）
 
@@ -287,6 +292,10 @@ duty     = round(pulse_us * 2^14 / 20000)                             （LEDC 14
   `trim_deg` と `sign` で吸収する。較正は分度器か治具で、少なくとも 3 点（-45°, 0°, +45°）を測り、
   `us_per_deg` も個体ごとに合わせる。結果は `--servo servo.json` で渡す
   （`{"default": {...}, "joints": {"hip_lf": {"trim_deg": 3.0, "sign": -1}}}`）。
+- `servo.json` は較正の道具が作る（[servo-calibration.md](servo-calibration.md) §8。`servo_calibration servo-json`）。
+  道具は中立のずれを `center_us` に入れ、`trim_deg` は 0 にする。`min_us` / `max_us` には実物で測った範囲の端が入る。
+  `joints` のキーはアクチュエータ名（`hip_lf/position`）でも関節名（`hip_lf`）でもよい。
+  方策の行動に当たらないキーがあれば `export_c` は止まる（2026-11-18 まで、実物の方策では関節名のキーが黙って無視されていた）。
 - MG90S はアナログサーボで、50 Hz の PWM が前提。制御を 50 Hz で回せば、1 フレームごとに新しい指令になる。
   25 Hz なら、同じ指令が 2 フレーム続く。
 - 起動時は、`policy_initial_command`（既定は行動範囲の中央）へいきなり動く。学習時のリセット姿勢
@@ -307,7 +316,8 @@ mini は電池を載せず、外部の 5V 電源で動かす。実機で確か�
 - **ESP32 の電源**: 書き込み・ログの確認中は USB（パソコン）から。サーボの 5V 電源とは GND だけを共通にする。
   外部 5V から ESP32 にも給電する方法（ボードの 5V ピンに入れてよいか、USB と同時につないでよいか）は、
   ボードの型番が分かってから回路図で確かめる（未確認）。
-- **信号線**: ファームウェアのサーボの GPIO は仮に `{4, 5, 6, 7, 15, 16, 17, 18}`（`firmware/main/main.c` の `SERVO_GPIO`、TODO）。
+- **信号線**: ファームウェアのサーボの GPIO は仮に `{4, 5, 6, 7, 15, 16, 17, 18}`（`firmware/main/servo_map.h` の `SERVO_MAP_GPIO`、
+  方策の行動の順。試験・較正モードと方策の制御ループの両方が使う）。
   手元のボードでこのピンが使えるか（ブートに使うピンや、PSRAM・USB に取られたピンでないか）は、型番が分かってから確かめる。
   IMU の I²C は未実装（`main.c` の TODO）。
 - 3.3V の GPIO で 5V 給電の MG90S を駆動できるか（信号の電圧）は実機で確かめていない。
@@ -319,9 +329,12 @@ deploy/esp32/cxpolicy_io.py   .cxpolicy の読み書き、参照順伝播、witn
 deploy/esp32/quantize.py      int8 量子化、較正、誤差評価、swish 近似の比較
 deploy/esp32/export_c.py      policy_weights.h の生成、観測レイアウト、サーボ換算
 deploy/esp32/budget.py        MAC 数、重みサイズ、推論時間の見積り
-deploy/esp32/firmware/        ESP-IDF プロジェクト（policy.c/h, control.c/h, main/main.c）
+deploy/esp32/servo_calibration.py  サーボの較正の受け取り・JSON・検査、servo.json と servo_map.h の生成
+deploy/esp32/firmware/        ESP-IDF プロジェクト（policy.c/h, control.c/h, servo_cal.c/h, servo_console.c/h,
+                              servo_hal.h, main/main.c, main/servo_hal_esp.c, main/servo_map.h）
 deploy/esp32/firmware/host/   ホスト検証用ハーネス（テストが clang でビルドする）
 tests/test_esp32_*.py         テスト（Cadex 本体の decode_policy / policy_forward / witness_disagreement との照合を含む）
+tests/test_servo_cal*.py      試験・較正モードとパソコン側の道具のテスト（関節の順序・向きと学習のモデルの一致を含む）
 ```
 
 ```bash
@@ -337,7 +350,10 @@ cd robot-project
 ```
 
 同梱の `firmware/main/policy_weights.h` は、合成ポリシー（乱数重み）から作った見本。
-`POLICY_SYNTHETIC` が 1 のあいだ、`main.c` はサーボに出力しない。
+`POLICY_SYNTHETIC` が 1 のあいだ、方策の制御ループはサーボに出力しない。
+
+ファームウェアは既定で**サーボの試験・較正モード**で起動する（`main.c` の `Q8_RUN_POLICY` が 0）。方策の制御ループは
+`idf.py -DQ8_RUN_POLICY=1 build` のときだけ入る。較正の手順とパソコン側のコマンドは [servo-calibration.md](servo-calibration.md)。
 
 ## 10. リスク
 
@@ -352,7 +368,8 @@ cd robot-project
 - 制御周期の揺らぎ。`vTaskDelayUntil` と FreeRTOS 1 kHz tick を前提にしている。I2C の読み取り時間は未測定。
 - 起動時の指令は `.cxpolicy` に入っていない。`export_c --task` を渡すと、学習のリセットと同じ値
   （リセットのキーフレームの ctrl、`CadexDynamics.reset_command` と同じ式）が自動で入る。この機体では全関節 0°。
-- `main.c` は ESP-IDF でビルドしていない。スタブヘッダでの構文・型検査だけを行った。
+- `main.c` と `servo_hal_esp.c` は ESP-IDF でビルドしていない。仮のヘッダ（`tests/esp_idf_stubs/`）での構文・型検査だけを
+  テストで行っている（`tests/test_servo_cal_c.py`）。
 - int8 の誤差は、実物の方策で合成ポリシーより大きく出た（最大 4.6°、§12）。float32 を使う。
 - **作る機体 mini の方策がまだ無い。** mini の学習は再調整中で、ESP32 に載せる方策は結果待ち。
 - **手元の ESP32-S3 の型番・寸法が未確認。** 設計は 63 × 25.5 mm の DevKitC-1 を想定している。違う場合は、
@@ -369,7 +386,8 @@ cd robot-project
 3. **電源を用意する。** 充電器の出力（5V で何 A か）を確かめ、3A 未満なら 5V 4A の AC アダプタを使う。
    サーボの電源を 5V の電源から直接取り、GND を ESP32 と共通にする（§8）。
 4. ESP-IDF でビルドし、推論サイクル数を実測して §4 の表を置き換える。
-5. サーボを1個ずつ動かして確かめたうえで較正し、`servo.json` を作る（§8）。
+5. サーボを1個ずつ動かして確かめたうえで較正し、`servo.json` を作る（[servo-calibration.md](servo-calibration.md)。
+   試験・較正モードとパソコン側の道具はできている。ホストのテストだけで、実機では未確認）。
 6. **mini の再調整の結果を待つ。** 合格した方策ができたら、その機体のタスクバンドルと組で `check` → `export_c` を通し、
    `servo.json` を渡して `firmware/main/policy_weights.h` を作る（置いた時点で `POLICY_SYNTHETIC` が 0 になり、サーボに出力する）。
 7. IMU ドライバと姿勢推定を実装し、§7 の手順で軸を合わせる（IMU は方策を載せる段階で買う）。

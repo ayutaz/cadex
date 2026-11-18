@@ -306,14 +306,37 @@ def ledc_duty(pulse_us: float, *, bits: int = 14, hz: int = 50) -> int:
     return min(max(d, 0), (1 << bits) - 1)
 
 
+def _servo_keys(action: dict[str, Any]) -> set[str]:
+    actuator = str(action.get("actuator"))
+    keys = {actuator, actuator.split("/")[0]}
+    if action.get("joint"):
+        keys.add(str(action["joint"]))
+    return keys
+
+
 def load_servos(path: str | Path | None, policy: cx.CxPolicy) -> list[ServoConfig]:
-    """``{"default": {...}, "joints": {"hip_lf": {...}}}`` 形式。無ければ全関節既定値。"""
+    """``{"default": {...}, "joints": {"hip_lf": {...}}}`` 形式。無ければ全関節既定値。
+
+    ``joints`` のキーはアクチュエータ名（``hip_lf/position``）でも関節名（``hip_lf``）でもよい。
+    どの行動にも当たらないキーがあれば止まる（黙って既定値のままにしない）。
+    """
 
     data = json.loads(Path(path).read_text(encoding="utf-8")) if path else {}
     base = {**asdict(ServoConfig()), **(data.get("default") or {})}
     joints = data.get("joints") or {}
-    return [ServoConfig(**{**base, **(joints.get(str(a.get("actuator"))) or {})})
-            for a in policy.actions]
+    keys = [_servo_keys(a) for a in policy.actions]
+    unknown = [k for k in joints if not any(k in ks or k.split("/")[0] in ks for ks in keys)]
+    if unknown:
+        raise ValueError(f"サーボ換算のキー {unknown} が方策の行動に無い"
+                         f"（行動: {[str(a.get('actuator')) for a in policy.actions]}）")
+    out = []
+    for ks in keys:
+        spec: dict[str, Any] = {}
+        for k, v in joints.items():
+            if k in ks or k.split("/")[0] in ks:
+                spec.update(v or {})
+        out.append(ServoConfig(**{**base, **spec}))
+    return out
 
 
 # ---------------------------------------------------------------------------

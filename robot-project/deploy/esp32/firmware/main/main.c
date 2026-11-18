@@ -1,24 +1,70 @@
 /*
- * main.c — ESP32-S3 の制御ループの雛形（ESP-IDF v5 系）。
+ * main.c — ESP32-S3 のファームウェア（ESP-IDF v5 系）。2 つのモードがある。
  *
- *   50 Hz:  IMU 読み取り → 観測生成 → 推論 → 指令フィルタ → LEDC PWM 出力
+ *   既定（Q8_RUN_POLICY == 0）: サーボの試験・較正モード（servo_console.c）。
+ *       方策は動かさない。シリアルのコマンドで関節を1つずつ動かし、中立・向き・範囲を測って NVS に保存する。
+ *       手順は docs/servo-calibration.md。
  *
- * 実機 I/O（IMU、ゴール入力）はスタブ。TODO の箇所を実装すること。
- * 推論にかかったサイクル数を 1 秒ごとにログへ出すので、書き込めばそのまま実測になる。
+ *   Q8_RUN_POLICY == 1: 50 Hz の制御ループ
+ *       IMU 読み取り → 観測生成 → 推論 → 指令フィルタ → LEDC PWM 出力
+ *       実機 I/O（IMU、ゴール入力）はスタブ。TODO の箇所を実装すること。
+ *       推論にかかったサイクル数を 1 秒ごとにログへ出すので、書き込めばそのまま実測になる。
+ *       policy_weights.h が合成ポリシー（POLICY_SYNTHETIC == 1）のときはサーボへ出力しない
+ *       （乱数重みで関節を動かさないため）。
  *
- * 注意: policy_weights.h が合成ポリシー（POLICY_SYNTHETIC == 1）のときは
- *       サーボへ出力しない（乱数重みで関節を動かさないため）。
+ * サーボの GPIO と関節の順は servo_map.h（deploy/esp32/servo_calibration.py が生成）にある。
  */
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "driver/ledc.h"
-#include "esp_cpu.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+#include "servo_map.h"
+
+/* 1 にすると方策の制御ループを動かす。既定は 0（方策を動かさず、試験・較正モード）。 */
+#ifndef Q8_RUN_POLICY
+#define Q8_RUN_POLICY 0
+#endif
+
+static const char *TAG = "q8";
+
+#if !Q8_RUN_POLICY
+
+#include "servo_console.h"
+#include "servo_hal.h"
+
+static void servo_console_task(void *arg)
+{
+    (void)arg;
+    static servo_console_t con;
+    servo_console_start(&con);
+    TickType_t last_wake = xTaskGetTickCount();
+    const TickType_t period = pdMS_TO_TICKS(1000 / SERVO_CAL_TICK_HZ);
+    for (;;) {
+        vTaskDelayUntil(&last_wake, period);
+        int ch;
+        while ((ch = servo_hal_getchar()) >= 0) {
+            servo_console_feed(&con, ch);
+        }
+        servo_console_tick(&con);
+    }
+}
+
+void app_main(void)
+{
+    ESP_LOGI(TAG, "サーボの試験・較正モードで起動（方策は動かさない）");
+    /* 応答の文字列を作るので、スタックの大きいタスクで動かす */
+    xTaskCreate(servo_console_task, "servo_console", 8192, NULL, 5, NULL);
+}
+
+#else /* Q8_RUN_POLICY */
+
+#include "driver/ledc.h"
+#include "esp_cpu.h"
 
 #include "control.h"
 #include "policy.h"
@@ -33,10 +79,9 @@
 #define USE_INT8_POLICY 0
 #endif
 
-static const char *TAG = "q8";
-
-/* サーボの GPIO。基板の配線に合わせること。TODO */
-static const int SERVO_GPIO[POLICY_N_OUT] = {4, 5, 6, 7, 15, 16, 17, 18};
+/* サーボの GPIO（方策の行動の順）。servo_map.h の表。基板の配線に合わせること（今は仮の値）。 */
+static const int SERVO_GPIO[SERVO_MAP_N] = SERVO_MAP_GPIO;
+_Static_assert(POLICY_N_OUT == SERVO_MAP_N, "方策の出力の数と servo_map.h の関節の数が違う");
 
 static void servo_init(void)
 {
@@ -171,3 +216,5 @@ void app_main(void)
         }
     }
 }
+
+#endif /* Q8_RUN_POLICY */
