@@ -356,3 +356,46 @@ def test_mini_v3_からの案のタスクは意図した項目だけが_mini_v3_
     assert (weights["effort"], weights["effort_rated"]) == (-want["w_effort"], -want["w_effort_rated"])
     assert _clock_goal(v3["goal"])["period_s"] == pytest.approx(0.5)
     assert {r["label"]: r["weight"] for r in v3["reward"]}["effort_rated"] == -0.3
+
+
+#: 脚を組めるように直した mini-r2（leg_rev=2）に、mini の再調整で良かった報酬の案を載せた機体。
+#: 機体のモデルは mini-r2 と同じで、タスク（指令・報酬・成功条件）は対応する mini の案と同じ
+#: （docs/experiment-results.md §9）。
+MINI_R2_TUNING = {"mini-r2-eff": "mini-eff", "mini-r2-p7-eff": "mini-p7-eff"}
+
+
+def _task_without_model(task: dict) -> dict:
+    """機体の形で決まる項目（モデル、成功判定の scale）と名前（label）を除いたタスク。"""
+    out = json.loads(json.dumps({k: v for k, v in task.items() if k not in ("model", "label")}))
+    out["success"].pop("scale", None)
+    return out
+
+
+@pytest.mark.parametrize("variant", sorted(MINI_R2_TUNING))
+def test_mini_r2_の案の本番設定は対応する_mini_の案と機体だけが違う(variant):
+    ref = json.loads((ROOT / "configs" / f"train_full_{MINI_R2_TUNING[variant]}.json").read_text(encoding="utf-8"))
+    other = json.loads((ROOT / "configs" / f"train_full_{variant}.json").read_text(encoding="utf-8"))
+    assert other["bundle"] == f"robot/mjcf/{variant}/cut/walk-task.json"
+    assert (ROOT / other["bundle"]).exists()
+    assert other["name"] == f"full-{variant}"
+    ignore = {"_comment", "name", "bundle", "trainer", "instance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == \
+        {k: v for k, v in ref.items() if k not in ignore}
+    assert {k: v for k, v in other["trainer"].items() if k != "label"} == \
+        {k: v for k, v in ref["trainer"].items() if k != "label"}
+    assert other["trainer"]["label"] == f"q8 vast.ai full {variant}"
+    assert {k: v for k, v in other["instance"].items() if k != "label"} == \
+        {k: v for k, v in ref["instance"].items() if k != "label"}
+    assert other["instance"]["label"] == f"q8-full-{variant}"
+
+
+@pytest.mark.parametrize("variant", sorted(MINI_R2_TUNING))
+def test_mini_r2_の案は機体のモデルが_mini_r2_で報酬が対応する_mini_の案と同じ(variant):
+    other, ref, r2 = _task(variant), _task(MINI_R2_TUNING[variant]), _task("mini-r2")
+    # 機体のモデル（sha256 まで）は mini-r2 と同じで、mini の案とは違う（足先の幅が違う）
+    assert other["model"] == r2["model"]
+    assert other["model"]["sha256"] != ref["model"]["sha256"]
+    # 指令・報酬・成功条件・観測・行動・乱択は、対応する mini の案と同じ
+    assert _task_without_model(other) == _task_without_model(ref)
+    # mini-r2 は既定の報酬（指令 40〜160 mm/s）のままなので、タスクは違う
+    assert _task_without_model(other) != _task_without_model(r2)
