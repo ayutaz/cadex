@@ -48,6 +48,8 @@ p = params(
     w_trot=num(0.5, min=0.0, max=5.0, step=0.1, label="報酬の重み: 対角ペアの接地位相（v3で1.0）"),
     w_swing=num(0.5, min=0.0, max=5.0, step=0.1, label="報酬の重み: 遊脚の足上げ（v3で1.5）"),
     gait_lift=num(10.0, unit="mm", min=3.0, max=30.0, step=1.0, label="遊脚で払う足上げ高さ"),
+    w_effort=num(0.5, min=0.0, max=5.0, step=0.1, label="報酬の罰の重み: トルク（失速トルクで正規化した2乗）"),
+    w_effort_rated=num(0.3, min=0.0, max=5.0, step=0.1, label="報酬の罰の重み: 推定連続定格を超えるトルク（4乗）"),
     armature=num(20.0, unit="kg*mm2", min=0.0, max=200.0, step=1.0,
                  label="サーボのロータ慣性（出力軸換算、推定値）"),
 )
@@ -422,10 +424,10 @@ rewards = [
         for leg in ("lf", "rf", "lh", "rh")), weight=p.w_swing, label="swing_lift"),
     # 滑らかさ: 指令の変化率（deg/s）とトルク（失速トルクで正規化）
     assembly.reward("(" + total("(c_{k}_rate / 600)^2") + ") / 8", weight=-0.5, label="action_rate"),
-    assembly.reward("(" + total("(tau_{k} / %.3f)^2" % STALL) + ") / 8", weight=-0.5, label="effort"),
+    assembly.reward("(" + total("(tau_{k} / %.3f)^2" % STALL) + ") / 8", weight=-p.w_effort, label="effort"),
     # v2: 推定連続定格で正規化したトルクの4乗。定格を超える区間だけを強く罰する（v1は左前脚が定格の1.4〜1.5倍）。
     assembly.reward("(" + total("(tau_{k} / %.3f)^4" % (STALL * p.rated_fraction)) + ") / 8",
-                    weight=-0.3, label="effort_rated"),
+                    weight=-p.w_effort_rated, label="effort_rated"),
     # v2: 胴体の傾き（5度で1）。v1 は最大傾斜が約20度だった。
     assembly.reward("(rot_qx^2 + rot_qy^2) / 0.0019", weight=-0.1, label="tilt"),
 ]

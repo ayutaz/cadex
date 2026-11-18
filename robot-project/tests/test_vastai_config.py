@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from pathlib import Path
 
@@ -291,3 +292,65 @@ def test_小型機の再調整のタスクは意図した項目だけが_mini_�
     # 元の mini は大きい機体と同じ値（指令 40〜160 mm/s、重み 0.5・0.5、足上げ 10 mm）
     assert (_cmd_goal(mini["goal"])["low"], _cmd_goal(mini["goal"])["high"]) == (40.0, 160.0)
     assert _lift_mm(mini) == {10.0}
+
+
+#: mini-v3 から、トルクの罰を減らすための案。mini-v3 とは、歩容の周期（gait_period）か
+#: トルクの罰の重み（w_effort/w_effort_rated）だけが違う（docs/experiment-results.md §8）。
+MINI_V3_TUNING = {
+    "mini-p6": {"period_s": 0.6, "w_effort": 0.5, "w_effort_rated": 0.3},
+    "mini-p7": {"period_s": 0.7, "w_effort": 0.5, "w_effort_rated": 0.3},
+    "mini-eff": {"period_s": 0.5, "w_effort": 0.5, "w_effort_rated": 1.0},
+}
+
+
+def _clock_goal(goals: list[dict]) -> dict:
+    return next(g for g in goals if g["name"] == "clock")
+
+
+def _without_v3_tuning(task: dict) -> dict:
+    """意図して変えた項目（位相クロックの周期、トルクの罰の重み）を除いたタスク。"""
+    out = json.loads(json.dumps({k: task[k] for k in
+                                 ("model", "reward", "success", "commands", "episode", "termination",
+                                  "randomisation", "reset_variation", "observations", "actions", "goal")}))
+    out["success"].pop("scale", None)
+    for goals in (out["goal"], out["success"]["goal"]):
+        for key in ("period_s", "radians_per_step"):
+            _clock_goal(goals)[key] = None
+    for reward in out["reward"]:
+        if reward["label"] in ("effort", "effort_rated"):
+            reward["weight"] = None
+    return out
+
+
+@pytest.mark.parametrize("variant", sorted(MINI_V3_TUNING))
+def test_mini_v3_からの案の本番設定は_mini_v3_と機体だけが違う(variant):
+    v3 = json.loads((ROOT / "configs" / "train_full_mini-v3.json").read_text(encoding="utf-8"))
+    other = json.loads((ROOT / "configs" / f"train_full_{variant}.json").read_text(encoding="utf-8"))
+    assert other["bundle"] == f"robot/mjcf/{variant}/cut/walk-task.json"
+    assert (ROOT / other["bundle"]).exists()
+    assert other["name"] == f"full-{variant}"
+    ignore = {"_comment", "name", "bundle", "trainer", "instance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == \
+        {k: v for k, v in v3.items() if k not in ignore}
+    assert {k: v for k, v in other["trainer"].items() if k != "label"} == \
+        {k: v for k, v in v3["trainer"].items() if k != "label"}
+    assert {k: v for k, v in other["instance"].items() if k != "label"} == \
+        {k: v for k, v in v3["instance"].items() if k != "label"}
+    assert other["instance"]["label"] == f"q8-full-{variant}"
+
+
+@pytest.mark.parametrize("variant", sorted(MINI_V3_TUNING))
+def test_mini_v3_からの案のタスクは意図した項目だけが_mini_v3_と違う(variant):
+    v3, other = _task("mini-v3"), _task(variant)
+    # 機体のモデル（sha256 まで）、指令速度、成功条件、ほかの報酬は mini-v3 と同じ
+    assert _without_v3_tuning(other) == _without_v3_tuning(v3)
+    want = MINI_V3_TUNING[variant]
+    for goals in (other["goal"], other["success"]["goal"]):
+        clock = _clock_goal(goals)
+        assert clock["period_s"] == pytest.approx(want["period_s"])
+        # 50 Hz の制御で1周期に 2π 進む
+        assert clock["radians_per_step"] == pytest.approx(2 * math.pi / (50 * want["period_s"]))
+    weights = {r["label"]: r["weight"] for r in other["reward"]}
+    assert (weights["effort"], weights["effort_rated"]) == (-want["w_effort"], -want["w_effort_rated"])
+    assert _clock_goal(v3["goal"])["period_s"] == pytest.approx(0.5)
+    assert {r["label"]: r["weight"] for r in v3["reward"]}["effort_rated"] == -0.3

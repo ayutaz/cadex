@@ -1,0 +1,77 @@
+{
+  "_comment": "小型機 mini の再調整（mini-v3 からの案 p6）。mini-v3 の歩容の周期（gait_period）を 0.5 s から 0.6 s に延ばしたタスク。脚の振りの角加速度が下がり、トルクの RMS が下がることを狙う。機体（bundle）以外は train_full_mini-v3.json と同じ（docs/experiment-results.md §8）。",
+  "name": "full-mini-p6",
+  "bundle": "robot/mjcf/mini-p6/cut/walk-task.json",
+  "policy_name": "walk",
+  "device": "gpu",
+  "env": {
+    "CADEX_JAX_CACHE": "/workspace/cache/jax"
+  },
+  "trainer": {
+    "seed": 0,
+    "iterations": 1000,
+    "envs": 8192,
+    "unroll": 20,
+    "epochs": 4,
+    "minibatches": 32,
+    "hidden": [
+      128,
+      64
+    ],
+    "activation": "swish",
+    "learning_rate": 0.0003,
+    "discount": 0.97,
+    "gae_lambda": 0.95,
+    "clip": 0.3,
+    "entropy": 0.01,
+    "max_grad_norm": 1.0,
+    "reward_floor": 0.0,
+    "checkpoint_every": 100,
+    "stop_on_collapse": true,
+    "label": "q8 vast.ai full mini-p6",
+    "action_filter_alpha": 0.6,
+    "no_load_speed": 10.47
+  },
+  "device_overrides": {
+    "cpu": {
+      "trainer": {
+        "envs": 512,
+        "minibatches": 32,
+        "iterations": 300
+      }
+    }
+  },
+  "resume": {
+    "critic_warmup": 10,
+    "actor_ramp": 10
+  },
+  "offer": {
+    "gpu_name": [
+      "RTX 4090",
+      "RTX 5090"
+    ],
+    "num_gpus": 1,
+    "min_reliability": 0.98,
+    "min_cuda": 12.4,
+    "min_disk_gb": 40,
+    "min_inet_down_mbps": 1000,
+    "max_dph": 1.2,
+    "verified": true,
+    "limit": 10
+  },
+  "instance": {
+    "image": "ghcr.io/ayutaz/cadex-train:sha-e7f4d9d",
+    "disk_gb": 40,
+    "label": "q8-full-mini-p6"
+  },
+  "estimate": {
+    "seconds_per_iteration": 0.6,
+    "setup_minutes": 15,
+    "margin": 1.3
+  },
+  "remote": {
+    "work_dir": "/workspace/runs",
+    "trainer_root": "/opt/cadex",
+    "python": "/opt/venv/bin/python"
+  }
+}
