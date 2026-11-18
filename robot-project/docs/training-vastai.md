@@ -1,6 +1,6 @@
 # vast.ai で強化学習を回す（cadex_train.py）
 
-確認日: 2026-11-17。対象は Cadex の `training/cadex_train.py`（Brax PPO on MJX/JAX）。
+確認日: 2026-11-18。対象は Cadex の `training/cadex_train.py`（Brax PPO on MJX/JAX）。
 
 手元の Mac（GPU なし）でロボットを設計し、Cadex が書き出した学習タスクの
 ペア（`*-task.json` と `*-model.xml`）を vast.ai で借りた GPU に送って学習し、
@@ -33,6 +33,8 @@
 | `configs/train_full.json` | 本番用、基準機体（1000 反復、8192 envs。環境数などは Cadex `training/RECIPE.md` §A の既定） |
 | `configs/train_full_leg120.json` | 本番用、脚20%増し（leg120）。機体（`bundle`）以外は `train_full.json` と同じ（テストで固定） |
 | `configs/train_full_mini.json` | 本番用、小型機（mini: 胴体 96×62 mm、MG90S、電池なし）。機体（`bundle`）以外は `train_full.json` と同じ（テストで固定） |
+| `configs/train_full_mini-*.json` | mini の報酬の再調整の案（`mini-v3`、`mini-eff`、`mini-p7-eff` など。[experiment-results.md](experiment-results.md) §7・§8）。報酬はバンドル（タスク）の側で変わり、設定は名前と機体（`bundle`）以外 `train_full.json` と同じ |
+| `configs/train_full_mini-r2-*.json` | 作る機体 mini-r2（mini の脚を組めるように直した形）の案。`mini-r2-eff`・`mini-r2-p7-eff`（§9）は名前と機体以外 `train_full.json` と同じ。実機との差に強くした `mini-r2-p7-eff-dr`（§11）は、加えて学習器のフラグ `randomise_friction`・`randomise_drive_torque` が違い、`-dr-2k` は反復も 2000 |
 
 コマンドはすべて `robot-project/` で実行する:
 
@@ -163,6 +165,8 @@ RTX 5090 で Go1 の 1260 反復が 333 秒＝約 0.26 秒/反復、別の機体
      （smoke から出した 4.1 秒/反復は、実際の約7倍だった）。見積りには、本番の最初の数十反復の
      `progress.json` を使う。
    - 設定の `seconds_per_iteration` は 0.6 にしてある。
+   - その後の機体・案（mini、mini-r2 系、2026-11-17〜18）では、1000 反復の1回が 440〜670 秒、2000 反復（`mini-r2-p7-eff-dr-2k`）が
+     1018〜1107 秒だった（[experiment-results.md](experiment-results.md) §6〜§9・§11）。
 
 ## 4. 借りる（課金開始）
 
@@ -302,6 +306,27 @@ VAST_SSH_HOST=<[このプロジェクト] の行のホスト> VAST_SSH_PORT=<ポ
 HTTP 429（API requests too frequent）を返し、1台のスレッドが例外で黙って終わった。その台は学習にも使われず、
 `--destroy-when-done` でも破棄されずに running のまま残った（→ 直した）。**sweep の後は必ず `instances` で
 自分の台が消えたことを確かめる。**
+
+2026-11-18 の mini と mini-r2 の学習（[experiment-results.md](experiment-results.md) §8・§9・§11）では、借りた台のうち
+毎回1〜2台で SSH の鍵が通らなかった（`Permission denied (publickey)`）。`sweep` はその台を `check` の失敗として退かせて破棄し、
+残りの台で回し終えた。どの回も、終わったあとに `instances` で全台が消えたことを確かめた。
+
+### 6.2 これまでの学習と費用（2026-11-17〜18）
+
+すべて RTX 4090、8192 環境。費用は、表示の $/h と各台を借りていた時間からの**概算**で、実際の請求額は確かめていない。
+起動しなかった台・SSH が通らなかった台の分も含む。
+
+| 日 | 学習 | 回数 | 概算の費用 | 結果 |
+|---|---|---|---|---|
+| 11-17 | base と leg120（手で並べた） | 5回 × 2 | 約 $1.8 | §5 |
+| 11-17 | mini（`sweep` を初めて本物の台で使った） | 5回 | 約 $1.0 | §6 |
+| 11-17 | mini の再調整（3案、mini-v3 を5回に） | 11回 | 約 $1.8 | §7 |
+| 11-18 | mini-v3 のトルクの罰と周期（mini-eff、mini-p7-eff ほか） | 14回 | 約 $2.0 | §8 |
+| 11-18 | 作る機体 mini-r2（mini-r2-eff、mini-r2-p7-eff） | 5回 × 2 | 約 $1.7 | §9 |
+| 11-18 | 実機との差に強くした mini-r2-p7-eff-dr（1000 反復と 2000 反復） | 5回 × 2 | 約 $2.2 | §11 |
+| | **累計** | | **約 $10.5** | |
+
+「結果」の節は [experiment-results.md](experiment-results.md)。どれもシミュレーションの結果で、実機では確かめていない。
 
 ## 7. 監視
 

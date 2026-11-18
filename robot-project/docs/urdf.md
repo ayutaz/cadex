@@ -1,12 +1,14 @@
 # URDF の書き出し
 
-最終確認日: 2026-11-17
+最終確認日: 2026-11-18
 
 Cadex には URDF 出力がないので、Cadex が書いた MJCF から変換する（`q8/urdf.py`）。
 
-いまリポジトリにある URDF は基準機体の `robot/urdf/base/quadruped8.urdf` だけ。作る機体 `mini` の URDF は
-まだ作っていない。`--variant mini` で、`robot/mjcf/mini/model-model.xml` から同じ手順で作れる（mini には電池の
-リンク `c_bat` が無い）。
+いまリポジトリにある URDF は基準機体の `robot/urdf/base/quadruped8.urdf` だけ。作る機体 `mini-r2`（mini の脚を
+組めるように直した形、`leg_rev=2`）の URDF は、リポジトリにはまだ置いていない。`--variant mini-r2` で、
+`robot/mjcf/mini-r2/model-model.xml` から同じ手順で作れる（mini-r2 には電池のリンク `c_bat` が無い）。
+2026-11-18 に作業用の場所へ書き出して確かめた: リンク 34、関節は revolute 8・fixed 25、総質量 220.147 g。
+`tests/test_urdf.py` と同じ比べ方（MuJoCo で読み直し、立位とランダムな関節角3組）で、元の MJCF との差は最大 4.2e-7 だった。
 
 ## 使い方
 

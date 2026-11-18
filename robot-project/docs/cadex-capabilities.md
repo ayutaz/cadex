@@ -1,6 +1,6 @@
 # Cadex でできること・できないこと（quadruped8 で確かめた結果）
 
-最終確認日: 2026-11-17
+最終確認日: 2026-11-18
 
 この文書は、quadruped8 を作る過程で Cadex の各機能を実際に動かして確かめた結果をまとめたものです。
 Cadex 本体の文書（`../../README.md`、`../../docs/*.md`）が「何ができるか」を書いているのに対し、
@@ -32,7 +32,7 @@ Cadex 本体の文書（`../../README.md`、`../../docs/*.md`）が「何がで�
 | 機能 | 状態 | 確かめたこと |
 |---|---|---|
 | xscript（Python の設計スクリプト）による形状生成 | 実装済み・実動作確認済み | `robot/design/quadruped8.py` を Cadex のサンドボックス（`FreeCADCmd` ワーカー）で実行し、OCCT の厳密形状として受理された |
-| 宣言パラメータ（`params(...)`）と寸法変更・再生成 | 実装済み・実動作確認済み | `./cadex script --set`、`./cadex params --set k=v` で再生成。派生機体 leg120・mini もパラメータだけで作った。ビルドの所要は `design_report.json` の `timings_s` で base 3.2秒、leg120 6.3秒、mini 10.3秒（干渉計測は別に約20〜31秒） |
+| 宣言パラメータ（`params(...)`）と寸法変更・再生成 | 実装済み・実動作確認済み | `./cadex script --set`、`./cadex params --set k=v` で再生成。派生機体 leg120・mini もパラメータだけで作った。作る機体 mini-r2 は、設計スクリプトに足した脚の形の切り替え（`leg_rev=2`）を mini の値に加えて作った。ビルドの所要は `design_report.json` の `timings_s` で base 3.2秒、leg120 6.3秒、mini 10.3秒、mini-r2 10.7秒（干渉計測は別に約20〜31秒） |
 | 部品ライブラリ（`lib.servo`、`lib.bolt`、ホーン、収納部 `bay`） | 実装済み・実動作確認済み | MG90S のケース・タブ・スプライン、十字ホーン、M2 ボルトと下穴・通し穴をカタログ値から生成 |
 | MCP 経由の操作（`cadex mcp`） | 実装済み・未確認 | ツール面は存在する。今回は同じ処理を CLI（`./cadex ... --json`）から呼び、MCP クライアントからは操作していない |
 
@@ -52,9 +52,10 @@ Cadex 本体の文書（`../../README.md`、`../../docs/*.md`）が「何がで�
 | 機能 | 状態 | 確かめたこと |
 |---|---|---|
 | revolute / fixed 関節、関節制限 | 実装済み・実動作確認済み | 8個の回転関節（股・膝×4脚）と、サーボ・ホーン・電装品の固定関節 |
-| 静的な干渉計測（`cadex clearance`） | 実装済み・実動作確認済み | OCCT の厳密形状で base は 595 組、電池の無い mini は 561 組を計測し、問題なし |
+| 静的な干渉計測（`cadex clearance`） | 実装済み・実動作確認済み | OCCT の厳密形状で base は 595 組、電池の無い mini と mini-r2 は 561 組を計測し、問題なし |
 | 可動域スイープ（`sweep_step_degrees`、`clearance --sweep`） | 実装済み・実動作確認済み | 5度刻みで全関節を可動域いっぱいに動かし、全組の干渉を計測。下の「スイープで見つけた問題」を参照 |
-| 質量・慣性 | 実装済み・実動作確認済み | OCCT 形状の体積×密度から計算。総質量は base 275.2 g（サーボ 107.2 g、PLA 120.0 g、電池の仮置き 30.0 g ほか）、mini 228.4 g（電池なし） |
+| 質量・慣性 | 実装済み・実動作確認済み | OCCT 形状の体積×密度から計算。総質量は base 275.2 g（サーボ 107.2 g、PLA 120.0 g、電池の仮置き 30.0 g ほか）、mini 228.4 g、mini-r2 220.1 g（どちらも電池なし） |
+| 組み立てられるか（部品をまっすぐ差し込めるか、外へつながらない空間） | 部分実装 | 前の小型機 mini は、上の干渉計測（組み上がった姿勢と可動域での重なり）をすべて通ったが、STL を調べると脚が組めない3点があった（膝サーボのタブが閉じた溝に入る、ホーンの凹みが板の中に閉じている、膝サーボのリード線の出口が無い）。STL から差し込みの向きに光線を当てる判定と閉じた空間の体積を出す `scripts/assembly_guide.py` を自作し、直した mini-r2 で7項目すべて合格（`artifacts/mini-r2/assembly/print_plan.json` の `assembly_verdict`。実物では未確認。[assembly-guide.md](assembly-guide.md) §0） |
 | 計測結果の機械可読な出力 | 部分実装 | 干渉の結果は Cadex プロジェクトの `docs/clearance.md` などの Markdown に書かれる。`q8/clearance.py` で読み取って JSON にしている |
 
 **スイープで見つけた問題（v1 → 現行）**: 最初の版では、前脚の股を +20° 振ると上腿（膝サーボのハウジング）が
@@ -79,11 +80,14 @@ Cadex 本体の文書（`../../README.md`、`../../docs/*.md`）が「何がで�
 | MuJoCo での物理シミュレーション | 実装済み・実動作確認済み | 接触・重力・アクチュエータの動作を確認。固定トロットで約50 mm/s 前進、左右の歩幅差による旋回で約33°/s |
 | 歩容リファレンス（`assembly.gait`） | 部分実装 | 1脚3関節以上が前提で、2自由度の脚には使えない。代わりに位相クロック（`assembly.goal(kind="phase")`）と接地位相の報酬で代替 |
 | 学習（`training/cadex_train.py`、Brax PPO on MJX/JAX） | 実装済み・実動作確認済み | CPU で学習が回ることを確認（256環境で約360ステップ/秒、1反復約14秒）。GPU でも回した（次の行） |
-| GPU での学習 | 実装済み・実動作確認済み | vast.ai の RTX 4090 で、base・leg120・mini を学習シード5回ずつ学習した（8192 環境、1000 反復。[experiment-results.md](experiment-results.md) §5・§6）。base と leg120 は合格率 0.92 と 1.00、mini は 0.24（再調整中） |
-| 学習時のセンサーノイズ・通信遅延のランダム化 | 未実装 | Cadex のトレーナーにこの機能はない（[simulation.md](simulation.md) の Sim2Real） |
+| GPU での学習 | 実装済み・実動作確認済み | vast.ai の RTX 4090 で、base・leg120・mini と、mini の報酬の再調整の案、脚を直した mini-r2 の案を、学習シード3〜5回ずつ学習した（8192 環境、1000 反復。一部は 2000 反復。[experiment-results.md](experiment-results.md) §5〜§9・§11）。合格率（評価シード10個での合格の割合を、学習シード方向に平均したもの）は base 0.92、leg120 1.00、mini 0.24（base と同じ報酬）。作る機体 mini-r2 では `mini-r2-p7-eff` が 0.90、実機との差に強くした `mini-r2-p7-eff-dr` が普通の評価で5回とも 10/10。GPU の費用は表示の $/h からの概算で累計 約 $10.5（請求額は未確認）。どれもシミュレーションの結果 |
+| 学習時のランダム化（Cadex の仕組み） | 実装済み・実動作確認済み | タスクの `randomisation`（モデルの配列の要素に、環境ごとに引いた係数を掛ける）と `disturbance`（胴体への押し）、学習器のフラグ `--randomise-friction`・`--randomise-drive-torque`。これで足の摩擦（μ 0.35〜1.25）、サーボのトルク（×0.8〜1.1）、サーボの剛性（×0.7〜1.3）、押し（0〜1.5 N）を学習に入れた（`mini-r2-p7-eff-dr`、[training.md](training.md) §5.2） |
+| サーボの応答の遅れ・重心のずれのランダム化 | 部分実装 | Cadex が書く MJCF のアクチュエータには応答の遅れ（`dyntype`）が無い。また Cadex のランダム化は係数を掛けるだけなので、胴体の重心をそのままずらすことはできない。係数で表せるよう、学習用カットモデルを書き換える `q8/dr_bundle.py` を自作した（アクチュエータを一次遅れ `dyntype="filterexact"` にして時定数 1.5〜30 ms、胴体の 20 g を子のボディ `dr_payload` に移してその重心を x ±2.7 mm・y ±1.8 mm）。学習器は変えていない |
+| 純粋な遅れ・制御周期のゆらぎ・ギアのガタ | 未実装 | Cadex の学習器に機能が無く、学習には入れていない（遅れは上の一次遅れで近似しただけ）。評価にだけ、自作の `q8/robustness.py` で入れた（エンジンの評価 `CadexDynamics.evaluate_success` をそのまま使い、2 ms ごとの `mj_step` を包んで遅れ・ゆらぎ・不感帯を入れる。何も変えない条件ではエンジンの評価と一致することをテストで確認。[experiment-results.md](experiment-results.md) §11） |
+| IMU（観測）のノイズ | 未実装 | 学習器の観測ノイズは、追跡器と荷重センサーのチャンネルにしか無い。IMU のノイズ・バイアスは、学習にも評価にも入れていない（[simulation.md](simulation.md) の Sim2Real） |
 | 方策の評価（`cadex evaluate`） | 実装済み・実動作確認済み | 成功条件・固定シード・動画つきで評価できた |
 | 固定歩容の評価 | 部分実装 | `cadex evaluate` は方策ファイルしか再生できない。固定歩容は `q8/evaluation.py` で MuJoCo 上で再生し、同じ `CadexEvaluation` の指標で評価する仕組みを自作 |
-| 方策ファイル（`.cxpolicy`） | 実装済み・実動作確認済み | Cadex 独自形式（重みと観測の正規化を含む）。ESP32 向けの C コードへの書き出しは base の方策で確認済み、実機は未確認（[esp32-deployment.md](esp32-deployment.md)） |
+| 方策ファイル（`.cxpolicy`） | 実装済み・実動作確認済み | Cadex 独自形式（重みと観測の正規化を含む）。ESP32 向けの C コードへの書き出しは、base の方策で手順を確かめ（ホストの C で照合）、作る機体 mini-r2 の方策（`full-mini-r2-p7-eff-s3` と、今の実機の候補 `full-mini-r2-p7-eff-dr-s4`）も float32 で書き出した（witness の照合は一致）。ESP-IDF でのビルドと実機は未確認（[esp32-deployment.md](esp32-deployment.md) §12・§13） |
 
 ### ダッシュボード
 
@@ -114,5 +118,5 @@ Cadex 本体の文書（`../../README.md`、`../../docs/*.md`）が「何がで�
 | アセンブリは歩容リファレンス（gait references）を持つ | 1脚3関節以上が前提で、2自由度脚の quadruped8 では使えない |
 | export で STL を書く | ASCII STL。MuJoCo で使うにはバイナリへの変換が要る |
 | MJCF を正確な慣性つきで書く | そのとおり。ただし衝突形状は単純形状だけで、見た目のメッシュは入らない |
-| トレーナーは CPU で小さな機構、GPU で歩容 | CPU でも歩行タスクの学習は回るが遅い（1反復約14秒）。GPU（RTX 4090）では1回の学習（8192 環境、1000 反復）が約 480〜550 秒（[experiment-results.md](experiment-results.md) §5・§6） |
+| トレーナーは CPU で小さな機構、GPU で歩容 | CPU でも歩行タスクの学習は回るが遅い（1反復約14秒）。GPU（RTX 4090）では1回の学習（8192 環境、1000 反復）が約 440〜670 秒、2000 反復で約 1020〜1110 秒（[experiment-results.md](experiment-results.md) §5〜§9・§11） |
 | URDF | README に記述はなく、機能もない |

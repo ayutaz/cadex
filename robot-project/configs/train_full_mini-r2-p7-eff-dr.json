@@ -1,5 +1,5 @@
 {
-  "_comment": "実機との差に強くする案（段階A-2）。機体とタスクは mini-r2-p7-eff に、サーボの応答の遅れ（一次遅れ 1.5〜30 ms）・剛性（×0.7〜1.3）・重心のずれ（x ±2.7 mm、y ±1.8 mm）・押し（0〜0.8 N、0.1 s を2回）を足したもの（scripts/make_dr_bundle.py → artifacts/mini-r2-p7-eff-dr/cut）。学習器のフラグで足の摩擦（μ 0.35〜1.25。床の摩擦 1.0 と足の 0.9 の大きい方に掛かる）とサーボのトルク（×0.8〜1.1）もばらつかせる。それ以外は train_full_mini-r2-p7-eff.json と同じ（docs/experiment-results.md §11）。",
+  "_comment": "実機との差に強くする案（段階A-2）。機体とタスクは mini-r2-p7-eff に、サーボの応答の遅れ（一次遅れ 1.5〜30 ms）・剛性（×0.7〜1.3）・重心のずれ（x ±2.7 mm、y ±1.8 mm）・押し（0〜1.5 N、0.1 s を2回）を足したもの（scripts/make_dr_bundle.py → artifacts/mini-r2-p7-eff-dr/cut）。学習器のフラグで足の摩擦（μ 0.35〜1.25。床の摩擦 1.0 と足の 0.9 の大きい方に掛かる）とサーボのトルク（×0.8〜1.1）もばらつかせる。それ以外は train_full_mini-r2-p7-eff.json と同じ（docs/experiment-results.md §11）。",
   "name": "full-mini-r2-p7-eff-dr",
   "bundle": "artifacts/mini-r2-p7-eff-dr/cut/walk-task.json",
   "policy_name": "walk",

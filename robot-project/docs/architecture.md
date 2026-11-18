@@ -1,6 +1,6 @@
 # 全体構成とデータの流れ
 
-最終確認日: 2026-11-17
+最終確認日: 2026-11-18
 
 ## 2つの層
 
@@ -27,9 +27,13 @@ robot-project は Cadex 本体を一切変更していません。Cadex へは�
 | 設計スクリプト | `robot/design/quadruped8.py` | 形状・関節・物理パラメータ・センサー・学習タスク（報酬・終了条件・ランダム化・成功条件）をすべて宣言する xscript |
 | 生成と検証 | `scripts/build_robot.py`、`q8/cadex.py`、`q8/clearance.py`、`q8/physics.py`、`q8/manufacturing.py` | Cadex を呼んで生成・干渉計測・出力し、質量・保持トルク・印刷可否・BOM をまとめる |
 | シミュレーション | `simulation/fixed_gait.py`、`q8/gait.py`、`q8/robot.py` | 逆運動学による固定歩容を MuJoCo で再生 |
-| 評価 | `evaluation/evaluate_variant.py`、`q8/evaluation.py`、`q8/compare.py` | 固定歩容と学習済み方策を同じ指標で評価し、機体どうしを比べる |
+| 評価 | `evaluation/evaluate_variant.py`、`q8/evaluation.py`、`q8/compare.py`、`q8/seeds.py`、`scripts/compare_seeds.py` | 固定歩容と学習済み方策を同じ指標で評価し、機体どうしを学習シード方向に比べる |
+| 実機との差の評価 | `evaluation/evaluate_robustness.py`、`q8/robustness.py`、`scripts/compare_robustness.py` | エンジンの評価（`CadexDynamics.evaluate_success`、`cadex evaluate` と同じ関数）をそのまま使い、摩擦・サーボの剛性とトルク・胴体の質量と重心をモデルに、サーボの遅れ・制御周期のゆらぎ・ガタ・横からの押しを 2 ms ごとに入れて評価する |
+| ランダム化の学習 | `q8/dr_bundle.py`、`scripts/make_dr_bundle.py`、`configs/train_full_mini-r2-p7-eff-dr*.json` | 学習用カットモデルとタスクに、サーボの一次遅れ・剛性・重心のずれ・押しのランダム化を足す（学習器は変えない）。足の摩擦とトルクは学習器のフラグで |
 | 学習基盤 | `configs/train_*.json`、`vastai/` | 学習設定と、vast.ai の GPU で学習を回す道具（複数台で待ち行列を回す `sweep` を含む） |
-| 移植 | `deploy/esp32/` | `.cxpolicy` を ESP32-S3 用の C コードにする（基準機体の方策で書き出しまで確認。ファームウェアは ESP-IDF で未ビルド） |
+| 組立 | `scripts/assembly_guide.py` | 印刷の向き・プレート割り・差し込めるかを STL から判定し、組立の段階図を描く |
+| 移植 | `deploy/esp32/`（`cxpolicy_io`、`quantize`、`export_c`、`budget`） | `.cxpolicy` を ESP32-S3 用の C コードにする（ホストでの照合まで確認。ファームウェアは ESP-IDF で未ビルド） |
+| サーボの試験・較正 | `deploy/esp32/firmware/servo_cal.c`・`servo_console.c`・`servo_hal.h`、`deploy/esp32/servo_calibration.py` | ファームウェアは既定でこのモードで起動し、方策を動かさない（`Q8_RUN_POLICY=1` のときだけ方策の制御ループ）。シリアルのコマンドで関節ごとに中立・向き・範囲を測って NVS に保存し、パソコン側で受け取って検査し、`servo.json` と `servo_map.h` を作る（ホストのテストだけで確認） |
 | 変換 | `q8/urdf.py`、`scripts/mjcf_to_urdf.py` | MJCF → URDF |
 | 描画 | `q8/render.py`、`q8/visual.py`、`scripts/render_views.py` | 静止画・動画 |
 
@@ -45,18 +49,33 @@ robot/design/quadruped8.py（xscript）
         │  ./cadex export
         ▼
 STEP / STL（ASCII）/ MJCF（model-model.xml）/ 学習タスク（walk-task.json）
-        │  build_robot.py: STL をバイナリ化、見た目用 MJCF（visual.xml）を追加
+        │  build_robot.py: STL をバイナリ化、見た目用 MJCF（visual.xml）、学習用カットモデル（cut/）を追加
         ▼
 robot/meshes/<variant>/、robot/mjcf/<variant>/、artifacts/<variant>/design_report.json
         │
+        ├─ scripts/assembly_guide.py ─────── 印刷の計画と組立の段階図 → artifacts/<variant>/assembly/
+        │
         ├─ simulation/fixed_gait.py ──────── MuJoCo（CPU）で固定歩容 → artifacts/base/fixed_gait/
         │
-        ├─ training/cadex_train.py ───────── MuJoCo MJX / JAX（手元の CPU か vast.ai の GPU）で PPO
+        ├─ scripts/make_dr_bundle.py ─────── cut/ にランダム化を足す → artifacts/mini-r2-p7-eff-dr/cut/
+        │        │                          （サーボの一次遅れ・剛性・重心のずれ・押し）
         │        ▼
-        │   .cxpolicy（重み・観測の正規化）→ artifacts/runs/<run>/
+        ├─ training/cadex_train.py ───────── MuJoCo MJX / JAX（手元の CPU か vast.ai の GPU）で PPO
+        │        ▼                          （dr の案は --randomise-friction と --randomise-drive-torque も）
+        │   .cxpolicy（重み・観測の正規化）→ artifacts/runs/<run>/、artifacts/training/<run>/
         │        │
         │        ├─ ./cadex evaluate ──────── 成功条件・固定シード・動画 → artifacts/<variant>/evaluation/policy/
-        │        └─ deploy/esp32/ ─────────── C コード（float32 か int8）→ ESP32-S3（実機は未確認）
+        │        ├─ evaluation/evaluate_robustness.py
+        │        │      エンジンの評価に実機との差（摩擦・遅れ・ゆらぎ・ガタ・剛性・質量・重心・押し）を重ねる
+        │        │      → artifacts/<案>/robustness/<run>/（scripts/compare_robustness.py で案どうしを比べる）
+        │        └─ deploy/esp32/export_c ─── C コード（float32 か int8）→ deploy/esp32/exports/<run>/
+        │                 │                   （servo.json でパルス幅に換算）
+        │                 ▼
+        │           ESP32-S3 のファームウェア（実機は未確認。方策の制御ループは Q8_RUN_POLICY=1 のときだけ）
+        │                 ▲
+        │           servo.json、servo_map.h
+        │                 │  deploy/esp32/servo_calibration.py（read / parse → check → servo-json / header）
+        │           較正の JSON ← ファームウェアの試験・較正モード（既定）で、関節ごとに中立・向き・範囲を測る
         │
         └─ evaluation/evaluate_variant.py ── 固定歩容と方策を同じ CadexEvaluation の指標で並べる
 ```
@@ -72,7 +91,10 @@ robot/meshes/<variant>/、robot/mjcf/<variant>/、artifacts/<variant>/design_rep
 | 固定歩容 | `visual.xml` | 判定 JSON、CSV、MP4 | `simulation/fixed_gait.py`（MuJoCo） |
 | 学習 | `walk-task.json` | `.cxpolicy` | `training/cadex_train.py`（Brax PPO、MJX） |
 | 評価 | MJCF と `.cxpolicy` | `evaluation.json`、トレース、動画 | `cadex evaluate`（エンジンが方策を再生） |
-| 移植 | `.cxpolicy` | C のソースとファームウェア | `deploy/esp32/`（実機は未確認） |
+| ランダム化の学習 | 学習用カットモデルとタスク（`robot/mjcf/mini-r2-p7-eff/cut/`） | ランダム化を足したバンドル（`cut.xml`、`walk-task.json`、`dr.json`）→ 学習して `.cxpolicy` | `scripts/make_dr_bundle.py`（`q8/dr_bundle.py`）、`training/cadex_train.py` |
+| 実機との差の評価 | 機体のモデルとタスク、`.cxpolicy` | `robustness.json`、`summary.md`（組は nominal・sweep・random・push） | `evaluation/evaluate_robustness.py`（`q8/robustness.py`。エンジンの評価の関数をそのまま使う） |
+| 移植 | `.cxpolicy`、タスク、`servo.json` | C のヘッダ（`policy_weights.h`）とファームウェア | `deploy/esp32/`（ホストでの照合まで。実機は未確認） |
+| サーボの試験・較正 | ファームウェアの試験・較正モードの `dump` の出力（`CAL ...` の行） | 較正の JSON、`servo.json`（`export_c --servo` 用）、`servo_map.h` | `deploy/esp32/firmware/`（既定のモード）、`deploy/esp32/servo_calibration.py`（ホストのテストだけで確認） |
 
 ## Cadex のプロジェクトストア
 
@@ -81,7 +103,7 @@ robot/meshes/<variant>/、robot/mjcf/<variant>/、artifacts/<variant>/design_rep
 | 機体 | プロジェクト |
 |---|---|
 | base（基準機体） | `~/cadex-projects/quadruped8` |
-| その他（leg120、mini、mini の再調整案 mini-cmd / mini-v3 / mini-lift など） | `~/cadex-projects/quadruped8-<variant>` |
+| その他（leg120、mini、mini-r2、学習タスクを変えた案 mini-v3 / mini-r2-p7-eff など） | `~/cadex-projects/quadruped8-<variant>` |
 
 ## 機体（variant）
 
@@ -93,8 +115,11 @@ robot/meshes/<variant>/、robot/mjcf/<variant>/、artifacts/<variant>/design_rep
 |---|---|
 | `base` | 基準機体（胴体 110 × 64 mm、電池 30 g の仮置き） |
 | `leg120` | base の上腿・下腿を 1.2 倍 |
-| `mini` | **作る機体**。胴体 96 × 62 mm、上腿 40 mm、下腿 44 mm、`hip_x` 40 mm、電池なし（`battery_mass_g=0`）。理由は [README](../README.md) |
-| `mini-cmd`、`mini-v3`、`mini-lift` | mini と同じ形で、学習タスクだけを変えた再調整の案。比較中で結果は未確定。`mini-cmd` は指令速度を 40〜160 から 30〜120 mm/s に縮める。`mini-v3` はそれに v3 の報酬の重み（`w_trot` 1.0、`w_swing` 1.5）を足す。`mini-lift` はさらに足上げ高さ（`gait_lift`）を 10 から 7.5 mm に縮める（各 `design_report.json` の `params`） |
+| `mini` | 前の小型機。胴体 96 × 62 mm、上腿 40 mm、下腿 44 mm、`hip_x` 40 mm、電池なし（`battery_mass_g=0`）。STL では脚が組めないと分かり、mini-r2 に置き換えた |
+| `mini-r2` | **作る機体**。mini の6つの値に `leg_rev=2` を足し、脚を組めるように直した形（膝サーボを内側から差し込む、ホーンの凹みをサーボ側の面に、リード線の口）。220.1 g。理由は [README](../README.md)、組立は [assembly-guide.md](assembly-guide.md) |
+| `mini-cmd`、`mini-v3`、`mini-lift`、`mini-p6`、`mini-p7`、`mini-eff`、`mini-p7-eff` | mini と同じ形で、学習タスク（指令速度・報酬の重み・周期・トルクの罰）だけを変えた再調整の案。比べ終えた（[experiment-results.md](experiment-results.md) §7・§8） |
+| `mini-r2-eff`、`mini-r2-p7-eff` | mini-r2 の形に、mini-eff・mini-p7-eff と同じ学習タスクを載せた案。mini-r2-p7-eff が良かった（§9） |
+| `mini-r2-p7-eff-dr`（と `-dr-2k`） | `build_robot.py` の機体ではなく、mini-r2-p7-eff の学習用カットモデルにランダム化を足した学習だけの案（`artifacts/mini-r2-p7-eff-dr/cut/`）。評価は元の mini-r2-p7-eff のモデルとタスクで行う（`compare_seeds.py --as`）。実機の候補はこの案の乱数 4 の回（§11） |
 | `taskv2`、`taskv3` | base の形で、報酬を見直したときの学習タスク（[experiment-results.md](experiment-results.md)） |
 
 プロジェクトの中には、Cadex が管理する `script.py`（設計スクリプトの写し）、`script.json`（パラメータ）、
