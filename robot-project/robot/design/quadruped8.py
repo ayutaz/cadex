@@ -4,6 +4,7 @@
 # 座標系: X が前方、Y が左、Z が上。単位は mm、度、kg/m^3。
 # 各脚は2自由度（股ピッチ・膝ピッチ）。8個の関節軸はすべてワールドの +Y に平行。
 # tail_dof を 1・2 にすると、胴体の後端にしっぽ（左右の軸 +Z、その先で上下の軸 +Y）のサーボが足される。
+# rear_legs を 1 にすると、後ろの2本の代わりに胴体の後端の中央に1本（hc）を置いた3本足になる（6自由度）。
 # 関節角0 = この形状を組んだ姿勢 = 立位姿勢。正の角度は脚を後ろへ振る向き。
 # 部品はすべてワールド座標の立位姿勢で作り、コンポーネントの配置は恒等変換にする。
 # 関節の2つのコネクタには同じワールドフレームを与える（docs/MUJOCO.md §7 の手順2）。
@@ -67,6 +68,11 @@ p = params(
     tail_yaw_limit=num(45.0, unit="deg", min=5.0, max=90.0, step=1.0, label="しっぽの左右の可動域（±）"),
     tail_pitch_min=num(-30.0, unit="deg", min=-80.0, max=0.0, step=1.0, label="しっぽの上下の下限（下げる）"),
     tail_pitch_max=num(45.0, unit="deg", min=0.0, max=80.0, step=1.0, label="しっぽの上下の上限（上げる）"),
+    # 3本足（rear_legs=1）: 前の2本はそのまま、後ろは胴体の後端の中央に1本（脚の名前 hc）。しっぽとは一緒に使えない。
+    rear_legs=num(2.0, min=1.0, max=2.0, step=1.0, label="後ろの脚の数（2: 四足、1: 後ろ中央の1本の3本足）"),
+    # 3本足の歩き方の報酬。0: 決めない（接地のリズムの報酬なし、足上げは全脚に払う）、
+    # 1: 波（lf → rf → hc の順に 1/3 周期ずつ立脚をずらす）。四足はトロットで、1 は使えない。
+    gait_mode=num(0.0, min=0.0, max=1.0, step=1.0, label="3本足の歩き方の報酬（0: 決めない、1: 波）"),
 )
 
 SKU = "sg90" if p.servo_sg90 >= 0.5 else "mg90s"
@@ -105,16 +111,57 @@ R2 = p.leg_rev >= 1.5
 STALL = [e["kg_cm"] for e in S["stall_torque"] if abs(e["volts"] - VOLT) < 1e-6][0] * 98.0665
 SPEED = [e["s_per_60_deg"] for e in S["speed"] if abs(e["volts"] - VOLT) < 1e-6][0]
 
+
+
+def horn_seat_of(hs):
+    """leg_rev 2: サーボのケース上面から、ホーンを受けるリンクの内面までの距離（hs はホーンの spec）。
+
+    ホーン（CAD はスプラインの先端に載る形。腕はハブの外側の端にある）の外面から、
+    腕の厚み + すきま だけサーボ側にリンクの内面を置き、凹みをその面に開ける。
+    実物のホーンはスプラインにかぶさるので CAD よりサーボ側に寄る（最大でスプラインの高さ、推定）。
+    そのときはリンクがホーンと一緒に寄るだけで、凹みの形は変わらない。
+    """
+    return max(g, SPLINE_H + hs["hub_height_mm"] - (hs["arm_thickness_mm"] + c))
+
+
+# --- 脚の数（rear_legs）と歩き方の報酬（gait_mode） ---
+REAR_LEGS = int(round(p.rear_legs))
+if REAR_LEGS not in (1, 2):
+    raise ValueError("rear_legs は 1 か 2: %r" % p.rear_legs)
+TRI = REAR_LEGS == 1
+GAIT_MODE = int(round(p.gait_mode))
+if GAIT_MODE not in (0, 1):
+    raise ValueError("gait_mode は 0 か 1: %r" % p.gait_mode)
+if GAIT_MODE == 1 and not TRI:
+    raise ValueError("gait_mode=1（波）は3本足（rear_legs=1）だけ。四足の歩き方はトロット")
+if TRI and p.tail_dof >= 0.5:
+    raise ValueError("しっぽ（tail_dof > 0）と3本足（rear_legs=1）は一緒に使えない")
+
 # --- 胴体（下側シャーシ + 上側カバー）。股軸の高さで上下に分割する ---
 z_bot = ZH - CASE_W / 2.0 - c - w
 z_top = z_bot + p.body_height
 BL = p.body_length
 hull = part.box(BL, 2.0 * W2, p.body_height, origin=[-BL / 2.0, -W2, z_bot])
 
+# 脚ごとの (名前, 前後の符号 sx, 左右の符号 sy, 股軸の x, 股サーボのケース上面の |y|)。
+# 左右の符号 sy は、股サーボの軸と脚の板が並ぶ向き（+Y なら、股サーボ → 上腿 → 膝サーボ → 下腿の順に +Y へ）。
+# 3本足の後ろの脚 hc は、左の脚（sy=+1）と同じ組み方で、上腿の板の中央面を y = 0 に置く。
+# 股軸は胴体の後端からハブの半径 + joint_gap 後ろ。股サーボは胴体の後端に足した台に入る。
+if TRI:
+    HC_X = -(BL / 2.0 + R + g)
+    seat0 = horn_seat_of(probe.horn("cross").spec) if R2 else g
+    HC_YB = -t / 2.0 - seat0           # 上腿の内面 = -t/2 になる、股サーボのケース上面の y
+    LEG_SPECS = [("lf", 1, 1, p.hip_x, W2), ("rf", 1, -1, p.hip_x, W2), ("hc", -1, 1, HC_X, HC_YB)]
+else:
+    LEG_SPECS = [("lf", 1, 1, p.hip_x, W2), ("rf", 1, -1, p.hip_x, W2),
+                 ("lh", -1, 1, -p.hip_x, W2), ("rh", -1, -1, -p.hip_x, W2)]
+LEG_NAMES = [spec[0] for spec in LEG_SPECS]
+LEG_YB = {spec[0]: spec[4] for spec in LEG_SPECS}
 hip_servos = {}
 bays = []
-for name, sx, sy in (("lf", 1, 1), ("rf", 1, -1), ("lh", -1, 1), ("rh", -1, -1)):
-    sv = lib.servo(SKU, origin=(sx * p.hip_x, sy * W2, ZH), direction=(0, sy, 0),
+LEG_X = {spec[0]: spec[3] for spec in LEG_SPECS}
+for name, sx, sy, hx_leg, yb in LEG_SPECS:
+    sv = lib.servo(SKU, origin=(hx_leg, sy * yb, ZH), direction=(0, sy, 0),
                    roll_degrees=(0.0 if sx > 0 else 180.0), label="hip_servo_" + name)
     hip_servos[name] = sv
     bays.append(sv.bay(clearance=c, lead_room=LEAD, ledge=4.0))
@@ -139,6 +186,13 @@ if TAIL:
     tail_mount = part.box((-BL / 2.0 + w) - (TY[0] - H_SHAFT), 2.0 * HW, p.body_height,
                           origin=[TY[0] - H_SHAFT, -HW, z_bot])
     hull = part.fuse([hull, tail_mount])
+if TRI:
+    # 3本足の後ろの脚の股サーボの台: ケース（ケース上面 y = HC_YB から -Y へ CASE_H）を包み、+Y の面は開ける。
+    # ロール 180 度でケースは軸から前へ伸び、リード線の逃げは胴体の後ろの壁へ入る。前端は胴体へ肉厚ぶん重ねる。
+    hc_depth = CASE_H + c + w
+    hc_mount = part.box((-BL / 2.0 + w) - (HC_X - H_SHAFT), hc_depth, p.body_height,
+                        origin=[HC_X - H_SHAFT, HC_YB - hc_depth, z_bot])
+    hull = part.fuse([hull, hc_mount])
 
 # 中央の空洞: 前後の股サーボの配線スペースまで達し、電池・IMUを収める。
 cav_x = p.hip_x - (CASE_L - FRONT) - c - LEAD
@@ -196,14 +250,8 @@ def y_slab(y_in, thick, sy):
 
 
 def horn_seat(horn):
-    """leg_rev 2: サーボのケース上面から、ホーンを受けるリンクの内面までの距離。
-
-    ホーン（CAD はスプラインの先端に載る形。腕はハブの外側の端にある）の外面から、
-    腕の厚み + すきま だけサーボ側にリンクの内面を置き、凹みをその面に開ける。
-    実物のホーンはスプラインにかぶさるので CAD よりサーボ側に寄る（最大でスプラインの高さ、推定）。
-    そのときはリンクがホーンと一緒に寄るだけで、凹みの形は変わらない。
-    """
-    return max(g, SPLINE_H + horn.spec["hub_height_mm"] - (horn.spec["arm_thickness_mm"] + c))
+    """leg_rev 2: サーボのケース上面から、ホーンを受けるリンクの内面までの距離（horn_seat_of）。"""
+    return horn_seat_of(horn.spec)
 
 
 def horn_pocket(horn, axis_xz, y_floor, y_face, sy):
@@ -258,13 +306,14 @@ result = {"chassis": chassis, "cover": cover, "esp32": esp32, "imu": imu}
 if HAS_BAT:
     result["battery"] = battery
 legs = {}
-for name, sx, sy in (("lf", 1, 1), ("rf", 1, -1), ("lh", -1, 1), ("rh", -1, -1)):
-    hip = [sx * p.hip_x, 0.0, ZH]
+for name, sx, sy, _, yb in LEG_SPECS:
+    hip = [LEG_X[name], 0.0, ZH]
     hx = hip[0]
     hsv = hip_servos[name]
     hhorn = hsv.horn("cross", label="hip_horn_" + name)
-    # 上腿の板: 胴体の側面から joint_gap 離して外側に置く（leg_rev 2 はホーンの腕の下に内面を置く）。
-    y_th_in = W2 + (horn_seat(hhorn) if R2 else g)
+    # 上腿の板: 股サーボのケース上面（胴体の側面、3本足の hc は台の面）から joint_gap 離して外側に置く
+    # （leg_rev 2 はホーンの腕の下に内面を置く）。
+    y_th_in = yb + (horn_seat(hhorn) if R2 else g)
     y_lo, _ = y_slab(y_th_in, t, sy)
     y_kt = sy * (y_th_in + t)  # 膝サーボのケース上面 = 上腿の外面
     kx = hx - L1 * math.sin(th_r)
@@ -289,11 +338,11 @@ for name, sx, sy in (("lf", 1, 1), ("rf", 1, -1), ("lh", -1, 1), ("rh", -1, -1))
     khorn = ksv.horn("cross", label="knee_horn_" + name)
     # スプラインとホーンの軸穴の逃げ（ホーンのハブ高さ分まで抜かないと、軸穴に材料が残る）
     HUB_H = hhorn.spec["hub_height_mm"]
-    spline_gap = part.cylinder(SPLINE_R + c, SPLINE_H + HUB_H, origin=[hx, sy * W2, ZH], direction=[0, sy, 0])
+    spline_gap = part.cylinder(SPLINE_R + c, SPLINE_H + HUB_H, origin=[hx, sy * yb, ZH], direction=[0, sy, 0])
     hip_access = part.cylinder(p.screw_hole / 2.0 + 0.8, t + 2.0, origin=[hx, sy * (y_th_in - 1.0), ZH], direction=[0, sy, 0])
     thigh_tools = [ksv.bay(clearance=c, lead_room=LEAD, ledge=4.0), hhorn.body, spline_gap, hip_access]
     if R2:
-        thigh_tools += horn_pocket(hhorn, (hx, ZH), W2 + SPLINE_H + HUB_H, y_th_in, sy)
+        thigh_tools += horn_pocket(hhorn, (hx, ZH), yb + SPLINE_H + HUB_H, y_th_in, sy)
         thigh_tools += [rot_y(tool, th, hip) for tool in knee_bay_opening(hx, abs(y_kt), depth, sy)]
     thigh = part.cut(thigh_raw, thigh_tools, label="thigh_" + name)
 
@@ -449,7 +498,7 @@ dynamics = []
 hip_joints = {}
 knee_joints = {}
 feet = {}
-for name in ("lf", "rf", "lh", "rh"):
+for name in LEG_NAMES:
     L = legs[name]
     c_hsv = assembly.component(L["hsv"].body, appearance="mechanism", role="hardware", label="hip_servo_" + name)
     c_hhorn = assembly.component(L["hhorn"].body, appearance="mechanism", role="hardware", label="hip_horn_" + name)
@@ -618,7 +667,7 @@ obs = [
     assembly.observation(c_chassis, "component_linear_velocity", name="vel", role="privileged"),
     assembly.observation(c_chassis, "component_position", name="pos", role="privileged"),
 ]
-for name in ("lf", "rf", "lh", "rh"):
+for name in LEG_NAMES:
     obs.append(assembly.observation(hip_joints[name], "position", name="q_hip_" + name, role="privileged"))
     obs.append(assembly.observation(knee_joints[name], "position", name="q_knee_" + name, role="privileged"))
     obs.append(assembly.observation(feet[name], "contact", name="ft_" + name, role="privileged"))
@@ -638,7 +687,7 @@ result["model"] = model
 KEYS = list(drive_by)
 UP = "(1 - 2*(rot_qx^2 + rot_qy^2))"
 cmd = assembly.goal("cmd", kind="speed", between=[p.cmd_min, p.cmd_max], resample_seconds=4.0)
-FEET = [feet["lf"], feet["rf"], feet["lh"], feet["rh"]]
+FEET = [feet[name] for name in LEG_NAMES]
 # Cadex の歩容リファレンス（assembly.gait）は1脚3関節以上が前提で、2自由度の脚には使えない。
 # 代わりに位相クロック（コントローラ自身のタイマー。実機でも同じものを使える）を方策に与え、
 # トロットのリズムは報酬で教える: 対角ペア (LF,RH) は clock_sin > 0 で立脚、(RF,LH) は < 0 で立脚。
@@ -652,6 +701,46 @@ def total(fmt):
     return " + ".join(fmt.format(k=k) for k in KEYS)
 
 
+def lift_term(leg):
+    """足上げ（足先の中心の高さ。立位で足の半径）。gait_lift まで払う。"""
+    return "tanh((fc_%s_z - %.2f) / %.2f)" % (leg, FOOT_R, p.gait_lift)
+
+
+# 3本足の波（gait_mode=1）: 脚 k（lf, rf, hc の順に 0, 1, 2）の位相は cos(θ - k·120°)。θ は位相クロックの角で、
+# clock_sin = sin θ、clock_cos = cos θ。cos(θ - φ) = cos θ cos φ + sin θ sin φ。
+# 位相が -0.5 より上（周期の 2/3）を立脚、下（1/3）を遊脚にする。どの時刻も遊脚は1本で、
+# 遊脚の中心は lf → rf → hc の順に 1/3 周期ずつずれる。
+WAVE_PHASE = [
+    "clock_cos",
+    "(-0.5*clock_cos + %.6f*clock_sin)" % (math.sqrt(3.0) / 2.0),
+    "(-0.5*clock_cos - %.6f*clock_sin)" % (math.sqrt(3.0) / 2.0),
+]
+
+
+def gait_rewards():
+    if not TRI:
+        return [
+            # トロットのリズム: 正しい組が接地していれば +、逆の組が接地していれば −（最大 2）
+            assembly.reward("tanh(5*clock_sin) * ((ft_lf_down + ft_rh_down) - (ft_rf_down + ft_lh_down))",
+                            weight=p.w_trot, label="trot_contact"),
+            # 遊脚の足上げ（足先の中心の高さ。立位で足の半径）。gait_lift まで払う。
+            assembly.reward(" + ".join(
+                "%s * tanh((fc_%s_z - %.2f) / %.2f)" % (STANCE_B if leg in ("lf", "rh") else STANCE_A, leg, FOOT_R, p.gait_lift)
+                for leg in ("lf", "rf", "lh", "rh")), weight=p.w_swing, label="swing_lift"),
+        ]
+    if GAIT_MODE == 0:
+        # 決めない: 接地のリズムの報酬は無く、足上げはどの脚にも位相によらず払う。
+        return [assembly.reward(" + ".join(lift_term(leg) for leg in LEG_NAMES), weight=p.w_swing, label="swing_lift")]
+    stance = ["tanh(5*(%s + 0.5))" % ph for ph in WAVE_PHASE]       # 立脚で +、遊脚で −
+    return [
+        # 立脚の位相で接地していれば +、遊脚の位相で接地していれば −（重みは四足のトロットと同じ w_trot）
+        assembly.reward(" + ".join("%s * ft_%s_down" % (st, leg) for st, leg in zip(stance, LEG_NAMES)),
+                        weight=p.w_trot, label="gait_contact"),
+        assembly.reward(" + ".join("(0.5 - 0.5*%s) * %s" % (st, lift_term(leg)) for st, leg in zip(stance, LEG_NAMES)),
+                        weight=p.w_swing, label="swing_lift"),
+    ]
+
+
 rewards = [
     assembly.reward("1", weight=1.0, label="alive"),
     assembly.reward(UP, weight=1.0, label="upright"),
@@ -661,13 +750,7 @@ rewards = [
     assembly.reward("(gyro_z / 60)^2", weight=-0.5, label="yaw_rate"),
     assembly.reward("(gyro_x / 100)^2 + (gyro_y / 100)^2", weight=-0.2, label="body_rock"),
     assembly.reward("(pos_z / 15)^2", weight=-0.5, label="height"),
-    # トロットのリズム: 正しい組が接地していれば +、逆の組が接地していれば −（最大 2）
-    assembly.reward("tanh(5*clock_sin) * ((ft_lf_down + ft_rh_down) - (ft_rf_down + ft_lh_down))",
-                    weight=p.w_trot, label="trot_contact"),
-    # 遊脚の足上げ（足先の中心の高さ。立位で足の半径）。gait_lift まで払う。
-    assembly.reward(" + ".join(
-        "%s * tanh((fc_%s_z - %.2f) / %.2f)" % (STANCE_B if leg in ("lf", "rh") else STANCE_A, leg, FOOT_R, p.gait_lift)
-        for leg in ("lf", "rf", "lh", "rh")), weight=p.w_swing, label="swing_lift"),
+] + gait_rewards() + [
     # 滑らかさ: 指令の変化率（deg/s）とトルク（失速トルクで正規化）
     assembly.reward("(" + total("(c_{k}_rate / 600)^2") + ") / %d" % len(KEYS), weight=-0.5, label="action_rate"),
     assembly.reward("(" + total("(tau_{k} / %.3f)^2" % STALL) + ") / %d" % len(KEYS), weight=-p.w_effort, label="effort"),
@@ -687,7 +770,7 @@ randomisation = [
 ]
 if HAS_BAT:
     randomisation.append(assembly.randomise(c_bat, "mass", scale=[0.6, 1.4], label="rand_battery_mass"))  # 重心位置も動く
-for name in ("lf", "rf", "lh", "rh"):
+for name in LEG_NAMES:
     for j in (hip_joints[name], knee_joints[name]):
         randomisation.append(assembly.randomise(j, "damping", scale=[0.7, 1.3]))      # サーボ速度のばらつき
         randomisation.append(assembly.randomise(j, "friction_loss", scale=[0.5, 2.0]))
