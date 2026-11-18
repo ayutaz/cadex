@@ -135,6 +135,7 @@ uv run python -m pytest tests -q
 | `evaluation/evaluate_variant.py --variant V [--policy P]` | 固定歩容（MuJoCo 上で開ループ）と学習済み方策（`cadex evaluate`）を同じ10シードで評価 | `artifacts/V/evaluation/` |
 | `scripts/render_views.py MODEL OUT [--collision]` | 静止画を描く | PNG |
 | `scripts/mjcf_to_urdf.py --variant V` | MJCF から URDF を作る | `robot/urdf/V/quadruped8.urdf` |
+| `scripts/assembly_guide.py [--variant V]` | 印刷の向き・張り出し・プレート割り・差し込めるかを STL から判定し、組立の段階図を描く（[docs/assembly-guide.md](docs/assembly-guide.md)） | `artifacts/V/assembly/` |
 | `python -m vastai create --count N` / `sweep` | vast.ai の GPU を検索の直後に N 台借り、設定 × 学習の乱数の回を並べて回す（手順は [docs/training-vastai.md](docs/training-vastai.md)） | `artifacts/runs/vastai/<run>/` |
 | `scripts/compare_seeds.py A=<回> ... B=<回> ...` | 学習の乱数違いの複数回を評価し、二機体を 平均 ± 標準偏差（最小〜最大）で比べる | `artifacts/compare/seeds_A_vs_B.{md,json}` |
 
@@ -182,6 +183,7 @@ uv run python -m pytest tests -q
 | [docs/hardware-spec.md](docs/hardware-spec.md) | 機体仕様、座標系、関節、サーボ、確認済みの値と推定値 | あり |
 | [docs/manufacturing.md](docs/manufacturing.md) | 印刷部品・購入部品・BOM・組立手順の案・未検証事項 | あり |
 | [docs/shopping-list.md](docs/shopping-list.md) | 初心者向けの購入部品の一覧（mini 用。最小構成・後で買う物・注意・工具・価格の出典） | あり |
+| [docs/assembly-guide.md](docs/assembly-guide.md) | 初心者向けの mini の印刷と組立の手順書（図付き。A1 mini の設定、配線図、今の STL で脚が組めない3か所） | あり |
 | [docs/simulation.md](docs/simulation.md) | MuJoCo モデルの中身、固定モーションの結果、Sim2Real の差 | あり |
 | [docs/training.md](docs/training.md) | 強化学習の設定と手順 | あり |
 | [docs/training-vastai.md](docs/training-vastai.md) | vast.ai の GPU での学習 | あり |
