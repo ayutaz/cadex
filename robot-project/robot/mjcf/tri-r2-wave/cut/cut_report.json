@@ -1,0 +1,278 @@
+{
+  "ok": true,
+  "problems": [],
+  "engine_mjcf": "~/cadex-projects/quadruped8-tri-r2-wave/script_artifacts/464b12ffcb928068f2545ad9612525f3c0ca081bd24b42316fe7891d38aabfcf/attempt-1794987884148-74825e4419b1/outputs/model-model.xml",
+  "engine_mjcf_sha256": "2a4f9894091a2ebba0e46b99209a47a254f1f5f82c30fe2816218ff5b2cb93f8",
+  "training_mjcf_sha256": "7d470c1ccfaa698b0ac98c806c68abb525a2dc832319d20b256cc50eeb6e7427",
+  "out": "/var/folders/b_/0zt18535599cmxt7wypby49dd83z85/T/tmpijihts_a/cut.xml",
+  "feet": [
+    "c_foot_lf/collision0",
+    "c_foot_rf/collision0",
+    "c_foot_hc/collision0"
+  ],
+  "fall_geoms": [
+    "c_chassis/collision0",
+    "c_chassis/collision1"
+  ],
+  "options": {
+    "timestep": 0.002,
+    "iterations": 2,
+    "ls_iterations": 3,
+    "integrator": "implicitfast",
+    "fall_condim": 1
+  },
+  "tried": [
+    {
+      "options": {
+        "timestep": 0.002,
+        "iterations": 2,
+        "ls_iterations": 3,
+        "integrator": "Euler"
+      },
+      "problems": [
+        "fidelity or standing failed"
+      ],
+      "sha256": "d4d225f5911b93b6bd916957a5e732702b1e4985261ad5aaaa9416f12e39f91f",
+      "check": {
+        "worst_gated_mm": 297.093,
+        "gated": 5,
+        "signals": 12,
+        "stand_tilt_deg": 47.687,
+        "stand_pass": false,
+        "pass": false
+      }
+    },
+    {
+      "options": {
+        "timestep": 0.002,
+        "iterations": 2,
+        "ls_iterations": 3,
+        "integrator": "implicitfast"
+      },
+      "problems": [],
+      "sha256": "7d470c1ccfaa698b0ac98c806c68abb525a2dc832319d20b256cc50eeb6e7427",
+      "check": {
+        "worst_gated_mm": 1.29,
+        "gated": 5,
+        "signals": 12,
+        "stand_tilt_deg": 0.091,
+        "stand_pass": true,
+        "pass": true
+      }
+    }
+  ],
+  "fidelity": {
+    "tolerance_mm": 5.0,
+    "converged_mm": 1.0,
+    "control_dt": 0.02,
+    "seconds": 2.0,
+    "engine_timestep": 0.002,
+    "signals": [
+      {
+        "frequency_hz": 1.0,
+        "amplitude_rad": 0.025,
+        "engine_travel_mm": 0.24,
+        "engine_half_step_mm": 0.06,
+        "gated": true,
+        "error_mm": {
+          "training": 0.026
+        }
+      },
+      {
+        "frequency_hz": 1.0,
+        "amplitude_rad": 0.05,
+        "engine_travel_mm": 0.76,
+        "engine_half_step_mm": 0.204,
+        "gated": true,
+        "error_mm": {
+          "training": 0.558
+        }
+      },
+      {
+        "frequency_hz": 1.0,
+        "amplitude_rad": 0.075,
+        "engine_travel_mm": 2.1,
+        "engine_half_step_mm": 0.772,
+        "gated": true,
+        "error_mm": {
+          "training": 1.29
+        }
+      },
+      {
+        "frequency_hz": 1.0,
+        "amplitude_rad": 0.1,
+        "engine_travel_mm": 9.85,
+        "engine_half_step_mm": 3.287,
+        "gated": false,
+        "error_mm": {
+          "training": 2.314
+        }
+      },
+      {
+        "frequency_hz": 2.0,
+        "amplitude_rad": 0.025,
+        "engine_travel_mm": 0.27,
+        "engine_half_step_mm": 0.167,
+        "gated": true,
+        "error_mm": {
+          "training": 0.339
+        }
+      },
+      {
+        "frequency_hz": 2.0,
+        "amplitude_rad": 0.05,
+        "engine_travel_mm": 3.55,
+        "engine_half_step_mm": 2.18,
+        "gated": false,
+        "error_mm": {
+          "training": 0.883
+        }
+      },
+      {
+        "frequency_hz": 2.0,
+        "amplitude_rad": 0.075,
+        "engine_travel_mm": 16.61,
+        "engine_half_step_mm": 5.993,
+        "gated": false,
+        "error_mm": {
+          "training": 3.464
+        }
+      },
+      {
+        "frequency_hz": 2.0,
+        "amplitude_rad": 0.1,
+        "engine_travel_mm": 29.94,
+        "engine_half_step_mm": 7.792,
+        "gated": false,
+        "error_mm": {
+          "training": 6.108
+        }
+      },
+      {
+        "frequency_hz": 3.0,
+        "amplitude_rad": 0.025,
+        "engine_travel_mm": 0.51,
+        "engine_half_step_mm": 0.295,
+        "gated": true,
+        "error_mm": {
+          "training": 0.677
+        }
+      },
+      {
+        "frequency_hz": 3.0,
+        "amplitude_rad": 0.05,
+        "engine_travel_mm": 8.01,
+        "engine_half_step_mm": 3.188,
+        "gated": false,
+        "error_mm": {
+          "training": 3.631
+        }
+      },
+      {
+        "frequency_hz": 3.0,
+        "amplitude_rad": 0.075,
+        "engine_travel_mm": 26.19,
+        "engine_half_step_mm": 6.091,
+        "gated": false,
+        "error_mm": {
+          "training": 3.88
+        }
+      },
+      {
+        "frequency_hz": 3.0,
+        "amplitude_rad": 0.1,
+        "engine_travel_mm": 48.73,
+        "engine_half_step_mm": 9.112,
+        "gated": false,
+        "error_mm": {
+          "training": 8.573
+        }
+      }
+    ],
+    "models": {
+      "training": {
+        "fidelity_worst_gated_mm": 1.29,
+        "fidelity_pass": true,
+        "stand": {
+          "seconds": 10.0,
+          "finite": true,
+          "tilt_deg": 0.091,
+          "drift_mm": 0.5,
+          "settle_mm": -0.2,
+          "floor_load_n": 1.8,
+          "weight_n": 1.8,
+          "loads_n": {
+            "c_foot_hc": 0.8,
+            "c_foot_lf": 0.3,
+            "c_foot_rf": 0.6
+          },
+          "on_feet_only": true,
+          "pass": true
+        },
+        "pass": true
+      }
+    }
+  },
+  "engine": {
+    "nbody": 28,
+    "nq": 13,
+    "nv": 12,
+    "nu": 6,
+    "neq": 0,
+    "nsensor": 22,
+    "ngeom_colliding": 11,
+    "colliding": [
+      "c_chassis/collision0",
+      "c_chassis/collision1",
+      "c_thigh_lf/collision0",
+      "c_shin_lf/collision0",
+      "c_foot_lf/collision0",
+      "c_thigh_rf/collision0",
+      "c_shin_rf/collision0",
+      "c_foot_rf/collision0",
+      "c_thigh_hc/collision0",
+      "c_shin_hc/collision0",
+      "c_foot_hc/collision0"
+    ],
+    "mass_kg": 0.182758,
+    "actuated_joints": [
+      "hip_lf",
+      "knee_lf",
+      "hip_rf",
+      "knee_rf",
+      "hip_hc",
+      "knee_hc"
+    ],
+    "timestep": 0.002,
+    "iterations": 100,
+    "ls_iterations": 50
+  },
+  "training": {
+    "nbody": 12,
+    "nq": 13,
+    "nv": 12,
+    "nu": 6,
+    "neq": 0,
+    "nsensor": 22,
+    "ngeom_colliding": 5,
+    "colliding": [
+      "c_chassis/collision0",
+      "c_chassis/collision1",
+      "c_foot_lf/collision0",
+      "c_foot_rf/collision0",
+      "c_foot_hc/collision0"
+    ],
+    "mass_kg": 0.182758,
+    "actuated_joints": [
+      "hip_lf",
+      "knee_lf",
+      "hip_rf",
+      "knee_rf",
+      "hip_hc",
+      "knee_hc"
+    ],
+    "timestep": 0.002,
+    "iterations": 2,
+    "ls_iterations": 3
+  }
+}

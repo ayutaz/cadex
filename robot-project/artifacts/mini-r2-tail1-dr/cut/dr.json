@@ -1,0 +1,62 @@
+{
+ "schema": "q8-dr-bundle-v1",
+ "source": {
+  "task_sha256": "154858a772d531df1f271fbbca8085f5603dbc0a968335158f2bd306d8028bcc",
+  "model_sha256": "e7078ab3f8d63bf3b8c3771ac5f56de2643fd5c4d0cf2dbf59c6ac1c1b553009"
+ },
+ "model_sha256": "5a744e1be38da79499b86d19525626ab471e7a16168fd08c0286b2dcbdcf9f89",
+ "task_sha256": "3eb5c1c59779d0003b760786f09725654e263c35c57197edbf583b5c63bfeb12",
+ "servo_lag_ms": [
+  1.5,
+  30.0
+ ],
+ "servo_kp_scale": [
+  0.7,
+  1.3
+ ],
+ "payload_g": 20.0,
+ "total_mass_g": 249.054,
+ "com_shift_mm": {
+  "x": [
+   -2.409,
+   2.409
+  ],
+  "y": [
+   -1.606,
+   1.606
+  ]
+ },
+ "push": {
+  "newtons": [
+   0.0,
+   1.5
+  ],
+  "duration_s": 0.1,
+  "windows_s": {
+   "dr_push_early": [
+    1.0,
+    3.5
+   ],
+   "dr_push_late": [
+    4.0,
+    7.0
+   ]
+  },
+  "azimuth": "全周（世界座標）"
+ },
+ "trainer_flags": {
+  "randomise_friction": [
+   0.35,
+   1.25
+  ],
+  "randomise_drive_torque": [
+   0.8,
+   1.1
+  ]
+ },
+ "not_modelled": [
+  "バックラッシュ（ガタ）",
+  "制御周期のゆらぎ",
+  "純粋な遅延（一次遅れで近似）"
+ ]
+}

@@ -464,8 +464,8 @@ TAIL_TRI_DR = {
     "tri-r2-free-dr": "tri-r2",
     "tri-r2-wave-dr": "tri-r2-wave",
 }
-#: バンドルを作り終えた案（Task 4 の機体の形が固まってから、作ったものを足す）
-TAIL_TRI_DR_BUILT: tuple[str, ...] = ()
+#: バンドルを作り終えた案（機体の形は ef0451348 の版）
+TAIL_TRI_DR_BUILT = tuple(sorted(TAIL_TRI_DR))
 
 
 @pytest.mark.parametrize("variant", sorted(TAIL_TRI_DR))
