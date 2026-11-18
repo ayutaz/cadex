@@ -19,6 +19,15 @@ GPU（vast.ai）での実行手順は [training-vastai.md](training-vastai.md)�
 **実機の候補を `artifacts/training/full-mini-r2-p7-eff-dr-s4/walk.cxpolicy` に替えた**
 （ESP32 向けの書き出しは `deploy/esp32/exports/full-mini-r2-p7-eff-dr-s4/`）。実機では未確認。
 
+**しっぽ付き四足と3本足（2026-11-18、experiment-results.md §12、シミュレーションだけ）**: mini-r2 にしっぽ（1関節 `mini-r2-tail1`、
+2関節 `mini-r2-tail2`）を足した形と、後ろを中央の1本にした3本足 `tri-r2` を、`mini-r2-p7-eff-dr` と同じ学習（機体・名前・ラベルだけ違う。
+設定は `configs/train_full_{mini-r2-tail1,mini-r2-tail2,tri-r2-free,tri-r2-wave}-dr.json`）で学ばせた。しっぽ付きは合格率 0.80（3回）・
+0.82 ± 0.40（5回）で、トルク比が 0.74・0.77 と基準（0.61）より大きく、良くはならなかった。3本足は、歩き方を決めない報酬（free）でも、
+波の接地の報酬（wave、`gait_mode=1`）でも合格 0（すり足）。原因は、どの1本を上げても静的に立てない足の配置と、追従の報酬が床の高さにある
+胴体の原点の速度（`component_linear_velocity`）を読むので胴体を揺するだけで報酬が取れる抜け道。追加の学習はせず、直す案（重心の速度
+`centre_of_mass_velocity` で追従を測る、wave の振りを短くする、hc の足先を重心の真後ろに置く）は未検証のまま次の課題にした。
+同じ抜け道は四足のタスクにもある。作る機体と実機の候補は変えていない。関節が8個でない方策は ESP32 の書き出しで止まる。
+
 ## 1. タスクの在りか
 
 タスクは CAD と同じ設計スクリプト `robot/design/quadruped8.py` の末尾に書いてある。

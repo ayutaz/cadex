@@ -25,7 +25,7 @@ Cadex（このリポジトリの本体。OCCT 上のヘッドレスCADエンジ�
 | 3D プリンタ | Bambu Lab A1 mini を購入予定（造形 180 × 180 × 180 mm）。印刷と組立の手順は [docs/assembly-guide.md](docs/assembly-guide.md)（mini-r2 用） |
 | 購入部品 | [docs/shopping-list.md](docs/shopping-list.md)（最小構成 ¥4,998: MG90S 10個と PLA 1 kg）。まだ買っていない |
 | 制御基板 | ESP32-S3 は手元にある（型番・寸法は未確認。設計は 63 × 25.5 mm の DevKitC-1 を想定） |
-| GPU の費用 | vast.ai の累計 約 $10.5（予算 $100。表示の $/h と借りた時間からの概算で、請求額は未確認） |
+| GPU の費用 | vast.ai の累計 約 $12.9（予算 $100。表示の $/h と借りた時間からの概算で、請求額は未確認） |
 
 ### 段階
 
@@ -53,8 +53,14 @@ Cadex（このリポジトリの本体。OCCT 上のヘッドレスCADエンジ�
 | `leg120` | 110 × 64 mm | 54 / 60 mm | 30 g の仮置き | 280.5 g | 脚を20%長くした派生機体（GPU 学習で合格率 1.00） |
 | `mini` | 96 × 62 mm | 40 / 44 mm | なし | 228.4 g | 前の小型機。脚が組めない形だったので作らない（mini-r2 に置き換えた） |
 | **`mini-r2`** | **96 × 62 mm** | **40 / 44 mm** | **なし** | **220.1 g** | **作る機体**。mini の脚を組めるように直したもの（`leg_rev=2`） |
+| `mini-r2-tail1` | 96 × 62 mm | 40 / 44 mm | なし | 249.1 g | mini-r2 に左右に振るしっぽ（1関節、60 mm）を足した。シミュレーションだけ。合格率 0.80（3回）、トルク比 0.74 で基準より負荷が大きい |
+| `mini-r2-tail2` | 96 × 62 mm | 40 / 44 mm | なし | 274.1 g | しっぽを左右＋上下の2関節にした。シミュレーションだけ。合格率 0.82 ± 0.40（5回）、トルク比 0.77 |
+| `tri-r2` | 96 × 62 mm | 40 / 44 mm | なし | 182.8 g | 後ろの2本を中央の1本にした3本足。シミュレーションだけ。2つの報酬とも合格 0（どの1本を上げても静的に立てない） |
 
 値は各機体の `artifacts/<variant>/design_report.json` から取りました。
+しっぽ付きと3本足は、mini-r2 との比較のためにシミュレーションだけで作った形です。どれも同じ学習（`-dr`）で基準の
+`mini-r2-p7-eff-dr`（合格率 1.00、トルク比 0.61）より良くならず、作る機体は mini-r2 のままです（[docs/experiment-results.md](docs/experiment-results.md) §12）。
+関節が8個でないので今の ESP32 の書き出しには載らず、しっぽの部品はこのままでは組めません。
 
 ### mini-r2 で学んだ歩き方の案
 
@@ -248,7 +254,7 @@ uv run pytest -q
 | [docs/simulation.md](docs/simulation.md) | MuJoCo モデルの中身、固定モーションの結果、Sim2Real の差 | あり |
 | [docs/training.md](docs/training.md) | 強化学習の設定と手順（実機との差に強くするランダム化は §5.2） | あり |
 | [docs/training-vastai.md](docs/training-vastai.md) | vast.ai の GPU での学習 | あり |
-| [docs/experiment-results.md](docs/experiment-results.md) | 実験結果（固定歩容、CPU 学習、GPU 学習: base・leg120・mini とその再調整・mini-r2、実機との差の評価とランダム化の学習） | あり |
+| [docs/experiment-results.md](docs/experiment-results.md) | 実験結果（固定歩容、CPU 学習、GPU 学習: base・leg120・mini とその再調整・mini-r2、実機との差の評価とランダム化の学習、しっぽ付き四足と3本足） | あり |
 | [docs/esp32-deployment.md](docs/esp32-deployment.md) | ESP32-S3 への移植、方策の書き出し、電源と配線の注意 | あり |
 | [docs/urdf.md](docs/urdf.md) | URDF への変換 | あり |
 

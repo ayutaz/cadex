@@ -324,7 +324,8 @@ HTTP 429（API requests too frequent）を返し、1台のスレッドが例外�
 | 11-18 | mini-v3 のトルクの罰と周期（mini-eff、mini-p7-eff ほか） | 14回 | 約 $2.0 | §8 |
 | 11-18 | 作る機体 mini-r2（mini-r2-eff、mini-r2-p7-eff） | 5回 × 2 | 約 $1.7 | §9 |
 | 11-18 | 実機との差に強くした mini-r2-p7-eff-dr（1000 反復と 2000 反復） | 5回 × 2 | 約 $2.2 | §11 |
-| | **累計** | | **約 $10.5** | |
+| 11-18 | しっぽ付き四足（mini-r2-tail1-dr・mini-r2-tail2-dr）と3本足（tri-r2-free-dr・tri-r2-wave-dr） | 3回 × 4 ＋ tail2 の2回 | 約 $2.4 | §12 |
+| | **累計** | | **約 $12.9** | |
 
 「結果」の節は [experiment-results.md](experiment-results.md)。どれもシミュレーションの結果で、実機では確かめていない。
 
