@@ -3,6 +3,7 @@
 #
 # 座標系: X が前方、Y が左、Z が上。単位は mm、度、kg/m^3。
 # 各脚は2自由度（股ピッチ・膝ピッチ）。8個の関節軸はすべてワールドの +Y に平行。
+# tail_dof を 1・2 にすると、胴体の後端にしっぽ（左右の軸 +Z、その先で上下の軸 +Y）のサーボが足される。
 # 関節角0 = この形状を組んだ姿勢 = 立位姿勢。正の角度は脚を後ろへ振る向き。
 # 部品はすべてワールド座標の立位姿勢で作り、コンポーネントの配置は恒等変換にする。
 # 関節の2つのコネクタには同じワールドフレームを与える（docs/MUJOCO.md §7 の手順2）。
@@ -57,6 +58,15 @@ p = params(
     # 膝サーボのリード線の出口が無い）。2 はそれを直した形（mini-r2）。
     leg_rev=num(1.0, min=1.0, max=2.0, step=1.0,
                 label="脚の組立の版（1: mini まで、2: 膝サーボを上腿の内側から入れ、ホーンの凹みをサーボ側の面に開ける）"),
+    # しっぽ（胴体の後端の中央）。0（既定）ならしっぽの部品・関節・アクチュエータをどれも作らず、出力は変わらない。
+    tail_dof=num(0.0, min=0.0, max=2.0, step=1.0, label="しっぽの関節の数（0: なし、1: 左右、2: 左右 + その先で上下）"),
+    tail_length=num(60.0, unit="mm", min=30.0, max=100.0, step=1.0,
+                    label="しっぽの長さ（左右の軸から先端のおもりの中心まで、前後方向）"),
+    tail_tip_mass_g=num(5.0, unit="g", min=0.0, max=20.0, step=0.5, label="しっぽの先端のおもりの質量（0 なら付けない）"),
+    # しっぽの可動域は仮の値（clearance スイープで決め直す）。
+    tail_yaw_limit=num(45.0, unit="deg", min=5.0, max=90.0, step=1.0, label="しっぽの左右の可動域（±）"),
+    tail_pitch_min=num(-30.0, unit="deg", min=-80.0, max=0.0, step=1.0, label="しっぽの上下の下限（下げる）"),
+    tail_pitch_max=num(45.0, unit="deg", min=0.0, max=80.0, step=1.0, label="しっぽの上下の上限（上げる）"),
 )
 
 SKU = "sg90" if p.servo_sg90 >= 0.5 else "mg90s"
@@ -108,6 +118,27 @@ for name, sx, sy in (("lf", 1, 1), ("rf", 1, -1), ("lh", -1, 1), ("rh", -1, -1))
                    roll_degrees=(0.0 if sx > 0 else 180.0), label="hip_servo_" + name)
     hip_servos[name] = sv
     bays.append(sv.bay(clearance=c, lead_room=LEAD, ledge=4.0))
+
+# --- しっぽの付け根（tail_dof >= 1） ---
+# 左右のサーボ: 出力軸はワールドの +Z（上）、ケースの上面（軸の基準点）は胴体の上面と同じ高さ、左右の中央。
+# ロール 180 度でケースは軸から前（胴体の側）へ伸び、リード線の逃げは胴体の後ろの壁へ入る。
+# サーボは胴体の後端に足した台（箱）の収納部に入る。台は胴体と一体（シャーシとカバーに分かれる）。
+TAIL_DOF = int(round(p.tail_dof))
+if TAIL_DOF not in (0, 1, 2):
+    raise ValueError("tail_dof は 0・1・2 のどれか: %r" % p.tail_dof)
+TAIL = TAIL_DOF > 0
+# サーボを包む台・ハウジングの、軸から両側への長さ（膝サーボのハウジングと同じ式）
+H_SHAFT = (TAB_HALF + CASE_CX) + c + w      # 軸の側（サーボのローカル +X、タブの先端まで）
+H_LEAD = (CASE_L - FRONT) + c + LEAD + w    # ケース後端の側（ローカル -X、リード線の余裕まで）
+HW = CASE_W / 2.0 + c + w                   # 台・ハウジングの半幅
+if TAIL:
+    TY = [-BL / 2.0 - (CASE_L - FRONT), 0.0, z_top]   # 左右の軸の基準点（ケース後端が胴体の後端に来る）
+    tail_yaw_sv = lib.servo(SKU, origin=tuple(TY), direction=(0, 0, 1), roll_degrees=180.0, label="tail_yaw_servo")
+    bays.append(tail_yaw_sv.bay(clearance=c, lead_room=LEAD, ledge=4.0))
+    # 前端は胴体の後端から肉厚ぶん中へ重ねる（胴体の箱と確実につながる）
+    tail_mount = part.box((-BL / 2.0 + w) - (TY[0] - H_SHAFT), 2.0 * HW, p.body_height,
+                          origin=[TY[0] - H_SHAFT, -HW, z_bot])
+    hull = part.fuse([hull, tail_mount])
 
 # 中央の空洞: 前後の股サーボの配線スペースまで達し、電池・IMUを収める。
 cav_x = p.hip_x - (CASE_L - FRONT) - c - LEAD
@@ -296,6 +327,64 @@ for name, sx, sy in (("lf", 1, 1), ("rf", 1, -1), ("lh", -1, 1), ("rh", -1, -1))
     result["shin_" + name] = shin
     result["foot_" + name] = foot
 
+# --- しっぽ（tail_dof >= 1） ---
+# 1本目のリンク: 左右のホーンの上の水平な板（下面は胴体の上面から joint_gap、ホーンは板の中に切り込む）。
+#   tail_dof=1 では、これがしっぽ。後ろへ伸び、先端におもりの球が載る。
+#   tail_dof=2 では、上下のサーボを載せるハウジングを持つ短い台。上下のサーボの軸はワールドの +Y で、
+#   ケースは左右の中央。ロール 180 度でケースは軸から前へ伸びる。ハウジングの前端は胴体の後端の後ろ。
+# 2本目のリンク（tail_dof=2）: 上下のホーンの外（+Y）の縦の板。後ろへ伸び、先端におもりが載る。
+#   板は +Y 側にあり、しっぽの中心面は y = 0 から外れる（左右に非対称）。
+TIP_R = 5.0
+HAS_TIP = TAIL and p.tail_tip_mass_g > 0.0
+if TAIL:
+    tz0 = z_top + g                        # 1本目のリンクの下面
+    x_tip = TY[0] - p.tail_length          # 先端のおもりの中心
+    ty_horn = tail_yaw_sv.horn("cross", label="tail_yaw_horn")
+    T_HUB_H = ty_horn.spec["hub_height_mm"]
+    tl1_parts = [part.cylinder(R, t, origin=[TY[0], 0.0, tz0])]
+    tl1_tools = [ty_horn.body,
+                 part.cylinder(SPLINE_R + c, SPLINE_H + T_HUB_H, origin=list(TY)),
+                 part.cylinder(p.screw_hole / 2.0 + 0.8, t + 2.0, origin=[TY[0], 0.0, tz0 - 1.0])]
+    if TAIL_DOF == 1:
+        tip_center = [x_tip, 0.0, tz0 + t / 2.0]
+        tl1_parts += [part.box(TY[0] - x_tip, 10.0, t, origin=[x_tip, -5.0, tz0]),
+                      part.cylinder(TIP_R + 1.0, t, origin=[x_tip, 0.0, tz0])]
+    else:
+        # 上下のサーボ: ケース（高さ CASE_H）を y = 0 の中央に。軸の高さはケースが1本目の板の上に載る位置。
+        TP_Y = CASE_H / 2.0                                  # 上下のサーボのケース上面（+Y）
+        TP = [-BL / 2.0 - g - H_LEAD, TP_Y, tz0 + t + c + CASE_W / 2.0]
+        tail_pitch_sv = lib.servo(SKU, origin=tuple(TP), direction=(0, 1, 0), roll_degrees=180.0,
+                                  label="tail_pitch_servo")
+        tp_horn = tail_pitch_sv.horn("cross", label="tail_pitch_horn")
+        depth_tp = CASE_H + c + w
+        tl1_parts.append(part.box(H_SHAFT + H_LEAD, depth_tp, (TP[2] + HW) - tz0,
+                                  origin=[TP[0] - H_SHAFT, TP_Y - depth_tp, tz0]))
+        tl1_tools.append(tail_pitch_sv.bay(clearance=c, lead_room=LEAD, ledge=4.0))
+        # 2本目のリンク（上下）。上下のホーンの外に置く（ホーンは板の中に切り込む）。
+        y_l2 = TP_Y + g
+        tip_center = [x_tip, y_l2 + t / 2.0, TP[2]]
+        tl2_parts = [part.cylinder(R, t, origin=[TP[0], y_l2, TP[2]], direction=[0, 1, 0]),
+                     part.box(TP[0] - x_tip, t, 10.0, origin=[x_tip, y_l2, TP[2] - 5.0]),
+                     part.cylinder(TIP_R + 1.0, t, origin=[x_tip, y_l2, TP[2]], direction=[0, 1, 0])]
+        tl2_tools = [tp_horn.body,
+                     part.cylinder(SPLINE_R + c, SPLINE_H + T_HUB_H, origin=list(TP), direction=[0, 1, 0]),
+                     part.cylinder(p.screw_hole / 2.0 + 0.8, t + 2.0, origin=[TP[0], y_l2 - 1.0, TP[2]],
+                                   direction=[0, 1, 0])]
+    if HAS_TIP:
+        tail_tip = part.sphere(TIP_R, center=tip_center, label="tail_tip")
+        tip_density = p.tail_tip_mass_g * 1.0e6 / (4.0 / 3.0 * math.pi * TIP_R ** 3)
+        (tl1_tools if TAIL_DOF == 1 else tl2_tools).append(tail_tip)
+        result["tail_tip"] = tail_tip
+    tail_link_1 = part.cut(part.fuse(tl1_parts), tl1_tools, label="tail_link_1")
+    result["tail_yaw_servo"] = tail_yaw_sv.body
+    result["tail_yaw_horn"] = ty_horn.body
+    result["tail_link_1"] = tail_link_1
+    if TAIL_DOF == 2:
+        tail_link_2 = part.cut(part.fuse(tl2_parts), tl2_tools, label="tail_link_2")
+        result["tail_pitch_servo"] = tail_pitch_sv.body
+        result["tail_pitch_horn"] = tp_horn.body
+        result["tail_link_2"] = tail_link_2
+
 # --- アセンブリ ---
 HINGE = {"axis": [1, 0, 0], "angle_degrees": -90}  # コネクタの +Z をワールドの +Y に向ける
 
@@ -431,6 +520,92 @@ for name in ("lf", "rf", "lh", "rh"):
                                                 armature_kgmm2=p.armature, friction_loss_nmm=p.friction_loss,
                                                 label=kind + "_dyn_" + name))
 
+
+def servo_drive(j, lo, hi, key):
+    """角度指令型PWMサーボのアクチュエータと関節の動特性（脚と同じ式）。"""
+    a = assembly.actuator(j, kind="position", control_deg="0",
+                          stiffness_nmm_per_deg=STALL / 5.0, damping_nmms_per_deg=STALL / 100.0,
+                          torque_limit_nmm=STALL, rated_torque_nmm=STALL * p.rated_fraction,
+                          command_limits_degrees=[lo, hi], label=key + "_drive")
+    drives.append(a)
+    drive_by[key] = a
+    dynamics.append(assembly.joint_dynamics(j, damping_nmms_per_deg=STALL / (60.0 / SPEED),
+                                            armature_kgmm2=p.armature, friction_loss_nmm=p.friction_loss,
+                                            label=key + "_dyn"))
+    return a
+
+
+tail_joints = []
+if TAIL:
+    # しっぽ: 左右のサーボは胴体に溶接。アクチュエータは脚のあと（task の actions の最後）に、左右・上下の順。
+    def tail_comp(shape, key, appearance, role):
+        cv = assembly.component(shape, appearance=appearance, role=role, label=key)
+        result["c_" + key] = cv
+        comps.append(cv)
+        return cv
+
+    c_tysv = tail_comp(tail_yaw_sv.body, "tail_yaw_servo", "mechanism", "hardware")
+    c_tyhorn = tail_comp(ty_horn.body, "tail_yaw_horn", "mechanism", "hardware")
+    c_tl1 = tail_comp(tail_link_1, "tail_link_1", "shell", "link")
+    contacts.append((c_tysv, c_tyhorn))
+    joints += [weld(c_chassis, c_tysv, "tail_yaw_servo"), weld(c_tl1, c_tyhorn, "tail_yaw_horn")]
+    yaw_lim = [-p.tail_yaw_limit, p.tail_yaw_limit]
+    j_ty = assembly.joint("revolute",
+                          assembly.connector(c_chassis, "origin", offset={"position": list(TY)}),
+                          assembly.connector(c_tl1, "origin", offset={"position": list(TY)}),
+                          angle_limits_degrees=yaw_lim, label="tail_yaw")
+    result["tail_yaw"] = j_ty
+    joints.append(j_ty)
+    bodies += [assembly.body(c_tysv, density_kg_m3=tail_yaw_sv.spec["effective_density_kg_m3"]),
+               assembly.body(c_tyhorn, density_kg_m3=ty_horn.spec["density_kg_m3"])]
+    tail_joints.append(j_ty)
+    servo_drive(j_ty, yaw_lim[0], yaw_lim[1], "tail_yaw")
+    c_tail_end = c_tl1
+    if TAIL_DOF == 1:
+        # しっぽの板の衝突形状: 付け根のハブの後ろから先端のおもりの手前まで（ワールドの X に沿う）
+        cap_len = max(p.tail_length - R - TIP_R, 1.0)
+        bodies.append(assembly.body(c_tl1, density_kg_m3=p.pla_density,
+                                    collision=assembly.collision(
+                                        "capsule", radius_mm=4.0, length_mm=cap_len,
+                                        offset={"position": [TY[0] - R - cap_len / 2.0, 0.0, tz0 + t / 2.0],
+                                                "axis": [0, 1, 0], "angle_degrees": 90.0},
+                                        contact_group=1, label="tail_cap_1")))
+    else:
+        bodies.append(assembly.body(c_tl1, density_kg_m3=p.pla_density))
+        c_tpsv = tail_comp(tail_pitch_sv.body, "tail_pitch_servo", "mechanism", "hardware")
+        c_tphorn = tail_comp(tp_horn.body, "tail_pitch_horn", "mechanism", "hardware")
+        c_tl2 = tail_comp(tail_link_2, "tail_link_2", "shell", "link")
+        contacts.append((c_tpsv, c_tphorn))
+        joints += [weld(c_tl1, c_tpsv, "tail_pitch_servo"), weld(c_tl2, c_tphorn, "tail_pitch_horn")]
+        pitch_lim = [p.tail_pitch_min, p.tail_pitch_max]
+        j_tp = assembly.joint("revolute",
+                              assembly.connector(c_tl1, "origin", offset=hinge_frame(TP)),
+                              assembly.connector(c_tl2, "origin", offset=hinge_frame(TP)),
+                              angle_limits_degrees=pitch_lim, label="tail_pitch")
+        result["tail_pitch"] = j_tp
+        joints.append(j_tp)
+        cap_len = max(TP[0] - x_tip - R - TIP_R, 1.0)
+        bodies += [
+            assembly.body(c_tpsv, density_kg_m3=tail_pitch_sv.spec["effective_density_kg_m3"]),
+            assembly.body(c_tphorn, density_kg_m3=tp_horn.spec["density_kg_m3"]),
+            assembly.body(c_tl2, density_kg_m3=p.pla_density,
+                          collision=assembly.collision(
+                              "capsule", radius_mm=4.0, length_mm=cap_len,
+                              offset={"position": [TP[0] - R - cap_len / 2.0, y_l2 + t / 2.0, TP[2]],
+                                      "axis": [0, 1, 0], "angle_degrees": 90.0},
+                              contact_group=1, label="tail_cap_2")),
+        ]
+        tail_joints.append(j_tp)
+        servo_drive(j_tp, pitch_lim[0], pitch_lim[1], "tail_pitch")
+        c_tail_end = c_tl2
+    if HAS_TIP:
+        c_tip = tail_comp(tail_tip, "tail_tip", "accent", "link")
+        joints.append(weld(c_tail_end, c_tip, "tail_tip"))
+        bodies.append(assembly.body(c_tip, density_kg_m3=tip_density,
+                                    collision=assembly.collision("sphere", radius_mm=TIP_R,
+                                                                 offset={"position": list(tip_center)},
+                                                                 contact_group=1, label="tail_tip_ball")))
+
 asm = assembly.assembly(comps, joints, sweep_step_degrees=5.0, contacts=contacts, label="quadruped8")
 diag = assembly.solve(asm)
 result["asm"] = asm
@@ -458,7 +633,7 @@ result["model"] = model
 
 # --- 強化学習タスク（docs/XSCRIPT.md: assembly.task） ---
 # 方策（policy）が読むのは実機で得られるものだけ:
-#   IMUの姿勢 rot_q* と角速度 gyro_*、前回の関節指令 c_*（8）、目標速度 cmd、歩容の位相 ref_sin/ref_cos。
+#   IMUの姿勢 rot_q* と角速度 gyro_*、前回の関節指令 c_*（アクチュエータの数: 脚 8 + しっぽ）、目標速度 cmd、歩容の位相 ref_sin/ref_cos。
 # 関節角・胴体の速度と位置・足の接地・トルクは privileged（報酬・終了条件・critic だけが読む）。
 KEYS = list(drive_by)
 UP = "(1 - 2*(rot_qx^2 + rot_qy^2))"
@@ -494,10 +669,10 @@ rewards = [
         "%s * tanh((fc_%s_z - %.2f) / %.2f)" % (STANCE_B if leg in ("lf", "rh") else STANCE_A, leg, FOOT_R, p.gait_lift)
         for leg in ("lf", "rf", "lh", "rh")), weight=p.w_swing, label="swing_lift"),
     # 滑らかさ: 指令の変化率（deg/s）とトルク（失速トルクで正規化）
-    assembly.reward("(" + total("(c_{k}_rate / 600)^2") + ") / 8", weight=-0.5, label="action_rate"),
-    assembly.reward("(" + total("(tau_{k} / %.3f)^2" % STALL) + ") / 8", weight=-p.w_effort, label="effort"),
+    assembly.reward("(" + total("(c_{k}_rate / 600)^2") + ") / %d" % len(KEYS), weight=-0.5, label="action_rate"),
+    assembly.reward("(" + total("(tau_{k} / %.3f)^2" % STALL) + ") / %d" % len(KEYS), weight=-p.w_effort, label="effort"),
     # v2: 推定連続定格で正規化したトルクの4乗。定格を超える区間だけを強く罰する（v1は左前脚が定格の1.4〜1.5倍）。
-    assembly.reward("(" + total("(tau_{k} / %.3f)^4" % (STALL * p.rated_fraction)) + ") / 8",
+    assembly.reward("(" + total("(tau_{k} / %.3f)^4" % (STALL * p.rated_fraction)) + ") / %d" % len(KEYS),
                     weight=-p.w_effort_rated, label="effort_rated"),
     # v2: 胴体の傾き（5度で1）。v1 は最大傾斜が約20度だった。
     assembly.reward("(rot_qx^2 + rot_qy^2) / 0.0019", weight=-0.1, label="tilt"),
@@ -516,6 +691,11 @@ for name in ("lf", "rf", "lh", "rh"):
     for j in (hip_joints[name], knee_joints[name]):
         randomisation.append(assembly.randomise(j, "damping", scale=[0.7, 1.3]))      # サーボ速度のばらつき
         randomisation.append(assembly.randomise(j, "friction_loss", scale=[0.5, 2.0]))
+for j in tail_joints:
+    randomisation.append(assembly.randomise(j, "damping", scale=[0.7, 1.3]))
+    randomisation.append(assembly.randomise(j, "friction_loss", scale=[0.5, 2.0]))
+if HAS_TIP:
+    randomisation.append(assembly.randomise(c_tip, "mass", scale=[0.8, 1.2], label="rand_tail_tip_mass"))
 reset = [assembly.reset_variation(c_chassis, tilt_degrees=[0.0, 3.0], height_mm=[4.0, 6.0])]  # 3度傾けると足が3.2 mm沈むため持ち上げる
 spec = assembly.success(
     [

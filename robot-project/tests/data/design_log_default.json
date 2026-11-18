@@ -1,0 +1,2336 @@
+[
+[
+"lib.servo",
+null,
+"()",
+"{'label': None}"
+],
+[
+"part.box",
+null,
+"(110.0, 64.0, 24.0)",
+"{'origin': [-55.0, -32.0, 81.02257091902912]}"
+],
+[
+"lib.servo",
+"hip_servo_lf",
+"()",
+"{'label': 'hip_servo_lf'}"
+],
+[
+"lib.servo",
+"hip_servo_rf",
+"()",
+"{'label': 'hip_servo_rf'}"
+],
+[
+"lib.servo",
+"hip_servo_lh",
+"()",
+"{'label': 'hip_servo_lh'}"
+],
+[
+"lib.servo",
+"hip_servo_rh",
+"()",
+"{'label': 'hip_servo_rh'}"
+],
+[
+"part.box",
+null,
+"(42.9, 60.0, 20.0)",
+"{'origin': [-21.45, -30.0, 83.02257091902912]}"
+],
+[
+"part.box",
+null,
+"(64.0, 26.5, 2.5)",
+"{'origin': [-32.0, -13.25, 103.02257091902912]}"
+],
+[
+"lib.bolt",
+null,
+"('m2', 10.0)",
+"{'label': None}"
+],
+[
+"lib.bolt",
+"body_bolt_0",
+"('m2', 10.0)",
+"{'label': 'body_bolt_0'}"
+],
+[
+"part.cylinder",
+null,
+"(2.1, 11.400000000000006)",
+"{'origin': [39.35, 0.0, 94.62257091902912]}"
+],
+[
+"part.cylinder",
+null,
+"(1.2, 5.01)",
+"{'origin': [39.35, 0.0, 89.62257091902912]}"
+],
+[
+"part.cylinder",
+null,
+"(0.8, 6.0)",
+"{'origin': [39.35, 0.0, 83.62257091902912]}"
+],
+[
+"lib.bolt",
+"body_bolt_1",
+"('m2', 10.0)",
+"{'label': 'body_bolt_1'}"
+],
+[
+"part.cylinder",
+null,
+"(2.1, 11.400000000000006)",
+"{'origin': [-39.35, 0.0, 94.62257091902912]}"
+],
+[
+"part.cylinder",
+null,
+"(1.2, 5.01)",
+"{'origin': [-39.35, 0.0, 89.62257091902912]}"
+],
+[
+"part.cylinder",
+null,
+"(0.8, 6.0)",
+"{'origin': [-39.35, 0.0, 83.62257091902912]}"
+],
+[
+"part.cut",
+null,
+"(<part.box None>, [<servo.bay None>, <servo.bay None>, <servo.bay None>, <servo.bay None>, <part.box None>, <part.box None>, <part.cylinder None>, <part.cylinder None>, <part.cylinder None>, <part.cylinder None>, <part.cylinder None>, <part.cylinder None>])",
+"{}"
+],
+[
+"part.box",
+null,
+"(112.0, 66.0, 24.0)",
+"{'origin': [-56.0, -33.0, 89.62257091902912]}"
+],
+[
+"part.box",
+null,
+"(112.0, 66.0, 24.0)",
+"{'origin': [-56.0, -33.0, 65.62257091902912]}"
+],
+[
+"part.cut",
+"chassis",
+"(<part.cut None>, <part.box None>)",
+"{'label': 'chassis'}"
+],
+[
+"part.cut",
+"cover",
+"(<part.cut None>, <part.box None>)",
+"{'label': 'cover'}"
+],
+[
+"part.box",
+"esp32s3_standin",
+"(63.0, 25.5, 4.0)",
+"{'origin': [-31.5, -12.75, 103.02257091902912], 'label': 'esp32s3_standin'}"
+],
+[
+"part.box",
+"imu_standin",
+"(21.0, 16.0, 3.0)",
+"{'origin': [-10.5, 13.5, 83.02257091902912], 'label': 'imu_standin'}"
+],
+[
+"part.box",
+"battery_standin",
+"(40.0, 26.0, 8.0)",
+"{'origin': [-20.0, -13.0, 83.02257091902912], 'label': 'battery_standin'}"
+],
+[
+"servo.horn",
+"hip_horn_lf",
+"('cross',)",
+"{'label': 'hip_horn_lf'}"
+],
+[
+"part.box",
+null,
+"(17.2, 6.5, 45.0)",
+"{'origin': [33.4, 33.0, 44.622570919029116]}"
+],
+[
+"part.cylinder",
+null,
+"(12.5, 6.5)",
+"{'origin': [42.0, 33.0, 89.62257091902912], 'direction': [0, 1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(8.6, 6.5)",
+"{'origin': [42.0, 33.0, 44.622570919029116], 'direction': [0, 1, 0]}"
+],
+[
+"part.box",
+null,
+"(17.2, 30.9, 38.650000000000006)",
+"{'origin': [33.4, 8.600000000000001, 22.072570919029115]}"
+],
+[
+"part.fuse",
+null,
+"([<part.box None>, <part.cylinder None>, <part.cylinder None>, <part.box None>],)",
+"{}"
+],
+[
+"part.transform",
+null,
+"(<part.fuse None>,)",
+"{'rotation_axis': [0, 1, 0], 'rotation_degrees': 30.0, 'pivot': [42.0, 0.0, 89.62257091902912]}"
+],
+[
+"lib.servo",
+"knee_servo_lf",
+"()",
+"{'label': 'knee_servo_lf'}"
+],
+[
+"servo.horn",
+"knee_horn_lf",
+"('cross',)",
+"{'label': 'knee_horn_lf'}"
+],
+[
+"part.cylinder",
+null,
+"(2.95, 6.5)",
+"{'origin': [42.0, 32.0, 89.62257091902912], 'direction': [0, 1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(1.9000000000000001, 8.5)",
+"{'origin': [42.0, 32.0, 89.62257091902912], 'direction': [0, 1, 0]}"
+],
+[
+"part.cut",
+"thigh_lf",
+"(<part.transform None>, [<servo.bay None>, <servo.horn hip_horn_lf>, <part.cylinder None>, <part.cylinder None>])",
+"{'label': 'thigh_lf'}"
+],
+[
+"part.cylinder",
+null,
+"(12.5, 6.5)",
+"{'origin': [19.500000000000004, 40.5, 50.651427748729375], 'direction': [0, 1, 0]}"
+],
+[
+"part.box",
+null,
+"(10.0, 6.5, 50.0)",
+"{'origin': [14.500000000000004, 40.5, 0.6514277487293754]}"
+],
+[
+"part.cylinder",
+null,
+"(5.0, 6.5)",
+"{'origin': [19.500000000000004, 40.5, 0.6514277487293754], 'direction': [0, 1, 0]}"
+],
+[
+"part.fuse",
+null,
+"([<part.cylinder None>, <part.box None>, <part.cylinder None>],)",
+"{}"
+],
+[
+"part.transform",
+null,
+"(<part.fuse None>,)",
+"{'rotation_axis': [0, 1, 0], 'rotation_degrees': -26.743683950403007, 'pivot': [19.500000000000004, 0.0, 50.651427748729375]}"
+],
+[
+"part.sphere",
+"foot_lf",
+"(6.0,)",
+"{'center': [42.0, 43.75, 6.0], 'label': 'foot_lf'}"
+],
+[
+"part.cylinder",
+null,
+"(2.95, 6.5)",
+"{'origin': [19.500000000000004, 39.5, 50.651427748729375], 'direction': [0, 1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(1.9000000000000001, 8.5)",
+"{'origin': [19.500000000000004, 39.5, 50.651427748729375], 'direction': [0, 1, 0]}"
+],
+[
+"part.cut",
+"shin_lf",
+"(<part.transform None>, [<servo.horn knee_horn_lf>, <part.cylinder None>, <part.cylinder None>, <part.sphere foot_lf>])",
+"{'label': 'shin_lf'}"
+],
+[
+"servo.horn",
+"hip_horn_rf",
+"('cross',)",
+"{'label': 'hip_horn_rf'}"
+],
+[
+"part.box",
+null,
+"(17.2, 6.5, 45.0)",
+"{'origin': [33.4, -39.5, 44.622570919029116]}"
+],
+[
+"part.cylinder",
+null,
+"(12.5, 6.5)",
+"{'origin': [42.0, -39.5, 89.62257091902912], 'direction': [0, 1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(8.6, 6.5)",
+"{'origin': [42.0, -39.5, 44.622570919029116], 'direction': [0, 1, 0]}"
+],
+[
+"part.box",
+null,
+"(17.2, 30.9, 38.650000000000006)",
+"{'origin': [33.4, -39.5, 22.072570919029115]}"
+],
+[
+"part.fuse",
+null,
+"([<part.box None>, <part.cylinder None>, <part.cylinder None>, <part.box None>],)",
+"{}"
+],
+[
+"part.transform",
+null,
+"(<part.fuse None>,)",
+"{'rotation_axis': [0, 1, 0], 'rotation_degrees': 30.0, 'pivot': [42.0, 0.0, 89.62257091902912]}"
+],
+[
+"lib.servo",
+"knee_servo_rf",
+"()",
+"{'label': 'knee_servo_rf'}"
+],
+[
+"servo.horn",
+"knee_horn_rf",
+"('cross',)",
+"{'label': 'knee_horn_rf'}"
+],
+[
+"part.cylinder",
+null,
+"(2.95, 6.5)",
+"{'origin': [42.0, -32.0, 89.62257091902912], 'direction': [0, -1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(1.9000000000000001, 8.5)",
+"{'origin': [42.0, -32.0, 89.62257091902912], 'direction': [0, -1, 0]}"
+],
+[
+"part.cut",
+"thigh_rf",
+"(<part.transform None>, [<servo.bay None>, <servo.horn hip_horn_rf>, <part.cylinder None>, <part.cylinder None>])",
+"{'label': 'thigh_rf'}"
+],
+[
+"part.cylinder",
+null,
+"(12.5, 6.5)",
+"{'origin': [19.500000000000004, -47.0, 50.651427748729375], 'direction': [0, 1, 0]}"
+],
+[
+"part.box",
+null,
+"(10.0, 6.5, 50.0)",
+"{'origin': [14.500000000000004, -47.0, 0.6514277487293754]}"
+],
+[
+"part.cylinder",
+null,
+"(5.0, 6.5)",
+"{'origin': [19.500000000000004, -47.0, 0.6514277487293754], 'direction': [0, 1, 0]}"
+],
+[
+"part.fuse",
+null,
+"([<part.cylinder None>, <part.box None>, <part.cylinder None>],)",
+"{}"
+],
+[
+"part.transform",
+null,
+"(<part.fuse None>,)",
+"{'rotation_axis': [0, 1, 0], 'rotation_degrees': -26.743683950403007, 'pivot': [19.500000000000004, 0.0, 50.651427748729375]}"
+],
+[
+"part.sphere",
+"foot_rf",
+"(6.0,)",
+"{'center': [42.0, -43.75, 6.0], 'label': 'foot_rf'}"
+],
+[
+"part.cylinder",
+null,
+"(2.95, 6.5)",
+"{'origin': [19.500000000000004, -39.5, 50.651427748729375], 'direction': [0, -1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(1.9000000000000001, 8.5)",
+"{'origin': [19.500000000000004, -39.5, 50.651427748729375], 'direction': [0, -1, 0]}"
+],
+[
+"part.cut",
+"shin_rf",
+"(<part.transform None>, [<servo.horn knee_horn_rf>, <part.cylinder None>, <part.cylinder None>, <part.sphere foot_rf>])",
+"{'label': 'shin_rf'}"
+],
+[
+"servo.horn",
+"hip_horn_lh",
+"('cross',)",
+"{'label': 'hip_horn_lh'}"
+],
+[
+"part.box",
+null,
+"(17.2, 6.5, 45.0)",
+"{'origin': [-50.6, 33.0, 44.622570919029116]}"
+],
+[
+"part.cylinder",
+null,
+"(12.5, 6.5)",
+"{'origin': [-42.0, 33.0, 89.62257091902912], 'direction': [0, 1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(8.6, 6.5)",
+"{'origin': [-42.0, 33.0, 44.622570919029116], 'direction': [0, 1, 0]}"
+],
+[
+"part.box",
+null,
+"(17.2, 30.9, 38.650000000000006)",
+"{'origin': [-50.6, 8.600000000000001, 22.072570919029115]}"
+],
+[
+"part.fuse",
+null,
+"([<part.box None>, <part.cylinder None>, <part.cylinder None>, <part.box None>],)",
+"{}"
+],
+[
+"part.transform",
+null,
+"(<part.fuse None>,)",
+"{'rotation_axis': [0, 1, 0], 'rotation_degrees': 30.0, 'pivot': [-42.0, 0.0, 89.62257091902912]}"
+],
+[
+"lib.servo",
+"knee_servo_lh",
+"()",
+"{'label': 'knee_servo_lh'}"
+],
+[
+"servo.horn",
+"knee_horn_lh",
+"('cross',)",
+"{'label': 'knee_horn_lh'}"
+],
+[
+"part.cylinder",
+null,
+"(2.95, 6.5)",
+"{'origin': [-42.0, 32.0, 89.62257091902912], 'direction': [0, 1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(1.9000000000000001, 8.5)",
+"{'origin': [-42.0, 32.0, 89.62257091902912], 'direction': [0, 1, 0]}"
+],
+[
+"part.cut",
+"thigh_lh",
+"(<part.transform None>, [<servo.bay None>, <servo.horn hip_horn_lh>, <part.cylinder None>, <part.cylinder None>])",
+"{'label': 'thigh_lh'}"
+],
+[
+"part.cylinder",
+null,
+"(12.5, 6.5)",
+"{'origin': [-64.5, 40.5, 50.651427748729375], 'direction': [0, 1, 0]}"
+],
+[
+"part.box",
+null,
+"(10.0, 6.5, 50.0)",
+"{'origin': [-69.5, 40.5, 0.6514277487293754]}"
+],
+[
+"part.cylinder",
+null,
+"(5.0, 6.5)",
+"{'origin': [-64.5, 40.5, 0.6514277487293754], 'direction': [0, 1, 0]}"
+],
+[
+"part.fuse",
+null,
+"([<part.cylinder None>, <part.box None>, <part.cylinder None>],)",
+"{}"
+],
+[
+"part.transform",
+null,
+"(<part.fuse None>,)",
+"{'rotation_axis': [0, 1, 0], 'rotation_degrees': -26.743683950403007, 'pivot': [-64.5, 0.0, 50.651427748729375]}"
+],
+[
+"part.sphere",
+"foot_lh",
+"(6.0,)",
+"{'center': [-42.0, 43.75, 6.0], 'label': 'foot_lh'}"
+],
+[
+"part.cylinder",
+null,
+"(2.95, 6.5)",
+"{'origin': [-64.5, 39.5, 50.651427748729375], 'direction': [0, 1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(1.9000000000000001, 8.5)",
+"{'origin': [-64.5, 39.5, 50.651427748729375], 'direction': [0, 1, 0]}"
+],
+[
+"part.cut",
+"shin_lh",
+"(<part.transform None>, [<servo.horn knee_horn_lh>, <part.cylinder None>, <part.cylinder None>, <part.sphere foot_lh>])",
+"{'label': 'shin_lh'}"
+],
+[
+"servo.horn",
+"hip_horn_rh",
+"('cross',)",
+"{'label': 'hip_horn_rh'}"
+],
+[
+"part.box",
+null,
+"(17.2, 6.5, 45.0)",
+"{'origin': [-50.6, -39.5, 44.622570919029116]}"
+],
+[
+"part.cylinder",
+null,
+"(12.5, 6.5)",
+"{'origin': [-42.0, -39.5, 89.62257091902912], 'direction': [0, 1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(8.6, 6.5)",
+"{'origin': [-42.0, -39.5, 44.622570919029116], 'direction': [0, 1, 0]}"
+],
+[
+"part.box",
+null,
+"(17.2, 30.9, 38.650000000000006)",
+"{'origin': [-50.6, -39.5, 22.072570919029115]}"
+],
+[
+"part.fuse",
+null,
+"([<part.box None>, <part.cylinder None>, <part.cylinder None>, <part.box None>],)",
+"{}"
+],
+[
+"part.transform",
+null,
+"(<part.fuse None>,)",
+"{'rotation_axis': [0, 1, 0], 'rotation_degrees': 30.0, 'pivot': [-42.0, 0.0, 89.62257091902912]}"
+],
+[
+"lib.servo",
+"knee_servo_rh",
+"()",
+"{'label': 'knee_servo_rh'}"
+],
+[
+"servo.horn",
+"knee_horn_rh",
+"('cross',)",
+"{'label': 'knee_horn_rh'}"
+],
+[
+"part.cylinder",
+null,
+"(2.95, 6.5)",
+"{'origin': [-42.0, -32.0, 89.62257091902912], 'direction': [0, -1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(1.9000000000000001, 8.5)",
+"{'origin': [-42.0, -32.0, 89.62257091902912], 'direction': [0, -1, 0]}"
+],
+[
+"part.cut",
+"thigh_rh",
+"(<part.transform None>, [<servo.bay None>, <servo.horn hip_horn_rh>, <part.cylinder None>, <part.cylinder None>])",
+"{'label': 'thigh_rh'}"
+],
+[
+"part.cylinder",
+null,
+"(12.5, 6.5)",
+"{'origin': [-64.5, -47.0, 50.651427748729375], 'direction': [0, 1, 0]}"
+],
+[
+"part.box",
+null,
+"(10.0, 6.5, 50.0)",
+"{'origin': [-69.5, -47.0, 0.6514277487293754]}"
+],
+[
+"part.cylinder",
+null,
+"(5.0, 6.5)",
+"{'origin': [-64.5, -47.0, 0.6514277487293754], 'direction': [0, 1, 0]}"
+],
+[
+"part.fuse",
+null,
+"([<part.cylinder None>, <part.box None>, <part.cylinder None>],)",
+"{}"
+],
+[
+"part.transform",
+null,
+"(<part.fuse None>,)",
+"{'rotation_axis': [0, 1, 0], 'rotation_degrees': -26.743683950403007, 'pivot': [-64.5, 0.0, 50.651427748729375]}"
+],
+[
+"part.sphere",
+"foot_rh",
+"(6.0,)",
+"{'center': [-42.0, -43.75, 6.0], 'label': 'foot_rh'}"
+],
+[
+"part.cylinder",
+null,
+"(2.95, 6.5)",
+"{'origin': [-64.5, -39.5, 50.651427748729375], 'direction': [0, -1, 0]}"
+],
+[
+"part.cylinder",
+null,
+"(1.9000000000000001, 8.5)",
+"{'origin': [-64.5, -39.5, 50.651427748729375], 'direction': [0, -1, 0]}"
+],
+[
+"part.cut",
+"shin_rh",
+"(<part.transform None>, [<servo.horn knee_horn_rh>, <part.cylinder None>, <part.cylinder None>, <part.sphere foot_rh>])",
+"{'label': 'shin_rh'}"
+],
+[
+"assembly.component",
+"chassis",
+"(<part.cut chassis>,)",
+"{'appearance': 'shell', 'role': 'frame', 'label': 'chassis'}"
+],
+[
+"assembly.component",
+"cover",
+"(<part.cut cover>,)",
+"{'appearance': 'shell', 'role': 'frame', 'label': 'cover'}"
+],
+[
+"assembly.component",
+"esp32s3",
+"(<part.box esp32s3_standin>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'esp32s3'}"
+],
+[
+"assembly.component",
+"imu",
+"(<part.box imu_standin>,)",
+"{'appearance': 'accent', 'role': 'hardware', 'label': 'imu'}"
+],
+[
+"assembly.component",
+"battery",
+"(<part.box battery_standin>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'battery'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component chassis>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component cover>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"cover",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'cover'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component cover>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component esp32s3>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"esp",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'esp'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component chassis>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component imu>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"imu",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'imu'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component chassis>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component battery>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"battery",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'battery'}"
+],
+[
+"assembly.component",
+"body_bolt_0",
+"(<lib.bolt body_bolt_0>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'body_bolt_0'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component cover>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component body_bolt_0>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"body_bolt_0",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'body_bolt_0'}"
+],
+[
+"assembly.component",
+"body_bolt_1",
+"(<lib.bolt body_bolt_1>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'body_bolt_1'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component cover>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component body_bolt_1>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"body_bolt_1",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'body_bolt_1'}"
+],
+[
+"assembly.collision",
+"body_box",
+"('box',)",
+"{'size_mm': [110.0, 64.0, 24.0], 'offset': {'position': [0.0, 0.0, 93.02257091902912]}, 'label': 'body_box'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component chassis>,)",
+"{'density_kg_m3': 800.0, 'collision': <assembly.collision body_box>}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component cover>,)",
+"{'density_kg_m3': 800.0}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component esp32s3>,)",
+"{'density_kg_m3': 1400.5602240896355}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component imu>,)",
+"{'density_kg_m3': 1984.1269841269839}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component battery>,)",
+"{'density_kg_m3': 3605.769230769231}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component body_bolt_0>,)",
+"{'density_kg_m3': 7900.0}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component body_bolt_1>,)",
+"{'density_kg_m3': 7900.0}"
+],
+[
+"assembly.component",
+"hip_servo_lf",
+"(<lib.servo hip_servo_lf>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'hip_servo_lf'}"
+],
+[
+"assembly.component",
+"hip_horn_lf",
+"(<servo.horn hip_horn_lf>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'hip_horn_lf'}"
+],
+[
+"assembly.component",
+"thigh_lf",
+"(<part.cut thigh_lf>,)",
+"{'appearance': 'shell', 'role': 'link', 'label': 'thigh_lf'}"
+],
+[
+"assembly.component",
+"knee_servo_lf",
+"(<lib.servo knee_servo_lf>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'knee_servo_lf'}"
+],
+[
+"assembly.component",
+"knee_horn_lf",
+"(<servo.horn knee_horn_lf>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'knee_horn_lf'}"
+],
+[
+"assembly.component",
+"shin_lf",
+"(<part.cut shin_lf>,)",
+"{'appearance': 'shell', 'role': 'link', 'label': 'shin_lf'}"
+],
+[
+"assembly.component",
+"foot_lf",
+"(<part.sphere foot_lf>,)",
+"{'appearance': 'accent', 'role': 'link', 'label': 'foot_lf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component chassis>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component hip_servo_lf>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"hip_servo_lf",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'hip_servo_lf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_lf>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component hip_horn_lf>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"hip_horn_lf",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'hip_horn_lf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_lf>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component knee_servo_lf>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"knee_servo_lf",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'knee_servo_lf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_lf>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component knee_horn_lf>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"knee_horn_lf",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'knee_horn_lf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_lf>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component foot_lf>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"foot_lf",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'foot_lf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component chassis>, 'origin')",
+"{'offset': {'position': [42.0, 0.0, 89.62257091902912], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_lf>, 'origin')",
+"{'offset': {'position': [42.0, 0.0, 89.62257091902912], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.joint",
+"hip_lf",
+"('revolute', <assembly.connector None>, <assembly.connector None>)",
+"{'angle_limits_degrees': [-45.0, 20.0], 'label': 'hip_lf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_lf>, 'origin')",
+"{'offset': {'position': [19.500000000000004, 0.0, 50.651427748729375], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_lf>, 'origin')",
+"{'offset': {'position': [19.500000000000004, 0.0, 50.651427748729375], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.joint",
+"knee_lf",
+"('revolute', <assembly.connector None>, <assembly.connector None>)",
+"{'angle_limits_degrees': [-60.0, 45.0], 'label': 'knee_lf'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component hip_servo_lf>,)",
+"{'density_kg_m3': 1500.0}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component hip_horn_lf>,)",
+"{'density_kg_m3': 1200.0}"
+],
+[
+"assembly.collision",
+"thigh_cap_lf",
+"('capsule',)",
+"{'radius_mm': 6.5, 'length_mm': 45.0, 'offset': {'position': [30.75, 36.25, 70.13699933387925], 'axis': [0, 1, 0], 'angle_degrees': 30.0}, 'contact_group': 1, 'label': 'thigh_cap_lf'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component thigh_lf>,)",
+"{'density_kg_m3': 800.0, 'collision': <assembly.collision thigh_cap_lf>}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component knee_servo_lf>,)",
+"{'density_kg_m3': 1500.0}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component knee_horn_lf>,)",
+"{'density_kg_m3': 1200.0}"
+],
+[
+"assembly.collision",
+"shin_cap_lf",
+"('capsule',)",
+"{'radius_mm': 4.0, 'length_mm': 38.0, 'offset': {'position': [30.75, 43.75, 28.325713874364688], 'axis': [0, 1, 0], 'angle_degrees': -26.743683950403007}, 'contact_group': 1, 'label': 'shin_cap_lf'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component shin_lf>,)",
+"{'density_kg_m3': 800.0, 'collision': <assembly.collision shin_cap_lf>}"
+],
+[
+"assembly.collision",
+"foot_ball_lf",
+"('sphere',)",
+"{'radius_mm': 6.0, 'offset': {'position': [42.0, 43.75, 6.0]}, 'friction': 0.9, 'contact_group': 2, 'label': 'foot_ball_lf'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component foot_lf>,)",
+"{'density_kg_m3': 1200.0, 'collision': <assembly.collision foot_ball_lf>}"
+],
+[
+"assembly.actuator",
+"hip_drive_lf",
+"(<assembly.joint hip_lf>,)",
+"{'kind': 'position', 'control_deg': '0', 'stiffness_nmm_per_deg': 35.30394, 'damping_nmms_per_deg': 1.765197, 'torque_limit_nmm': 176.5197, 'rated_torque_nmm': 70.60788000000001, 'command_limits_degrees': [-45.0, 20.0], 'label': 'hip_drive_lf'}"
+],
+[
+"assembly.joint_dynamics",
+"hip_dyn_lf",
+"(<assembly.joint hip_lf>,)",
+"{'damping_nmms_per_deg': 0.2941995, 'armature_kgmm2': 20.0, 'friction_loss_nmm': 2.0, 'label': 'hip_dyn_lf'}"
+],
+[
+"assembly.actuator",
+"knee_drive_lf",
+"(<assembly.joint knee_lf>,)",
+"{'kind': 'position', 'control_deg': '0', 'stiffness_nmm_per_deg': 35.30394, 'damping_nmms_per_deg': 1.765197, 'torque_limit_nmm': 176.5197, 'rated_torque_nmm': 70.60788000000001, 'command_limits_degrees': [-60.0, 45.0], 'label': 'knee_drive_lf'}"
+],
+[
+"assembly.joint_dynamics",
+"knee_dyn_lf",
+"(<assembly.joint knee_lf>,)",
+"{'damping_nmms_per_deg': 0.2941995, 'armature_kgmm2': 20.0, 'friction_loss_nmm': 2.0, 'label': 'knee_dyn_lf'}"
+],
+[
+"assembly.component",
+"hip_servo_rf",
+"(<lib.servo hip_servo_rf>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'hip_servo_rf'}"
+],
+[
+"assembly.component",
+"hip_horn_rf",
+"(<servo.horn hip_horn_rf>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'hip_horn_rf'}"
+],
+[
+"assembly.component",
+"thigh_rf",
+"(<part.cut thigh_rf>,)",
+"{'appearance': 'shell', 'role': 'link', 'label': 'thigh_rf'}"
+],
+[
+"assembly.component",
+"knee_servo_rf",
+"(<lib.servo knee_servo_rf>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'knee_servo_rf'}"
+],
+[
+"assembly.component",
+"knee_horn_rf",
+"(<servo.horn knee_horn_rf>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'knee_horn_rf'}"
+],
+[
+"assembly.component",
+"shin_rf",
+"(<part.cut shin_rf>,)",
+"{'appearance': 'shell', 'role': 'link', 'label': 'shin_rf'}"
+],
+[
+"assembly.component",
+"foot_rf",
+"(<part.sphere foot_rf>,)",
+"{'appearance': 'accent', 'role': 'link', 'label': 'foot_rf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component chassis>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component hip_servo_rf>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"hip_servo_rf",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'hip_servo_rf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_rf>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component hip_horn_rf>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"hip_horn_rf",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'hip_horn_rf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_rf>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component knee_servo_rf>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"knee_servo_rf",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'knee_servo_rf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_rf>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component knee_horn_rf>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"knee_horn_rf",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'knee_horn_rf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_rf>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component foot_rf>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"foot_rf",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'foot_rf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component chassis>, 'origin')",
+"{'offset': {'position': [42.0, 0.0, 89.62257091902912], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_rf>, 'origin')",
+"{'offset': {'position': [42.0, 0.0, 89.62257091902912], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.joint",
+"hip_rf",
+"('revolute', <assembly.connector None>, <assembly.connector None>)",
+"{'angle_limits_degrees': [-45.0, 20.0], 'label': 'hip_rf'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_rf>, 'origin')",
+"{'offset': {'position': [19.500000000000004, 0.0, 50.651427748729375], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_rf>, 'origin')",
+"{'offset': {'position': [19.500000000000004, 0.0, 50.651427748729375], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.joint",
+"knee_rf",
+"('revolute', <assembly.connector None>, <assembly.connector None>)",
+"{'angle_limits_degrees': [-60.0, 45.0], 'label': 'knee_rf'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component hip_servo_rf>,)",
+"{'density_kg_m3': 1500.0}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component hip_horn_rf>,)",
+"{'density_kg_m3': 1200.0}"
+],
+[
+"assembly.collision",
+"thigh_cap_rf",
+"('capsule',)",
+"{'radius_mm': 6.5, 'length_mm': 45.0, 'offset': {'position': [30.75, -36.25, 70.13699933387925], 'axis': [0, 1, 0], 'angle_degrees': 30.0}, 'contact_group': 1, 'label': 'thigh_cap_rf'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component thigh_rf>,)",
+"{'density_kg_m3': 800.0, 'collision': <assembly.collision thigh_cap_rf>}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component knee_servo_rf>,)",
+"{'density_kg_m3': 1500.0}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component knee_horn_rf>,)",
+"{'density_kg_m3': 1200.0}"
+],
+[
+"assembly.collision",
+"shin_cap_rf",
+"('capsule',)",
+"{'radius_mm': 4.0, 'length_mm': 38.0, 'offset': {'position': [30.75, -43.75, 28.325713874364688], 'axis': [0, 1, 0], 'angle_degrees': -26.743683950403007}, 'contact_group': 1, 'label': 'shin_cap_rf'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component shin_rf>,)",
+"{'density_kg_m3': 800.0, 'collision': <assembly.collision shin_cap_rf>}"
+],
+[
+"assembly.collision",
+"foot_ball_rf",
+"('sphere',)",
+"{'radius_mm': 6.0, 'offset': {'position': [42.0, -43.75, 6.0]}, 'friction': 0.9, 'contact_group': 2, 'label': 'foot_ball_rf'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component foot_rf>,)",
+"{'density_kg_m3': 1200.0, 'collision': <assembly.collision foot_ball_rf>}"
+],
+[
+"assembly.actuator",
+"hip_drive_rf",
+"(<assembly.joint hip_rf>,)",
+"{'kind': 'position', 'control_deg': '0', 'stiffness_nmm_per_deg': 35.30394, 'damping_nmms_per_deg': 1.765197, 'torque_limit_nmm': 176.5197, 'rated_torque_nmm': 70.60788000000001, 'command_limits_degrees': [-45.0, 20.0], 'label': 'hip_drive_rf'}"
+],
+[
+"assembly.joint_dynamics",
+"hip_dyn_rf",
+"(<assembly.joint hip_rf>,)",
+"{'damping_nmms_per_deg': 0.2941995, 'armature_kgmm2': 20.0, 'friction_loss_nmm': 2.0, 'label': 'hip_dyn_rf'}"
+],
+[
+"assembly.actuator",
+"knee_drive_rf",
+"(<assembly.joint knee_rf>,)",
+"{'kind': 'position', 'control_deg': '0', 'stiffness_nmm_per_deg': 35.30394, 'damping_nmms_per_deg': 1.765197, 'torque_limit_nmm': 176.5197, 'rated_torque_nmm': 70.60788000000001, 'command_limits_degrees': [-60.0, 45.0], 'label': 'knee_drive_rf'}"
+],
+[
+"assembly.joint_dynamics",
+"knee_dyn_rf",
+"(<assembly.joint knee_rf>,)",
+"{'damping_nmms_per_deg': 0.2941995, 'armature_kgmm2': 20.0, 'friction_loss_nmm': 2.0, 'label': 'knee_dyn_rf'}"
+],
+[
+"assembly.component",
+"hip_servo_lh",
+"(<lib.servo hip_servo_lh>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'hip_servo_lh'}"
+],
+[
+"assembly.component",
+"hip_horn_lh",
+"(<servo.horn hip_horn_lh>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'hip_horn_lh'}"
+],
+[
+"assembly.component",
+"thigh_lh",
+"(<part.cut thigh_lh>,)",
+"{'appearance': 'shell', 'role': 'link', 'label': 'thigh_lh'}"
+],
+[
+"assembly.component",
+"knee_servo_lh",
+"(<lib.servo knee_servo_lh>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'knee_servo_lh'}"
+],
+[
+"assembly.component",
+"knee_horn_lh",
+"(<servo.horn knee_horn_lh>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'knee_horn_lh'}"
+],
+[
+"assembly.component",
+"shin_lh",
+"(<part.cut shin_lh>,)",
+"{'appearance': 'shell', 'role': 'link', 'label': 'shin_lh'}"
+],
+[
+"assembly.component",
+"foot_lh",
+"(<part.sphere foot_lh>,)",
+"{'appearance': 'accent', 'role': 'link', 'label': 'foot_lh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component chassis>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component hip_servo_lh>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"hip_servo_lh",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'hip_servo_lh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_lh>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component hip_horn_lh>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"hip_horn_lh",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'hip_horn_lh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_lh>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component knee_servo_lh>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"knee_servo_lh",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'knee_servo_lh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_lh>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component knee_horn_lh>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"knee_horn_lh",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'knee_horn_lh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_lh>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component foot_lh>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"foot_lh",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'foot_lh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component chassis>, 'origin')",
+"{'offset': {'position': [-42.0, 0.0, 89.62257091902912], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_lh>, 'origin')",
+"{'offset': {'position': [-42.0, 0.0, 89.62257091902912], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.joint",
+"hip_lh",
+"('revolute', <assembly.connector None>, <assembly.connector None>)",
+"{'angle_limits_degrees': [-35.0, 45.0], 'label': 'hip_lh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_lh>, 'origin')",
+"{'offset': {'position': [-64.5, 0.0, 50.651427748729375], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_lh>, 'origin')",
+"{'offset': {'position': [-64.5, 0.0, 50.651427748729375], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.joint",
+"knee_lh",
+"('revolute', <assembly.connector None>, <assembly.connector None>)",
+"{'angle_limits_degrees': [-60.0, 45.0], 'label': 'knee_lh'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component hip_servo_lh>,)",
+"{'density_kg_m3': 1500.0}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component hip_horn_lh>,)",
+"{'density_kg_m3': 1200.0}"
+],
+[
+"assembly.collision",
+"thigh_cap_lh",
+"('capsule',)",
+"{'radius_mm': 6.5, 'length_mm': 45.0, 'offset': {'position': [-53.25, 36.25, 70.13699933387925], 'axis': [0, 1, 0], 'angle_degrees': 30.0}, 'contact_group': 1, 'label': 'thigh_cap_lh'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component thigh_lh>,)",
+"{'density_kg_m3': 800.0, 'collision': <assembly.collision thigh_cap_lh>}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component knee_servo_lh>,)",
+"{'density_kg_m3': 1500.0}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component knee_horn_lh>,)",
+"{'density_kg_m3': 1200.0}"
+],
+[
+"assembly.collision",
+"shin_cap_lh",
+"('capsule',)",
+"{'radius_mm': 4.0, 'length_mm': 38.0, 'offset': {'position': [-53.25, 43.75, 28.325713874364688], 'axis': [0, 1, 0], 'angle_degrees': -26.743683950403007}, 'contact_group': 1, 'label': 'shin_cap_lh'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component shin_lh>,)",
+"{'density_kg_m3': 800.0, 'collision': <assembly.collision shin_cap_lh>}"
+],
+[
+"assembly.collision",
+"foot_ball_lh",
+"('sphere',)",
+"{'radius_mm': 6.0, 'offset': {'position': [-42.0, 43.75, 6.0]}, 'friction': 0.9, 'contact_group': 2, 'label': 'foot_ball_lh'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component foot_lh>,)",
+"{'density_kg_m3': 1200.0, 'collision': <assembly.collision foot_ball_lh>}"
+],
+[
+"assembly.actuator",
+"hip_drive_lh",
+"(<assembly.joint hip_lh>,)",
+"{'kind': 'position', 'control_deg': '0', 'stiffness_nmm_per_deg': 35.30394, 'damping_nmms_per_deg': 1.765197, 'torque_limit_nmm': 176.5197, 'rated_torque_nmm': 70.60788000000001, 'command_limits_degrees': [-35.0, 45.0], 'label': 'hip_drive_lh'}"
+],
+[
+"assembly.joint_dynamics",
+"hip_dyn_lh",
+"(<assembly.joint hip_lh>,)",
+"{'damping_nmms_per_deg': 0.2941995, 'armature_kgmm2': 20.0, 'friction_loss_nmm': 2.0, 'label': 'hip_dyn_lh'}"
+],
+[
+"assembly.actuator",
+"knee_drive_lh",
+"(<assembly.joint knee_lh>,)",
+"{'kind': 'position', 'control_deg': '0', 'stiffness_nmm_per_deg': 35.30394, 'damping_nmms_per_deg': 1.765197, 'torque_limit_nmm': 176.5197, 'rated_torque_nmm': 70.60788000000001, 'command_limits_degrees': [-60.0, 45.0], 'label': 'knee_drive_lh'}"
+],
+[
+"assembly.joint_dynamics",
+"knee_dyn_lh",
+"(<assembly.joint knee_lh>,)",
+"{'damping_nmms_per_deg': 0.2941995, 'armature_kgmm2': 20.0, 'friction_loss_nmm': 2.0, 'label': 'knee_dyn_lh'}"
+],
+[
+"assembly.component",
+"hip_servo_rh",
+"(<lib.servo hip_servo_rh>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'hip_servo_rh'}"
+],
+[
+"assembly.component",
+"hip_horn_rh",
+"(<servo.horn hip_horn_rh>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'hip_horn_rh'}"
+],
+[
+"assembly.component",
+"thigh_rh",
+"(<part.cut thigh_rh>,)",
+"{'appearance': 'shell', 'role': 'link', 'label': 'thigh_rh'}"
+],
+[
+"assembly.component",
+"knee_servo_rh",
+"(<lib.servo knee_servo_rh>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'knee_servo_rh'}"
+],
+[
+"assembly.component",
+"knee_horn_rh",
+"(<servo.horn knee_horn_rh>,)",
+"{'appearance': 'mechanism', 'role': 'hardware', 'label': 'knee_horn_rh'}"
+],
+[
+"assembly.component",
+"shin_rh",
+"(<part.cut shin_rh>,)",
+"{'appearance': 'shell', 'role': 'link', 'label': 'shin_rh'}"
+],
+[
+"assembly.component",
+"foot_rh",
+"(<part.sphere foot_rh>,)",
+"{'appearance': 'accent', 'role': 'link', 'label': 'foot_rh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component chassis>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component hip_servo_rh>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"hip_servo_rh",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'hip_servo_rh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_rh>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component hip_horn_rh>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"hip_horn_rh",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'hip_horn_rh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_rh>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component knee_servo_rh>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"knee_servo_rh",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'knee_servo_rh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_rh>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component knee_horn_rh>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"knee_horn_rh",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'knee_horn_rh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_rh>, 'origin')",
+"{}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component foot_rh>, 'origin')",
+"{}"
+],
+[
+"assembly.joint",
+"foot_rh",
+"('fixed', <assembly.connector None>, <assembly.connector None>)",
+"{'label': 'foot_rh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component chassis>, 'origin')",
+"{'offset': {'position': [-42.0, 0.0, 89.62257091902912], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_rh>, 'origin')",
+"{'offset': {'position': [-42.0, 0.0, 89.62257091902912], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.joint",
+"hip_rh",
+"('revolute', <assembly.connector None>, <assembly.connector None>)",
+"{'angle_limits_degrees': [-35.0, 45.0], 'label': 'hip_rh'}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component thigh_rh>, 'origin')",
+"{'offset': {'position': [-64.5, 0.0, 50.651427748729375], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.connector",
+null,
+"(<assembly.component shin_rh>, 'origin')",
+"{'offset': {'position': [-64.5, 0.0, 50.651427748729375], 'axis': [1, 0, 0], 'angle_degrees': -90}}"
+],
+[
+"assembly.joint",
+"knee_rh",
+"('revolute', <assembly.connector None>, <assembly.connector None>)",
+"{'angle_limits_degrees': [-60.0, 45.0], 'label': 'knee_rh'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component hip_servo_rh>,)",
+"{'density_kg_m3': 1500.0}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component hip_horn_rh>,)",
+"{'density_kg_m3': 1200.0}"
+],
+[
+"assembly.collision",
+"thigh_cap_rh",
+"('capsule',)",
+"{'radius_mm': 6.5, 'length_mm': 45.0, 'offset': {'position': [-53.25, -36.25, 70.13699933387925], 'axis': [0, 1, 0], 'angle_degrees': 30.0}, 'contact_group': 1, 'label': 'thigh_cap_rh'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component thigh_rh>,)",
+"{'density_kg_m3': 800.0, 'collision': <assembly.collision thigh_cap_rh>}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component knee_servo_rh>,)",
+"{'density_kg_m3': 1500.0}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component knee_horn_rh>,)",
+"{'density_kg_m3': 1200.0}"
+],
+[
+"assembly.collision",
+"shin_cap_rh",
+"('capsule',)",
+"{'radius_mm': 4.0, 'length_mm': 38.0, 'offset': {'position': [-53.25, -43.75, 28.325713874364688], 'axis': [0, 1, 0], 'angle_degrees': -26.743683950403007}, 'contact_group': 1, 'label': 'shin_cap_rh'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component shin_rh>,)",
+"{'density_kg_m3': 800.0, 'collision': <assembly.collision shin_cap_rh>}"
+],
+[
+"assembly.collision",
+"foot_ball_rh",
+"('sphere',)",
+"{'radius_mm': 6.0, 'offset': {'position': [-42.0, -43.75, 6.0]}, 'friction': 0.9, 'contact_group': 2, 'label': 'foot_ball_rh'}"
+],
+[
+"assembly.body",
+null,
+"(<assembly.component foot_rh>,)",
+"{'density_kg_m3': 1200.0, 'collision': <assembly.collision foot_ball_rh>}"
+],
+[
+"assembly.actuator",
+"hip_drive_rh",
+"(<assembly.joint hip_rh>,)",
+"{'kind': 'position', 'control_deg': '0', 'stiffness_nmm_per_deg': 35.30394, 'damping_nmms_per_deg': 1.765197, 'torque_limit_nmm': 176.5197, 'rated_torque_nmm': 70.60788000000001, 'command_limits_degrees': [-35.0, 45.0], 'label': 'hip_drive_rh'}"
+],
+[
+"assembly.joint_dynamics",
+"hip_dyn_rh",
+"(<assembly.joint hip_rh>,)",
+"{'damping_nmms_per_deg': 0.2941995, 'armature_kgmm2': 20.0, 'friction_loss_nmm': 2.0, 'label': 'hip_dyn_rh'}"
+],
+[
+"assembly.actuator",
+"knee_drive_rh",
+"(<assembly.joint knee_rh>,)",
+"{'kind': 'position', 'control_deg': '0', 'stiffness_nmm_per_deg': 35.30394, 'damping_nmms_per_deg': 1.765197, 'torque_limit_nmm': 176.5197, 'rated_torque_nmm': 70.60788000000001, 'command_limits_degrees': [-60.0, 45.0], 'label': 'knee_drive_rh'}"
+],
+[
+"assembly.joint_dynamics",
+"knee_dyn_rh",
+"(<assembly.joint knee_rh>,)",
+"{'damping_nmms_per_deg': 0.2941995, 'armature_kgmm2': 20.0, 'friction_loss_nmm': 2.0, 'label': 'knee_dyn_rh'}"
+],
+[
+"assembly.assembly",
+"quadruped8",
+"([<assembly.component chassis>, <assembly.component cover>, <assembly.component esp32s3>, <assembly.component imu>, <assembly.component battery>, <assembly.component body_bolt_0>, <assembly.component body_bolt_1>, <assembly.component hip_servo_lf>, <assembly.component hip_horn_lf>, <assembly.component thigh_lf>, <assembly.component knee_servo_lf>, <assembly.component knee_horn_lf>, <assembly.component shin_lf>, <assembly.component foot_lf>, <assembly.component hip_servo_rf>, <assembly.component hip_horn_rf>, <assembly.component thigh_rf>, <assembly.component knee_servo_rf>, <assembly.component knee_horn_rf>, <assembly.component shin_rf>, <assembly.component foot_rf>, <assembly.component hip_servo_lh>, <assembly.component hip_horn_lh>, <assembly.component thigh_lh>, <assembly.component knee_servo_lh>, <assembly.component knee_horn_lh>, <assembly.component shin_lh>, <assembly.component foot_lh>, <assembly.component hip_servo_rh>, <assembly.component hip_horn_rh>, <assembly.component thigh_rh>, <assembly.component knee_servo_rh>, <assembly.component knee_horn_rh>, <assembly.component shin_rh>, <assembly.component foot_rh>], [<assembly.joint cover>, <assembly.joint esp>, <assembly.joint imu>, <assembly.joint battery>, <assembly.joint body_bolt_0>, <assembly.joint body_bolt_1>, <assembly.joint hip_servo_lf>, <assembly.joint hip_horn_lf>, <assembly.joint knee_servo_lf>, <assembly.joint knee_horn_lf>, <assembly.joint foot_lf>, <assembly.joint hip_lf>, <assembly.joint knee_lf>, <assembly.joint hip_servo_rf>, <assembly.joint hip_horn_rf>, <assembly.joint knee_servo_rf>, <assembly.joint knee_horn_rf>, <assembly.joint foot_rf>, <assembly.joint hip_rf>, <assembly.joint knee_rf>, <assembly.joint hip_servo_lh>, <assembly.joint hip_horn_lh>, <assembly.joint knee_servo_lh>, <assembly.joint knee_horn_lh>, <assembly.joint foot_lh>, <assembly.joint hip_lh>, <assembly.joint knee_lh>, <assembly.joint hip_servo_rh>, <assembly.joint hip_horn_rh>, <assembly.joint knee_servo_rh>, <assembly.joint knee_horn_rh>, <assembly.joint foot_rh>, <assembly.joint hip_rh>, <assembly.joint knee_rh>])",
+"{'sweep_step_degrees': 5.0, 'contacts': [(<assembly.component hip_servo_lf>, <assembly.component hip_horn_lf>), (<assembly.component knee_servo_lf>, <assembly.component knee_horn_lf>), (<assembly.component hip_servo_rf>, <assembly.component hip_horn_rf>), (<assembly.component knee_servo_rf>, <assembly.component knee_horn_rf>), (<assembly.component hip_servo_lh>, <assembly.component hip_horn_lh>), (<assembly.component knee_servo_lh>, <assembly.component knee_horn_lh>), (<assembly.component hip_servo_rh>, <assembly.component hip_horn_rh>), (<assembly.component knee_servo_rh>, <assembly.component knee_horn_rh>)], 'label': 'quadruped8'}"
+],
+[
+"assembly.solve",
+null,
+"(<assembly.assembly quadruped8>,)",
+"{}"
+],
+[
+"assembly.sensor",
+null,
+"(<assembly.component imu>, 'imu')",
+"{'name': 'imu'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component imu>, 'component_orientation')",
+"{'name': 'rot', 'sensor': <assembly.sensor None>}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component imu>, 'component_angular_velocity')",
+"{'name': 'gyro', 'sensor': <assembly.sensor None>}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component chassis>, 'component_linear_velocity')",
+"{'name': 'vel', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component chassis>, 'component_position')",
+"{'name': 'pos', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.joint hip_lf>, 'position')",
+"{'name': 'q_hip_lf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.joint knee_lf>, 'position')",
+"{'name': 'q_knee_lf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component foot_lf>, 'contact')",
+"{'name': 'ft_lf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component foot_lf>, 'centre_of_mass')",
+"{'name': 'fc_lf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.joint hip_rf>, 'position')",
+"{'name': 'q_hip_rf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.joint knee_rf>, 'position')",
+"{'name': 'q_knee_rf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component foot_rf>, 'contact')",
+"{'name': 'ft_rf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component foot_rf>, 'centre_of_mass')",
+"{'name': 'fc_rf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.joint hip_lh>, 'position')",
+"{'name': 'q_hip_lh', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.joint knee_lh>, 'position')",
+"{'name': 'q_knee_lh', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component foot_lh>, 'contact')",
+"{'name': 'ft_lh', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component foot_lh>, 'centre_of_mass')",
+"{'name': 'fc_lh', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.joint hip_rh>, 'position')",
+"{'name': 'q_hip_rh', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.joint knee_rh>, 'position')",
+"{'name': 'q_knee_rh', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component foot_rh>, 'contact')",
+"{'name': 'ft_rh', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.component foot_rh>, 'centre_of_mass')",
+"{'name': 'fc_rh', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator hip_drive_lf>, 'command')",
+"{'name': 'c_hip_lf'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator hip_drive_lf>, 'actuator_force')",
+"{'name': 'tau_hip_lf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator knee_drive_lf>, 'command')",
+"{'name': 'c_knee_lf'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator knee_drive_lf>, 'actuator_force')",
+"{'name': 'tau_knee_lf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator hip_drive_rf>, 'command')",
+"{'name': 'c_hip_rf'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator hip_drive_rf>, 'actuator_force')",
+"{'name': 'tau_hip_rf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator knee_drive_rf>, 'command')",
+"{'name': 'c_knee_rf'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator knee_drive_rf>, 'actuator_force')",
+"{'name': 'tau_knee_rf', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator hip_drive_lh>, 'command')",
+"{'name': 'c_hip_lh'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator hip_drive_lh>, 'actuator_force')",
+"{'name': 'tau_hip_lh', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator knee_drive_lh>, 'command')",
+"{'name': 'c_knee_lh'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator knee_drive_lh>, 'actuator_force')",
+"{'name': 'tau_knee_lh', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator hip_drive_rh>, 'command')",
+"{'name': 'c_hip_rh'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator hip_drive_rh>, 'actuator_force')",
+"{'name': 'tau_hip_rh', 'role': 'privileged'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator knee_drive_rh>, 'command')",
+"{'name': 'c_knee_rh'}"
+],
+[
+"assembly.observation",
+null,
+"(<assembly.actuator knee_drive_rh>, 'actuator_force')",
+"{'name': 'tau_knee_rh', 'role': 'privileged'}"
+],
+[
+"assembly.mjcf",
+"quadruped8",
+"(<assembly.assembly quadruped8>, [<assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>, <assembly.body None>])",
+"{'actuators': [<assembly.actuator hip_drive_lf>, <assembly.actuator knee_drive_lf>, <assembly.actuator hip_drive_rf>, <assembly.actuator knee_drive_rf>, <assembly.actuator hip_drive_lh>, <assembly.actuator knee_drive_lh>, <assembly.actuator hip_drive_rh>, <assembly.actuator knee_drive_rh>], 'joint_dynamics': [<assembly.joint_dynamics hip_dyn_lf>, <assembly.joint_dynamics knee_dyn_lf>, <assembly.joint_dynamics hip_dyn_rf>, <assembly.joint_dynamics knee_dyn_rf>, <assembly.joint_dynamics hip_dyn_lh>, <assembly.joint_dynamics knee_dyn_lh>, <assembly.joint_dynamics hip_dyn_rh>, <assembly.joint_dynamics knee_dyn_rh>], 'observations': [<assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>, <assembly.observation None>], 'solver_step_s': 0.002, 'label': 'quadruped8'}"
+],
+[
+"assembly.goal",
+null,
+"('cmd',)",
+"{'kind': 'speed', 'between': [40.0, 160.0], 'resample_seconds': 4.0}"
+],
+[
+"assembly.goal",
+null,
+"('clock',)",
+"{'kind': 'phase', 'period_seconds': 0.5}"
+],
+[
+"assembly.reward",
+"alive",
+"('1',)",
+"{'weight': 1.0, 'label': 'alive'}"
+],
+[
+"assembly.reward",
+"upright",
+"('(1 - 2*(rot_qx^2 + rot_qy^2))',)",
+"{'weight': 1.0, 'label': 'upright'}"
+],
+[
+"assembly.reward",
+"track_speed",
+"('(1 - 2*(rot_qx^2 + rot_qy^2)) * exp(-((vel_x - cmd) / 40)^2)',)",
+"{'weight': 3.0, 'label': 'track_speed'}"
+],
+[
+"assembly.reward",
+"lateral",
+"('(vel_y / 100)^2',)",
+"{'weight': -1.0, 'label': 'lateral'}"
+],
+[
+"assembly.reward",
+"yaw_rate",
+"('(gyro_z / 60)^2',)",
+"{'weight': -0.5, 'label': 'yaw_rate'}"
+],
+[
+"assembly.reward",
+"body_rock",
+"('(gyro_x / 100)^2 + (gyro_y / 100)^2',)",
+"{'weight': -0.2, 'label': 'body_rock'}"
+],
+[
+"assembly.reward",
+"height",
+"('(pos_z / 15)^2',)",
+"{'weight': -0.5, 'label': 'height'}"
+],
+[
+"assembly.reward",
+"trot_contact",
+"('tanh(5*clock_sin) * ((ft_lf_down + ft_rh_down) - (ft_rf_down + ft_lh_down))',)",
+"{'weight': 0.5, 'label': 'trot_contact'}"
+],
+[
+"assembly.reward",
+"swing_lift",
+"('(0.5 - 0.5*tanh(5*clock_sin)) * tanh((fc_lf_z - 6.00) / 10.00) + (0.5 + 0.5*tanh(5*clock_sin)) * tanh((fc_rf_z - 6.00) / 10.00) + (0.5 + 0.5*tanh(5*clock_sin)) * tanh((fc_lh_z - 6.00) / 10.00) + (0.5 - 0.5*tanh(5*clock_sin)) * tanh((fc_rh_z - 6.00) / 10.00)',)",
+"{'weight': 0.5, 'label': 'swing_lift'}"
+],
+[
+"assembly.reward",
+"action_rate",
+"('((c_hip_lf_rate / 600)^2 + (c_knee_lf_rate / 600)^2 + (c_hip_rf_rate / 600)^2 + (c_knee_rf_rate / 600)^2 + (c_hip_lh_rate / 600)^2 + (c_knee_lh_rate / 600)^2 + (c_hip_rh_rate / 600)^2 + (c_knee_rh_rate / 600)^2) / 8',)",
+"{'weight': -0.5, 'label': 'action_rate'}"
+],
+[
+"assembly.reward",
+"effort",
+"('((tau_hip_lf / 176.520)^2 + (tau_knee_lf / 176.520)^2 + (tau_hip_rf / 176.520)^2 + (tau_knee_rf / 176.520)^2 + (tau_hip_lh / 176.520)^2 + (tau_knee_lh / 176.520)^2 + (tau_hip_rh / 176.520)^2 + (tau_knee_rh / 176.520)^2) / 8',)",
+"{'weight': -0.5, 'label': 'effort'}"
+],
+[
+"assembly.reward",
+"effort_rated",
+"('((tau_hip_lf / 70.608)^4 + (tau_knee_lf / 70.608)^4 + (tau_hip_rf / 70.608)^4 + (tau_knee_rf / 70.608)^4 + (tau_hip_lh / 70.608)^4 + (tau_knee_lh / 70.608)^4 + (tau_hip_rh / 70.608)^4 + (tau_knee_rh / 70.608)^4) / 8',)",
+"{'weight': -0.3, 'label': 'effort_rated'}"
+],
+[
+"assembly.reward",
+"tilt",
+"('(rot_qx^2 + rot_qy^2) / 0.0019',)",
+"{'weight': -0.1, 'label': 'tilt'}"
+],
+[
+"assembly.termination",
+"fell",
+"('(1 - 2*(rot_qx^2 + rot_qy^2))',)",
+"{'below': 0.7, 'label': 'fell'}"
+],
+[
+"assembly.termination",
+"sank",
+"('pos_z',)",
+"{'below': -30.0, 'label': 'sank'}"
+],
+[
+"assembly.randomise",
+"rand_chassis_mass",
+"(<assembly.component chassis>, 'mass')",
+"{'scale': [0.85, 1.15], 'label': 'rand_chassis_mass'}"
+],
+[
+"assembly.randomise",
+"rand_cover_mass",
+"(<assembly.component cover>, 'mass')",
+"{'scale': [0.85, 1.15], 'label': 'rand_cover_mass'}"
+],
+[
+"assembly.randomise",
+"rand_battery_mass",
+"(<assembly.component battery>, 'mass')",
+"{'scale': [0.6, 1.4], 'label': 'rand_battery_mass'}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint hip_lf>, 'damping')",
+"{'scale': [0.7, 1.3]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint hip_lf>, 'friction_loss')",
+"{'scale': [0.5, 2.0]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint knee_lf>, 'damping')",
+"{'scale': [0.7, 1.3]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint knee_lf>, 'friction_loss')",
+"{'scale': [0.5, 2.0]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint hip_rf>, 'damping')",
+"{'scale': [0.7, 1.3]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint hip_rf>, 'friction_loss')",
+"{'scale': [0.5, 2.0]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint knee_rf>, 'damping')",
+"{'scale': [0.7, 1.3]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint knee_rf>, 'friction_loss')",
+"{'scale': [0.5, 2.0]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint hip_lh>, 'damping')",
+"{'scale': [0.7, 1.3]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint hip_lh>, 'friction_loss')",
+"{'scale': [0.5, 2.0]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint knee_lh>, 'damping')",
+"{'scale': [0.7, 1.3]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint knee_lh>, 'friction_loss')",
+"{'scale': [0.5, 2.0]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint hip_rh>, 'damping')",
+"{'scale': [0.7, 1.3]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint hip_rh>, 'friction_loss')",
+"{'scale': [0.5, 2.0]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint knee_rh>, 'damping')",
+"{'scale': [0.7, 1.3]}"
+],
+[
+"assembly.randomise",
+null,
+"(<assembly.joint knee_rh>, 'friction_loss')",
+"{'scale': [0.5, 2.0]}"
+],
+[
+"assembly.reset_variation",
+null,
+"(<assembly.component chassis>,)",
+"{'tilt_degrees': [0.0, 3.0], 'height_mm': [4.0, 6.0]}"
+],
+[
+"assembly.success",
+null,
+"([{'id': 'completes', 'metric': 'completed', 'min': 1}, {'id': 'upright', 'metric': 'max_tilt_deg', 'max': 25}, {'id': 'walks', 'metric': 'steps_min', 'min': 4}, {'id': 'speed', 'metric': 'speed_ratio', 'min': 0.5, 'max': 1.5}, {'id': 'rated', 'metric': 'effort_rms_rated_ratio_max', 'max': 1.0}],)",
+"{'seeds': [2101, 2102, 2103, 2104, 2105, 2106, 2107, 2108, 2109, 2110], 'feet': [<assembly.component foot_lf>, <assembly.component foot_rf>, <assembly.component foot_lh>, <assembly.component foot_rh>], 'episode_seconds': 8.0}"
+],
+[
+"assembly.task",
+"walk",
+"(<assembly.mjcf quadruped8>,)",
+"{'actions': [<assembly.actuator hip_drive_lf>, <assembly.actuator knee_drive_lf>, <assembly.actuator hip_drive_rf>, <assembly.actuator knee_drive_rf>, <assembly.actuator hip_drive_lh>, <assembly.actuator knee_drive_lh>, <assembly.actuator hip_drive_rh>, <assembly.actuator knee_drive_rh>], 'reward': [<assembly.reward alive>, <assembly.reward upright>, <assembly.reward track_speed>, <assembly.reward lateral>, <assembly.reward yaw_rate>, <assembly.reward body_rock>, <assembly.reward height>, <assembly.reward trot_contact>, <assembly.reward swing_lift>, <assembly.reward action_rate>, <assembly.reward effort>, <assembly.reward effort_rated>, <assembly.reward tilt>], 'termination': [<assembly.termination fell>, <assembly.termination sank>], 'randomisation': [<assembly.randomise rand_chassis_mass>, <assembly.randomise rand_cover_mass>, <assembly.randomise rand_battery_mass>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>, <assembly.randomise None>], 'reset_variation': [<assembly.reset_variation None>], 'goals': [<assembly.goal None>, <assembly.goal None>], 'success': <assembly.success None>, 'episode_seconds': 8.0, 'control_hz': 50, 'label': 'walk'}"
+]
+]
