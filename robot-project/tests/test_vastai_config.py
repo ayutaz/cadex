@@ -473,8 +473,8 @@ TRI3_DR = {
     "tri3-r8-slip-dr": "tri3-r8-slip",
     "tri3-r9-dr": "tri3-r9",
     "tri3-r9-slip-dr": "tri3-r9-slip",
-    "tri3-r9-sw1-dr": "tri3-r9-sw1",
-    "tri3-r9-sw2-dr": "tri3-r9-sw2",
+    "tri3-r9-sw1-dr": "tri3-r9-sw1-dr",
+    "tri3-r9-sw2-dr": "tri3-r9-sw2-dr",
 }
 DR_SOURCE = {**TAIL_TRI_DR, "tri-r2-dyn-dr": "tri-r2-dyn", **TRI3_DR}
 #: バンドルを作り終えた案（機体の形は ef0451348 の版。tri-r2-dyn-dr は hc_foot_center などを足した版、
