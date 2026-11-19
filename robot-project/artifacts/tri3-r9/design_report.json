@@ -477,8 +477,8 @@
     ]
   },
   "timings_s": {
-    "build_s": 31.7,
-    "clearance_s": 28.8
+    "build_s": 7.5,
+    "clearance_s": 28.4
   },
   "training_cut": {
     "fidelity_pass": true,

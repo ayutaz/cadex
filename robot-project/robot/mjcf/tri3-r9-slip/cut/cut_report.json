@@ -1,10 +1,10 @@
 {
   "ok": true,
   "problems": [],
-  "engine_mjcf": "~/cadex-projects/quadruped8-tri3-r9-slip/script_artifacts/21b717f50c97757f9eee1b5a23e5416d45c151bcb702a9f6b9ca5d86541390a3/attempt-1795068733591-c515532f966a/outputs/model-model.xml",
+  "engine_mjcf": "~/cadex-projects/quadruped8-tri3-r9-slip/script_artifacts/21b717f50c97757f9eee1b5a23e5416d45c151bcb702a9f6b9ca5d86541390a3/attempt-1795069289977-1be141f5eb66/outputs/model-model.xml",
   "engine_mjcf_sha256": "d7e3383299c6f730d481d11a957269994aafd0ac94bf4015c6ad06a5e46cef6b",
   "training_mjcf_sha256": "fc1c2428cfe8b1c910e9408b92caa75a6c413d803ade8d75b35219cc44e8564d",
-  "out": "/var/folders/b_/0zt18535599cmxt7wypby49dd83z85/T/tmp4u530_pu/cut.xml",
+  "out": "/var/folders/b_/0zt18535599cmxt7wypby49dd83z85/T/tmpduyjjjyb/cut.xml",
   "feet": [
     "c_foot_lf/collision0",
     "c_foot_rf/collision0",
