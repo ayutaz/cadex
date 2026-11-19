@@ -61,6 +61,14 @@ def require_joint_count(policy: "CxPolicy", expected: int = len(DEFAULT_JOINTS))
         raise ValueError(f"この書き出しは関節 {expected} 個の機体向け、方策の行動は {len(policy.actions)} 個")
 
 
+def require_joint_names(policy: "CxPolicy", expected: Sequence[str] = DEFAULT_JOINTS) -> None:
+    """関節の数が同じでも、名前と順番が違えばサーボの割り当て（servo_map.h）とずれる。止める。"""
+    got = [str(a.get("actuator")).split("/")[0] for a in policy.actions]  # 実物は "hip_lf/position"
+    if got != list(expected):
+        diff = [f"{i}番目 {g}（期待 {e}）" for i, (g, e) in enumerate(zip(got, expected)) if g != e]
+        raise ValueError("関節の名前または順番が実機の割り当てと違う: " + ", ".join(diff or got))
+
+
 #: 合成ポリシーの既定の観測チャネル（実機で観測できるものだけ、計 20）。
 #: 実物の .cxpolicy ではタスクが決めた名前になるので、配備側はこの名前を当てにせず
 #: ヘッダの ``observations`` を読むこと（export_c.resolve_layout がそれをする）。

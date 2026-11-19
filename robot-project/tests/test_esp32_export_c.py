@@ -382,3 +382,13 @@ def test_cli_uses_the_reset_command_when_the_task_is_given(tmp_path):
     body = re.search(r"const float policy_initial_command\[8\] = \{(.*?)\};", text, re.S).group(1)
     values = [float(v.strip().rstrip("f")) for v in body.split(",") if v.strip()]
     assert values == [0.0] * 8
+
+
+def test_rejects_same_count_wrong_names():
+    """関節が8個でも名前と順番が違う方策（tri3-r8 など）は、書き出しで止める。"""
+    names = ("roll_lf", "hip_lf", "knee_lf", "roll_rf", "hip_rf", "knee_rf", "hip_hc", "knee_hc")
+    policy = cx.parse_policy(cx.make_synthetic_policy(hidden=(8,), seed=3, joints=names))
+    assert len(policy.actions) == len(cx.DEFAULT_JOINTS)
+    layout = ex.resolve_layout(cx.parse_policy(cx.make_synthetic_policy(hidden=(8,), seed=3)))
+    with pytest.raises(ValueError, match="roll_lf"):
+        ex.render_header(policy, None, layout=layout, source="x")
