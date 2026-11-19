@@ -211,6 +211,8 @@ def test_built_roll_axis_and_limits(variant, order):
     name, mujoco, model = _model(variant)
     # ロールの範囲は機体ごとの params（tri3-r8 は重心の線に届くよう ±30°、Task 5）。ビルドの記録と比べる
     params = json.loads((ROOT / "artifacts" / name / "design_report.json").read_text(encoding="utf-8"))["params"]
+    # 無ければ leg_roll より前のビルド（記録が古い）。既定の ±20° に逃がさず、作り直しを求める
+    assert "roll_min" in params and "roll_max" in params, f"artifacts/{name}/design_report.json が古い（作り直す）"
     data = mujoco.MjData(model)
     mujoco.mj_resetDataKeyframe(model, data, 0)
     mujoco.mj_forward(model, data)
