@@ -1,0 +1,8 @@
+# Written by cadex evaluate (ADR-459, ADR-570, ADR-571). The film, the heroes and the
+# videos are drawn again with --film-only; evaluation.json is the record.
+seed-*-overview.png
+seed-*-detail.png
+seed-*-rollout.webm
+hero.png
+print-bed.png
+*.webm
