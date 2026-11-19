@@ -52,6 +52,7 @@ p = params(
     gait_lift=num(10.0, unit="mm", min=3.0, max=30.0, step=1.0, label="遊脚で払う足上げ高さ"),
     w_effort=num(0.5, min=0.0, max=5.0, step=0.1, label="報酬の罰の重み: トルク（失速トルクで正規化した2乗）"),
     w_effort_rated=num(0.3, min=0.0, max=5.0, step=0.1, label="報酬の罰の重み: 推定連続定格を超えるトルク（4乗）"),
+    slip_cost=num(0.0, min=0.0, max=5.0, step=0.1, label="報酬の罰の重み: 接地した足の滑り（0 なら項も観測も足さない）"),
     armature=num(20.0, unit="kg*mm2", min=0.0, max=200.0, step=1.0,
                  label="サーボのロータ慣性（出力軸換算、推定値）"),
     # 1 は mini までの形（base・leg120・mini などの生成物はこの形）。STL で調べると脚が組めない
@@ -785,6 +786,14 @@ for key, a in drive_by.items():
     # 前回の関節指令（コントローラ自身が知っている値なのでセンサ不要）と、サーボの出力トルク（実機では測れない）
     obs.append(assembly.observation(a, "command", name="c_" + key))
     obs.append(assembly.observation(a, "actuator_force", name="tau_" + key, role="privileged"))
+# 足の滑りの罰（slip_cost > 0）。足は MJCF の葉のボディなので、centre_of_mass_velocity（subtreelinvel）は
+# 足そのものの重心の速度（ワールド、mm/s）。0（既定）なら観測を足さず、出力は変わらない。
+if not 0.0 <= p.slip_cost <= 5.0:
+    raise ValueError("slip_cost は 0〜5: %r" % p.slip_cost)
+SLIP = p.slip_cost > 0.0
+if SLIP:
+    for name in LEG_NAMES:
+        obs.append(assembly.observation(feet[name], "centre_of_mass_velocity", name="fv_" + name, role="privileged"))
 model = assembly.mjcf(asm, bodies, actuators=drives, joint_dynamics=dynamics, observations=obs,
                       solver_step_s=0.002, label="quadruped8")
 result["model"] = model
@@ -876,6 +885,13 @@ rewards = [
     # v2: 胴体の傾き（5度で1）。v1 は最大傾斜が約20度だった。
     assembly.reward("(rot_qx^2 + rot_qy^2) / 0.0019", weight=-0.1, label="tilt"),
 ]
+if SLIP:
+    # 接地している足の、床に沿った速さ（100 mm/s で正規化）の2乗の、脚の平均（浮いた足は 0 と数える）。
+    # すり足（足を上げずに滑らせて進む）は track_speed だけで 1 ステップ約 1.8 点を取れた（tri-r2-dyn-dr）。
+    # 速さは足の重心のもの。足先の球が転がる分（下腿の角速度 × 足の半径）も含まれる。
+    rewards.append(assembly.reward("(" + " + ".join(
+        "ft_{l}_down * ((fv_{l}_x / 100)^2 + (fv_{l}_y / 100)^2)".format(l=leg) for leg in LEG_NAMES)
+        + ") / %d" % len(LEG_NAMES), weight=-p.slip_cost, label="foot_slip"))
 terminations = [
     assembly.termination(UP, below=0.7, label="fell"),          # 約45度以上傾いた
     assembly.termination("pos_z", below=-30.0, label="sank"),   # 胴体が立位から30 mm以上下がった
