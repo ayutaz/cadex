@@ -473,6 +473,8 @@ TRI3_DR = {
     "tri3-r8-slip-dr": "tri3-r8-slip",
     "tri3-r9-dr": "tri3-r9",
     "tri3-r9-slip-dr": "tri3-r9-slip",
+    "tri3-r9-sw1-dr": "tri3-r9-sw1",
+    "tri3-r9-sw2-dr": "tri3-r9-sw2",
 }
 DR_SOURCE = {**TAIL_TRI_DR, "tri-r2-dyn-dr": "tri-r2-dyn", **TRI3_DR}
 #: バンドルを作り終えた案（機体の形は ef0451348 の版。tri-r2-dyn-dr は hc_foot_center などを足した版、
@@ -544,6 +546,24 @@ def test_tri3_slip_configs_match_tri3(variant):
     assert other["bundle"] == f"artifacts/{variant}-slip-dr/cut/walk-task.json"
     assert other["trainer"]["label"] == f"q8 vast.ai full {variant}-slip-dr"
     assert other["instance"]["label"] == f"q8-full-{variant}-slip-dr"
+    ignore = {"_comment", "name", "bundle", "trainer", "instance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == \
+        {k: v for k, v in ref.items() if k not in ignore}
+    assert {k: v for k, v in other["trainer"].items() if k != "label"} == \
+        {k: v for k, v in ref["trainer"].items() if k != "label"}
+    assert {k: v for k, v in other["instance"].items() if k != "label"} == \
+        {k: v for k, v in ref["instance"].items() if k != "label"}
+
+
+@pytest.mark.parametrize("variant", ["tri3-r9-sw1", "tri3-r9-sw2"])
+def test_tri3_sw_configs_match_tri3_r9(variant):
+    # 遊脚の接地の罰を足した版。train_full_tri3-r9-dr.json と、名前・ラベル・バンドルのパスだけが違う
+    ref = json.loads((ROOT / "configs" / "train_full_tri3-r9-dr.json").read_text(encoding="utf-8"))
+    other = json.loads((ROOT / "configs" / f"train_full_{variant}-dr.json").read_text(encoding="utf-8"))
+    assert other["name"] == f"full-{variant}-dr"
+    assert other["bundle"] == f"artifacts/{variant}-dr/cut/walk-task.json"
+    assert other["trainer"]["label"] == f"q8 vast.ai full {variant}-dr"
+    assert other["instance"]["label"] == f"q8-full-{variant}-dr"
     ignore = {"_comment", "name", "bundle", "trainer", "instance"}
     assert {k: v for k, v in other.items() if k not in ignore} == \
         {k: v for k, v in ref.items() if k not in ignore}
