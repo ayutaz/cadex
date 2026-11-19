@@ -208,14 +208,16 @@ def test_built_joint_order(variant, order):
 
 @pytest.mark.parametrize("variant, order", [("tri3-r8", ORDER_R8), ("tri3-r9", ORDER_R9)])
 def test_built_roll_axis_and_limits(variant, order):
-    _, mujoco, model = _model(variant)
+    name, mujoco, model = _model(variant)
+    # ロールの範囲は機体ごとの params（tri3-r8 は重心の線に届くよう ±30°、Task 5）。ビルドの記録と比べる
+    params = json.loads((ROOT / "artifacts" / name / "design_report.json").read_text(encoding="utf-8"))["params"]
     data = mujoco.MjData(model)
     mujoco.mj_resetDataKeyframe(model, data, 0)
     mujoco.mj_forward(model, data)
     for j in [j for j in order if j.startswith("roll_")]:
         jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, j)
         assert abs(float(data.xaxis[jid][0])) >= 0.99
-        assert [round(math.degrees(v), 3) for v in model.jnt_range[jid]] == [-20.0, 20.0]
+        assert [round(math.degrees(v), 3) for v in model.jnt_range[jid]] == [params["roll_min"], params["roll_max"]]
 
 
 @pytest.mark.parametrize("variant, order", [("tri3-r8", ORDER_R8), ("tri3-r9", ORDER_R9)])
