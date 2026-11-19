@@ -1,0 +1,122 @@
+{
+ "2101": {
+  "frames": 401,
+  "nonfoot_share_below_2mm": 0.0,
+  "nonfoot_max_depth_mm": 0.0,
+  "nonfoot_excl_chassis_share": 0.0,
+  "nonfoot_excl_chassis_depth": 0.0,
+  "deepest_geom": "c_shin_lf/collision0",
+  "deepest_geom_depth": -4.00160138156707,
+  "foot_lowest_mm": -1.6980265394012122,
+  "per_geom_depth_mm": {},
+  "excluded": false
+ },
+ "2102": {
+  "frames": 401,
+  "nonfoot_share_below_2mm": 0.0,
+  "nonfoot_max_depth_mm": 0.0,
+  "nonfoot_excl_chassis_share": 0.0,
+  "nonfoot_excl_chassis_depth": 0.0,
+  "deepest_geom": "c_shin_lf/collision0",
+  "deepest_geom_depth": -3.5641919351684503,
+  "foot_lowest_mm": -1.8095836004958468,
+  "per_geom_depth_mm": {},
+  "excluded": false
+ },
+ "2103": {
+  "frames": 401,
+  "nonfoot_share_below_2mm": 0.0,
+  "nonfoot_max_depth_mm": 0.0,
+  "nonfoot_excl_chassis_share": 0.0,
+  "nonfoot_excl_chassis_depth": 0.0,
+  "deepest_geom": "c_shin_lf/collision0",
+  "deepest_geom_depth": -4.224167199720739,
+  "foot_lowest_mm": -1.5762498452278457,
+  "per_geom_depth_mm": {},
+  "excluded": false
+ },
+ "2104": {
+  "frames": 401,
+  "nonfoot_share_below_2mm": 0.0,
+  "nonfoot_max_depth_mm": 0.0,
+  "nonfoot_excl_chassis_share": 0.0,
+  "nonfoot_excl_chassis_depth": 0.0,
+  "deepest_geom": "c_shin_lf/collision0",
+  "deepest_geom_depth": -4.234044413835752,
+  "foot_lowest_mm": -1.3524534612216597,
+  "per_geom_depth_mm": {},
+  "excluded": false
+ },
+ "2105": {
+  "frames": 401,
+  "nonfoot_share_below_2mm": 0.0,
+  "nonfoot_max_depth_mm": 0.0,
+  "nonfoot_excl_chassis_share": 0.0,
+  "nonfoot_excl_chassis_depth": 0.0,
+  "deepest_geom": "c_shin_lf/collision0",
+  "deepest_geom_depth": -3.7590995158874705,
+  "foot_lowest_mm": -1.5940253914672482,
+  "per_geom_depth_mm": {},
+  "excluded": false
+ },
+ "2106": {
+  "frames": 401,
+  "nonfoot_share_below_2mm": 0.0,
+  "nonfoot_max_depth_mm": 0.0,
+  "nonfoot_excl_chassis_share": 0.0,
+  "nonfoot_excl_chassis_depth": 0.0,
+  "deepest_geom": "c_shin_lf/collision0",
+  "deepest_geom_depth": -4.472925968029509,
+  "foot_lowest_mm": -1.2329704981431853,
+  "per_geom_depth_mm": {},
+  "excluded": false
+ },
+ "2107": {
+  "frames": 401,
+  "nonfoot_share_below_2mm": 0.0,
+  "nonfoot_max_depth_mm": 0.0,
+  "nonfoot_excl_chassis_share": 0.0,
+  "nonfoot_excl_chassis_depth": 0.0,
+  "deepest_geom": "c_shin_lf/collision0",
+  "deepest_geom_depth": -4.55492261160672,
+  "foot_lowest_mm": -1.3661449830212433,
+  "per_geom_depth_mm": {},
+  "excluded": false
+ },
+ "2108": {
+  "frames": 401,
+  "nonfoot_share_below_2mm": 0.0,
+  "nonfoot_max_depth_mm": 0.0,
+  "nonfoot_excl_chassis_share": 0.0,
+  "nonfoot_excl_chassis_depth": 0.0,
+  "deepest_geom": "c_shin_lf/collision0",
+  "deepest_geom_depth": -4.0212213107315975,
+  "foot_lowest_mm": -1.580188432185615,
+  "per_geom_depth_mm": {},
+  "excluded": false
+ },
+ "2109": {
+  "frames": 401,
+  "nonfoot_share_below_2mm": 0.0,
+  "nonfoot_max_depth_mm": 0.0,
+  "nonfoot_excl_chassis_share": 0.0,
+  "nonfoot_excl_chassis_depth": 0.0,
+  "deepest_geom": "c_shin_lf/collision0",
+  "deepest_geom_depth": -4.669641075340946,
+  "foot_lowest_mm": -1.4524473475964133,
+  "per_geom_depth_mm": {},
+  "excluded": false
+ },
+ "2110": {
+  "frames": 401,
+  "nonfoot_share_below_2mm": 0.0,
+  "nonfoot_max_depth_mm": 0.0,
+  "nonfoot_excl_chassis_share": 0.0,
+  "nonfoot_excl_chassis_depth": 0.0,
+  "deepest_geom": "c_shin_lf/collision0",
+  "deepest_geom_depth": -4.19594062403857,
+  "foot_lowest_mm": -1.4759367287581622,
+  "per_geom_depth_mm": {},
+  "excluded": false
+ }
+}
