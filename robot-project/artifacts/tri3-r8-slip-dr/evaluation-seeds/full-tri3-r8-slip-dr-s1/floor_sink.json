@@ -1,0 +1,202 @@
+{
+ "2101": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 2.1990659292102563,
+   "argmin": "c_shin_rf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 49.1053913756598,
+   "argmin": "c_chassis/collision3",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.004975124378109453,
+   "minz": -2.5396483332708577,
+   "argmin": "c_foot_rf/collision0",
+   "frames": 402
+  }
+ },
+ "2102": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 2.1085364432647893,
+   "argmin": "c_shin_rf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 47.86769650348472,
+   "argmin": "c_chassis/collision3",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.004975124378109453,
+   "minz": -2.365222112307624,
+   "argmin": "c_foot_rf/collision0",
+   "frames": 402
+  }
+ },
+ "2103": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 1.921696820408311,
+   "argmin": "c_shin_rf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 48.999312410940036,
+   "argmin": "c_chassis/collision3",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.007462686567164179,
+   "minz": -2.6442154896363697,
+   "argmin": "c_foot_rf/collision0",
+   "frames": 402
+  }
+ },
+ "2104": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 2.1391380951579464,
+   "argmin": "c_shin_rf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 48.94089604465913,
+   "argmin": "c_chassis/collision3",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.012437810945273632,
+   "minz": -2.454506691216512,
+   "argmin": "c_foot_rf/collision0",
+   "frames": 402
+  }
+ },
+ "2105": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 1.8536238877127253,
+   "argmin": "c_shin_rf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 47.61262521120306,
+   "argmin": "c_chassis/collision3",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.007462686567164179,
+   "minz": -2.8359360019704845,
+   "argmin": "c_foot_rf/collision0",
+   "frames": 402
+  }
+ },
+ "2106": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 1.694192378743523,
+   "argmin": "c_shin_rf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 48.4436271312836,
+   "argmin": "c_chassis/collision3",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.007462686567164179,
+   "minz": -2.846928496566523,
+   "argmin": "c_foot_rf/collision0",
+   "frames": 402
+  }
+ },
+ "2107": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 1.940768958212967,
+   "argmin": "c_shin_rf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 46.632647018665175,
+   "argmin": "c_chassis/collision3",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.007462686567164179,
+   "minz": -2.5313083590331757,
+   "argmin": "c_foot_rf/collision0",
+   "frames": 402
+  }
+ },
+ "2108": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 2.0848827237046947,
+   "argmin": "c_shin_rf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 49.65231109295085,
+   "argmin": "c_chassis/collision3",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.004975124378109453,
+   "minz": -2.4389576411164526,
+   "argmin": "c_foot_rf/collision0",
+   "frames": 402
+  }
+ },
+ "2109": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 2.0867068615121447,
+   "argmin": "c_shin_rf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 46.95816052591315,
+   "argmin": "c_chassis/collision3",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.004975124378109453,
+   "minz": -2.3630732521880056,
+   "argmin": "c_foot_rf/collision0",
+   "frames": 402
+  }
+ },
+ "2110": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 1.9105157668226234,
+   "argmin": "c_shin_rf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 47.64377162699884,
+   "argmin": "c_chassis/collision3",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.004975124378109453,
+   "minz": -2.7096467012542043,
+   "argmin": "c_foot_rf/collision0",
+   "frames": 402
+  }
+ }
+}
