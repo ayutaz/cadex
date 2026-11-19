@@ -5,6 +5,9 @@
 # 各脚は2自由度（股ピッチ・膝ピッチ）。8個の関節軸はすべてワールドの +Y に平行。
 # tail_dof を 1・2 にすると、胴体の後端にしっぽ（左右の軸 +Z、その先で上下の軸 +Y）のサーボが足される。
 # rear_legs を 1 にすると、後ろの2本の代わりに胴体の後端の中央に1本（hc）を置いた3本足になる（6自由度）。
+# 3本足で leg_roll を 1・2 にすると、前の2本（2 なら hc も）の付け根に、脚を横へ開くロールの関節（軸はワールドの x）が
+# 足される（8・9自由度）。前の2本は、股サーボを胴体の外へ出して軸を内へ向け、上腿・下腿をその内側に並べる
+# （膝サーボのハウジングは上腿の外、股サーボの下）。
 # 関節角0 = この形状を組んだ姿勢 = 立位姿勢。正の角度は脚を後ろへ振る向き。
 # 部品はすべてワールド座標の立位姿勢で作り、コンポーネントの配置は恒等変換にする。
 # 関節の2つのコネクタには同じワールドフレームを与える（docs/MUJOCO.md §7 の手順2）。
@@ -88,6 +91,13 @@ p = params(
                    label="追従の速度（0: 胴体の原点の速度 component_linear_velocity、1: 体全体の重心の速度）"),
     # 波（gait_mode=1）の遊脚の幅: 脚の位相 cos が -wave_swing より下を遊脚にする（0.5 で周期の 1/3、0.8 で約 0.2）。
     wave_swing=num(0.5, min=0.0, max=0.95, step=0.05, label="波の遊脚のしきい値（大きいほど遊脚が短い）"),
+    # 3本足の脚を横へ開く関節（ロール、tri3）。0（既定）なら何も作らず、出力は変わらない。
+    # ロールのサーボは胴体に付き、軸は前後（ワールドの x）。その出力の台 rollbr_<脚> が股のサーボを持つ
+    # （胴体 →roll→ 台 →hip→ 上腿 →knee→ 下腿）。正の角度は脚を外へ開く向き（左 lf は +x、右 rf と hc は -x まわり）。
+    leg_roll=num(0.0, min=0.0, max=2.0, step=1.0,
+                 label="3本足のロールの関節（0: なし、1: 前の2本、2: 3本とも）"),
+    roll_min=num(-20.0, unit="deg", min=-40.0, max=-1.0, step=1.0, label="ロールの下限（脚を内へ閉じる）"),
+    roll_max=num(20.0, unit="deg", min=1.0, max=40.0, step=1.0, label="ロールの上限（脚を外へ開く）"),
 )
 
 SKU = "sg90" if p.servo_sg90 >= 0.5 else "mg90s"
@@ -125,6 +135,10 @@ LEAD = 6.0
 R2 = p.leg_rev >= 1.5
 STALL = [e["kg_cm"] for e in S["stall_torque"] if abs(e["volts"] - VOLT) < 1e-6][0] * 98.0665
 SPEED = [e["s_per_60_deg"] for e in S["speed"] if abs(e["volts"] - VOLT) < 1e-6][0]
+# サーボを包む台・ハウジングの、軸から両側への長さ（膝サーボのハウジングと同じ式）
+H_SHAFT = (TAB_HALF + CASE_CX) + c + w      # 軸の側（サーボのローカル +X、タブの先端まで）
+H_LEAD = (CASE_L - FRONT) + c + LEAD + w    # ケース後端の側（ローカル -X、リード線の余裕まで）
+HW = CASE_W / 2.0 + c + w                   # 台・ハウジングの半幅
 
 
 
@@ -161,6 +175,16 @@ if p.vel_source not in (0.0, 1.0):
 VEL_KIND = "centre_of_mass_velocity" if p.vel_source == 1.0 else "component_linear_velocity"
 if p.wave_swing != 0.5 and GAIT_MODE != 1:
     raise ValueError("wave_swing は波（gait_mode=1）でだけ効く: %r" % p.wave_swing)
+if p.leg_roll not in (0.0, 1.0, 2.0):
+    raise ValueError("leg_roll は 0・1・2 のどれか: %r" % p.leg_roll)
+LEG_ROLL = int(p.leg_roll)
+if LEG_ROLL and not TRI:
+    raise ValueError("leg_roll（ロールの関節）は3本足（rear_legs=1）だけ: %r" % p.leg_roll)
+if not p.roll_min < 0.0 < p.roll_max:
+    raise ValueError("roll_min < 0 < roll_max にする（ロールの角 0 が立位）: %r, %r" % (p.roll_min, p.roll_max))
+ROLL_LEGS = ("lf", "rf", "hc")[:{0: 0, 1: 2, 2: 3}[LEG_ROLL]]
+ROLL_FRONT = "lf" in ROLL_LEGS
+ROLL_HC = "hc" in ROLL_LEGS
 
 # --- 胴体（下側シャーシ + 上側カバー）。股軸の高さで上下に分割する ---
 z_bot = ZH - CASE_W / 2.0 - c - w
@@ -184,20 +208,73 @@ if TRI:
         if HC_YB < -(W2 - w):
             # 台の +Y の面（= HC_YB）が胴体の側面の壁の内側まで届かないと、台が胴体から離れる
             raise ValueError("hc_foot_y が -Y に寄りすぎ（股サーボの台が胴体から離れる）: %r" % p.hc_foot_y)
+    if ROLL_HC:
+        # hc の股サーボはロールの台（rollbr_hc）に移る。台は胴体の後ろの面から joint_gap 後ろ。股サーボはロール 180 度で
+        # ケースが軸から前へ伸びるので、台の前端は軸から H_LEAD 前（今の hc の台と同じ向き。ロール 0 にすると、
+        # 股を +45 度に振ったとき膝サーボのハウジングが台の後ろの端に当たる）。股軸は tri-r2-dyn より約 10 mm 後ろ。
+        HC_X = -(BL / 2.0 + g + H_LEAD)
     LEG_SPECS = [("lf", 1, 1, p.hip_x, W2), ("rf", 1, -1, p.hip_x, W2), ("hc", -1, 1, HC_X, HC_YB)]
+    if ROLL_FRONT:
+        # 前の2本のロール（胴体の幅 W2 は変えない）。左 lf で書く（右 rf は y の符号が逆）。
+        # ロールのサーボは胴体の側面の外の台（胴体と一体）に入り、軸は +x（前）、ケースは軸から後ろへ CASE_H。
+        # 断面は幅 CASE_W が左右、長さ（タブ）が上下で、リード線の逃げは上。台は胴体の箱に ROLL_OV 重なる。
+        # 出力のホーンの前の板（ロールの台 rollbr_lf の板）から、股サーボのハウジングへ腕が伸びる。
+        # 股サーボは胴体の外（いちばん外）に置き、軸を内（-y）へ向ける。上腿と下腿はその内側に並び、膝サーボの
+        # ハウジングは上腿の外（股サーボの下）に来る（脚の組み方は今の式のまま符号 sy = -1。足先は今の前脚より約 3 mm 内）。
+        ROLL_OV = 5.0                         # 4 mm 以上（tri-r2-dyn の hc の台は 2.25 mm で薄かった）
+        RO_Y = W2 + g + R                     # ロールの軸の |y|: 台の円板（半径 R）が胴体の側面から joint_gap 離れる
+        # 軸の高さ: 股を +20 度（後ろ）に振ったとき、ロールのサーボの台の下面が下腿のハブの上から約 2 mm、
+        # 台の板の下の端が上腿の上の縁から約 1 mm 離れる高さ（mini-r2-p7-eff の値で、clearance スイープで確かめる）
+        RO_Z = ZH + 5.0
+        RF_YB = RO_Y + HW + g + t + seat0     # 股サーボのケース上面の |y|: 上腿の内面がロールの台の外面から joint_gap
+        # 台の板（厚み t）の前の面は、股サーボのハウジングの後ろの端から joint_gap 後ろ（股を後ろへ振った上腿と当たらない）
+        RO_XP = p.hip_x - H_LEAD - g - t      # 板の後ろの面（ロールのホーンの側）の x
+        RO_X = RO_XP - seat0                  # ロールのサーボのケース上面（軸の基準点）の x
+        LEG_SPECS[0] = ("lf", 1, -1, p.hip_x, -RF_YB)
+        LEG_SPECS[1] = ("rf", 1, 1, p.hip_x, -RF_YB)
 else:
     LEG_SPECS = [("lf", 1, 1, p.hip_x, W2), ("rf", 1, -1, p.hip_x, W2),
                  ("lh", -1, 1, -p.hip_x, W2), ("rh", -1, -1, -p.hip_x, W2)]
 LEG_NAMES = [spec[0] for spec in LEG_SPECS]
 LEG_YB = {spec[0]: spec[4] for spec in LEG_SPECS}
 hip_servos = {}
+hip_bays = {}
 bays = []
 LEG_X = {spec[0]: spec[3] for spec in LEG_SPECS}
 for name, sx, sy, hx_leg, yb in LEG_SPECS:
     sv = lib.servo(SKU, origin=(hx_leg, sy * yb, ZH), direction=(0, sy, 0),
                    roll_degrees=(0.0 if sx > 0 else 180.0), label="hip_servo_" + name)
     hip_servos[name] = sv
-    bays.append(sv.bay(clearance=c, lead_room=LEAD, ledge=4.0))
+    if name in ROLL_LEGS:
+        hip_bays[name] = sv.bay(clearance=c, lead_room=LEAD, ledge=4.0)   # ロールの台を切る
+    else:
+        bays.append(sv.bay(clearance=c, lead_room=LEAD, ledge=4.0))
+
+# --- ロールのサーボ（leg_roll >= 1）。胴体に付く（溶接） ---
+roll_servos = {}
+roll_mounts = {}
+if ROLL_HC:
+    # hc のロールのサーボは胴体の後ろの中に入れ、軸は -x（後ろ）。ケース上面は胴体の後ろの面、ケースは前へ CASE_H。
+    # 断面は長さ（タブ）が左右、幅 CASE_W が上下（胴体の空洞の高さに収まる）で、リード線の逃げは -y。
+    # 軸の y: 台の円板（半径 R）が hc の上腿の外面（+y の面）から joint_gap 離れる。軸の高さは股軸と同じ。
+    HR_X = -BL / 2.0
+    HR_Y = (HC_YB + seat0 + t) + g + R
+for name in ROLL_LEGS:
+    if name == "hc":
+        rsv = lib.servo(SKU, origin=(HR_X, HR_Y, ZH), direction=(-1, 0, 0), roll_degrees=90.0, label="roll_servo_hc")
+    else:
+        s = 1.0 if name == "lf" else -1.0
+        rsv = lib.servo(SKU, origin=(RO_X, s * RO_Y, RO_Z), direction=(1, 0, 0), label="roll_servo_" + name)
+        ys = sorted([s * (W2 - ROLL_OV), s * (RO_Y + HW)])
+        roll_mounts[name] = ([RO_X - CASE_H - c - w, ys[0], RO_Z - H_SHAFT], [RO_X, ys[1], RO_Z + H_LEAD])
+        # リード線の逃げ（タブの下 4 mm より奥、ケース後端の先）を、台の上の壁の外まで抜く
+        ry = sorted([s * (RO_Y - CASE_W / 2.0 - c), s * (RO_Y + CASE_W / 2.0 + c)])
+        rz0 = RO_Z + (CASE_L - FRONT) + c
+        rx1 = RO_X + S["mount_hole_z_mm"] - 4.0
+        bays.append(part.box(rx1 - (RO_X - CASE_H - c), ry[1] - ry[0], RO_Z + H_LEAD + 1.0 - rz0,
+                             origin=[RO_X - CASE_H - c, ry[0], rz0]))
+    roll_servos[name] = rsv
+    bays.append(rsv.bay(clearance=c, lead_room=LEAD, ledge=4.0))
 
 # --- しっぽの付け根（tail_dof >= 1） ---
 # 左右のサーボ: 出力軸はワールドの +Z（上）、ケースの上面（軸の基準点）は胴体の上面と同じ高さ、左右の中央。
@@ -210,10 +287,6 @@ TAIL_DOF = int(round(p.tail_dof))
 if TAIL_DOF not in (0, 1, 2):
     raise ValueError("tail_dof は 0・1・2 のどれか: %r" % p.tail_dof)
 TAIL = TAIL_DOF > 0
-# サーボを包む台・ハウジングの、軸から両側への長さ（膝サーボのハウジングと同じ式）
-H_SHAFT = (TAB_HALF + CASE_CX) + c + w      # 軸の側（サーボのローカル +X、タブの先端まで）
-H_LEAD = (CASE_L - FRONT) + c + LEAD + w    # ケース後端の側（ローカル -X、リード線の余裕まで）
-HW = CASE_W / 2.0 + c + w                   # 台・ハウジングの半幅
 if TAIL:
     rear_hip_case = -(p.hip_x + FRONT)                       # 後ろの股サーボ（ロール 180 度）のケースの後ろの面
     ty_x = min(-BL / 2.0 - (CASE_L - FRONT), rear_hip_case - 2.0 * c - w - (TAB_HALF - CASE_CX))
@@ -233,13 +306,17 @@ if TAIL:
     tail_mount = part.box((-BL / 2.0 + w) - (TY[0] - H_SHAFT), 2.0 * HW, p.body_height,
                           origin=[TY[0] - H_SHAFT, -HW, z_bot])
     hull = part.fuse([hull, tail_mount])
-if TRI:
+if TRI and not ROLL_HC:
     # 3本足の後ろの脚の股サーボの台: ケース（ケース上面 y = HC_YB から -Y へ CASE_H）を包み、+Y の面は開ける。
     # ロール 180 度でケースは軸から前へ伸び、リード線の逃げは胴体の後ろの壁へ入る。前端は胴体へ肉厚ぶん重ねる。
     hc_depth = CASE_H + c + w
     hc_mount = part.box((-BL / 2.0 + w) - (HC_X - H_SHAFT), hc_depth, p.body_height,
                         origin=[HC_X - H_SHAFT, HC_YB - hc_depth, z_bot])
     hull = part.fuse([hull, hc_mount])
+for name in roll_mounts:
+    # 前の脚のロールのサーボの台（胴体の側面の外。胴体の箱に ROLL_OV 重なる）
+    lo, hi = roll_mounts[name]
+    hull = part.fuse([hull, part.box(*[b - a for a, b in zip(lo, hi)], origin=list(lo))])
 
 # 中央の空洞: 前後の股サーボの配線スペースまで達し、電池・IMUを収める。
 cav_x = p.hip_x - (CASE_L - FRONT) - c - LEAD
@@ -257,21 +334,49 @@ z_seat = ZH + BOLT_LEN - THREAD_IN
 head = lib.bolt("m2", BOLT_LEN).spec
 bolts = []
 bolt_holes = []
+PILLAR_R = head["head_dia_mm"] / 2.0 + 0.2 + w   # 締結ボルトのまわりに残す柱の半径
+# hc のロールのサーボが胴体の後ろの中央にあると、後ろのボルト（y = 0）と重なる。そのときは +y の側面の壁に寄せる
+BOLT_Y = [0.0, (W2 - w) - PILLAR_R + 1.0 if ROLL_HC else 0.0]
 for i, bx in enumerate((p.hip_x + CASE_CX, -(p.hip_x + CASE_CX))):
-    bolts.append(lib.bolt("m2", BOLT_LEN, origin=(bx, 0.0, z_seat), direction=(0, 0, 1), label="body_bolt_%d" % i))
+    by = BOLT_Y[i]
+    bolts.append(lib.bolt("m2", BOLT_LEN, origin=(bx, by, z_seat), direction=(0, 0, 1), label="body_bolt_%d" % i))
     bolt_holes += [
-        part.cylinder(head["head_dia_mm"] / 2.0 + 0.2, z_top - z_seat + 1.0, origin=[bx, 0.0, z_seat]),
-        part.cylinder(lib.clearance_hole("m2") / 2.0, z_seat - ZH + 0.01, origin=[bx, 0.0, ZH]),
-        part.cylinder(lib.tap_drill("m2") / 2.0, THREAD_IN + 1.0, origin=[bx, 0.0, ZH - THREAD_IN - 1.0]),
+        part.cylinder(head["head_dia_mm"] / 2.0 + 0.2, z_top - z_seat + 1.0, origin=[bx, by, z_seat]),
+        part.cylinder(lib.clearance_hole("m2") / 2.0, z_seat - ZH + 0.01, origin=[bx, by, ZH]),
+        part.cylinder(lib.tap_drill("m2") / 2.0, THREAD_IN + 1.0, origin=[bx, by, ZH - THREAD_IN - 1.0]),
     ]
-if TRI:
+if ROLL_FRONT:
+    # 前の股サーボが胴体から出たので、前の角（四足の空洞の前の端から前の壁まで）も空洞にする。前のボルトの柱は残す
+    front_x0 = cav_x - 1.0
+    front_pillar = part.cylinder(PILLAR_R, p.body_height, origin=[p.hip_x + CASE_CX, 0.0, z_bot])
+    bays.append(part.cut(part.box((BL / 2.0 - w) - front_x0, 2.0 * (W2 - w), p.body_height - 2.0 * w,
+                                  origin=[front_x0, -(W2 - w), z_bot + w]), [front_pillar]))
+if ROLL_HC:
+    # 胴体の後ろ: hc のロールのサーボを囲む塊（タブの先から肉厚ぶん）を残し、ほかは四足の空洞の後ろの端まで空洞にする。
+    # 後ろのボルトの柱（+y の側面の壁に寄せた）も残す。リード線の逃げ（-y の端）は塊の外の空洞へ抜く。
+    hr_x1 = HR_X + CASE_H + c + w
+    hr_y0 = HR_Y - (TAB_HALF - CASE_CX) - c - w
+    hr_y1 = HR_Y + (TAB_HALF + CASE_CX) + c + w
+    # 空洞は1つの立体で切れない（塊で左右に分かれる）ので、塊の前・+y の横・-y の横の3つの箱にする
+    rear_pillar = part.cylinder(PILLAR_R, p.body_height, origin=[-(p.hip_x + CASE_CX), BOLT_Y[1], z_bot])
+    hz0, hdz = z_bot + w, p.body_height - 2.0 * w
+    if -cav_x + 1.0 > hr_x1:     # mini-r2-p7-eff の値では、塊の前の端は四足の空洞の中に入る（前の箱は要らない）
+        bays.append(part.box(-cav_x + 1.0 - hr_x1, 2.0 * (W2 - w), hdz, origin=[hr_x1, -(W2 - w), hz0]))
+    bays.append(part.cut(part.box(hr_x1 + 1.0 - (-BL / 2.0 + w), (W2 - w) - hr_y1, hdz,
+                                  origin=[-BL / 2.0 + w, hr_y1, hz0]), [rear_pillar]))
+    if hr_y0 > -(W2 - w):
+        bays.append(part.box(hr_x1 + 1.0 - (-BL / 2.0 + w), hr_y0 + (W2 - w), hdz, origin=[-BL / 2.0 + w, -(W2 - w), hz0]))
+    hr_lead_x0 = HR_X - S["mount_hole_z_mm"] + 4.0
+    hr_lead_y1 = HR_Y - (CASE_L - FRONT) - c - LEAD + 1.0
+    bays.append(part.box(HR_X + CASE_H + c - hr_lead_x0, hr_lead_y1 - (hr_y0 - 1.0), CASE_W + 2.0 * c,
+                         origin=[hr_lead_x0, hr_y0 - 1.0, ZH - CASE_W / 2.0 - c]))
+if TRI and not ROLL_HC:
     # 3本足の胴体の後ろの空洞: 四足では後ろの股サーボ2個が入る所が中実のまま残り、chassis + cover が約 24 g 重かった。
     # hc の股サーボのタブの収納部（先端 + すきま）から壁1枚ぶん前から、四足の空洞の後ろの端まで、左右は側面の壁の内側まで。
     # 後ろの上下の締結ボルト（x = -(hip_x + CASE_CX)）のまわりには、座ぐりの半径 + 肉厚の柱を残す。
     rear_x0 = HC_X + (TAB_HALF - CASE_CX) + c + w
     rear_bolt_x = -(p.hip_x + CASE_CX)
-    rear_pillar = part.cylinder(head["head_dia_mm"] / 2.0 + 0.2 + w, p.body_height,
-                                origin=[rear_bolt_x, 0.0, z_bot])
+    rear_pillar = part.cylinder(PILLAR_R, p.body_height, origin=[rear_bolt_x, 0.0, z_bot])
     bays.append(part.cut(part.box(-cav_x + 1.0 - rear_x0, 2.0 * (W2 - w), p.body_height - 2.0 * w,
                                   origin=[rear_x0, -(W2 - w), z_bot + w]), [rear_pillar]))
     # 股サーボの +Y 側（台もサーボも無い）は、胴体の後ろの壁の内側まで空洞にする
@@ -294,12 +399,21 @@ if TAIL or TRI:
     sx0, sy0 = -BL / 2.0, -W2
     if TAIL:
         sx0 = min(sx0, TY[0] - H_SHAFT)
-    if TRI:
+    if TRI and not ROLL_HC:
         sx0 = min(sx0, HC_X - H_SHAFT)
         sy0 = min(sy0, HC_YB - hc_depth)
-    split = (BL / 2.0 - sx0 + 2.0, W2 - sy0 + 2.0)
-    upper_half = part.box(split[0], split[1], p.body_height, origin=[sx0 - 1.0, sy0 - 1.0, ZH])
-    lower_half = part.box(split[0], split[1], p.body_height, origin=[sx0 - 1.0, sy0 - 1.0, ZH - p.body_height])
+    if roll_mounts:
+        # 前のロールの台は左右の外へ、上下にも胴体からはみ出す（上はリード線の逃げ、下はタブ）
+        sy0 = min([sy0] + [lo[1] for lo, _ in roll_mounts.values()])
+        sy1 = max([W2] + [hi[1] for _, hi in roll_mounts.values()])
+        zt = max([z_top] + [hi[2] for _, hi in roll_mounts.values()])
+        zb = min([z_bot] + [lo[2] for lo, _ in roll_mounts.values()])
+        upper_half = part.box(BL / 2.0 - sx0 + 2.0, sy1 - sy0 + 2.0, zt - ZH + 1.0, origin=[sx0 - 1.0, sy0 - 1.0, ZH])
+        lower_half = part.box(BL / 2.0 - sx0 + 2.0, sy1 - sy0 + 2.0, ZH - zb + 1.0, origin=[sx0 - 1.0, sy0 - 1.0, zb - 1.0])
+    else:
+        split = (BL / 2.0 - sx0 + 2.0, W2 - sy0 + 2.0)
+        upper_half = part.box(split[0], split[1], p.body_height, origin=[sx0 - 1.0, sy0 - 1.0, ZH])
+        lower_half = part.box(split[0], split[1], p.body_height, origin=[sx0 - 1.0, sy0 - 1.0, ZH - p.body_height])
 else:
     upper_half = part.box(BL + 2, 2.0 * W2 + 2, p.body_height, origin=[-BL / 2.0 - 1, -W2 - 1, ZH])
     lower_half = part.box(BL + 2, 2.0 * W2 + 2, p.body_height, origin=[-BL / 2.0 - 1, -W2 - 1, ZH - p.body_height])
@@ -461,6 +575,112 @@ for name, sx, sy, _, yb in LEG_SPECS:
     result["shin_" + name] = shin
     result["foot_" + name] = foot
 
+# --- ロールの台（leg_roll >= 1）: ロールのホーンの外の板と、股サーボを包むハウジング ---
+# ハウジングは股サーボのケース（ケース上面から軸と逆向きに CASE_H）を包み、ケース上面の側は開ける（hc の台と同じ形）。
+# 股サーボのリード線は、ハウジングの上の壁に開けた口から出す。
+# 板はロールの軸に垂直（厚み t）。ホーンは板の中に切り込む（leg_rev 2 は股・膝と同じ凹み）。
+
+
+def box_between(lo, hi):
+    return part.box(*[b - a for a, b in zip(lo, hi)], origin=list(lo))
+
+
+def x_horn_pocket(horn, y, z, x_floor, x_face, sx):
+    """horn_pocket（軸が y の凹み）を、軸が x（sx 側へ伸びる）の凹みに回す。z まわりに -90 度（sx > 0）か +90 度回すと、
+    y の向きが sx の x に、x の向きが -sx の y に移る。"""
+    tools = horn_pocket(horn, (-sx * y, z), sx * x_floor, sx * x_face, 1)
+    return [part.transform(tool, rotation_axis=[0, 0, 1], rotation_degrees=-90.0 * sx, pivot=[0.0, 0.0, 0.0])
+            for tool in tools]
+
+
+rollbr = {}
+roll_horns = {}
+rollbr_boxes = {}
+for name in ROLL_LEGS:
+    L = legs[name]
+    rsv = roll_servos[name]
+    rhorn = rsv.horn("cross", label="roll_horn_" + name)
+    R_HUB_H = rhorn.spec["hub_height_mm"]
+    hx, sy, yb = LEG_X[name], L["sy"], LEG_YB[name]
+    depth_h = CASE_H + c + w
+    hy = sorted([sy * yb, sy * yb - sy * depth_h])          # ハウジングの y（ケース上面 sy*yb から軸と逆向き）
+    if name == "hc":
+        # ロール 180 度でケースは軸から前へ（リード線の逃げは前）。板は胴体の後ろの面の外（ホーンの後ろ）
+        hxs = [hx - H_SHAFT, hx + H_LEAD]
+        lead_x = [hx + (CASE_L - FRONT), hx + (CASE_L - FRONT) + c + LEAD]
+        ax, ay, az, sx_r = HR_X, HR_Y, ZH, -1.0
+        xp = [HR_X - seat0 - t, HR_X - seat0]
+        y_kt = sy * (L["y_th_in"] + t)                       # 上腿の外面（+y の面）
+        top = ZH + R + g + t                                 # 板の上の端（上腿のハブの上を越える橋の上面）
+        pieces = [
+            box_between([xp[0], y_kt + g, ZH - R], [xp[1], ay + R, top]),          # ホーンのまわり
+            box_between([xp[0], hy[0], ZH + R + g], [xp[1], y_kt + g + 1.0, top]),  # 上腿のハブの上を越える橋
+            box_between([xp[0], hy[0], ZH - HW], [xp[1], hy[1], top]),            # 橋からハウジングへ下りる柱
+        ]
+        boxes = [([hxs[0], hy[0], ZH - HW], [hxs[1], hy[1], ZH + HW]), ([xp[0], hy[0], ZH - R], [xp[1], ay + R, top])]
+    else:
+        # ロール 0 度でケースは軸から後ろへ（リード線の逃げは後ろ）。板はロールのホーンの前、腕で前のハウジングへ
+        s = 1.0 if name == "lf" else -1.0
+        hxs = [hx - H_LEAD, hx + H_SHAFT]
+        lead_x = [hx - (CASE_L - FRONT) - c - LEAD, hx - (CASE_L - FRONT)]
+        ax, ay, az, sx_r = RO_X, s * RO_Y, RO_Z, 1.0
+        xp = [RO_XP, RO_XP + t]
+        ys = sorted([ay, hy[0] if s < 0 else hy[1]])          # 板: ロールの軸から、ハウジングの外の面まで
+        pieces = [
+            part.cylinder(R, t, origin=[xp[0], ay, az], direction=[1, 0, 0]),
+            box_between([xp[0], ys[0], az - R], [xp[1], ys[1], az + R]),
+            # 腕: 下面は股サーボのハウジングより 2 mm 上（股を後ろへ振った膝サーボのハウジングの角との余裕）
+            box_between([xp[0], hy[0], ZH - HW + 2.0], [hxs[0] + 1.0, hy[1], ZH + HW]),
+        ]
+        ys_c = sorted([s * (RO_Y - R), ys[0] if s < 0 else ys[1]])
+        boxes = [([xp[0], hy[0], ZH - HW], [hxs[1], hy[1], ZH + HW]), ([xp[0], ys_c[0], az - R], [xp[1], ys_c[1], az + R])]
+    pieces.append(box_between([hxs[0], hy[0], ZH - HW], [hxs[1], hy[1], ZH + HW]))
+    # 股サーボのリード線の口: 逃げ（タブの下 4 mm より奥）の上半分から、ハウジングの上の壁の外まで
+    ly = sorted([sy * yb - sy * (-S["mount_hole_z_mm"] + 4.0), sy * yb - sy * (CASE_H + c)])
+    tools = [hip_bays[name], rhorn.body,
+             part.cylinder(SPLINE_R + c, SPLINE_H + R_HUB_H, origin=[ax, ay, az], direction=[sx_r, 0, 0]),
+             part.cylinder(p.screw_hole / 2.0 + 0.8, t + 2.0, origin=[ax + sx_r * (seat0 - 1.0), ay, az],
+                           direction=[sx_r, 0, 0]),
+             box_between([lead_x[0], ly[0], ZH], [lead_x[1], ly[1], ZH + HW + 1.0])]
+    kx = -1.0 if name == "hc" else 1.0                       # サーボのローカル +X のワールドの x の向き
+    zc0, zc1 = ZH - CASE_W / 2.0 - c, ZH + CASE_W / 2.0 + c
+
+    def y_depth(d0, d1):                                     # ケース上面からの深さ（軸と逆向き）の範囲の y
+        return sorted([sy * yb - sy * d0, sy * yb - sy * d1])
+
+    def x_local(l0, l1):                                     # サーボのローカル X の範囲の x
+        return sorted([hx + kx * l0, hx + kx * l1])
+
+    tab_l = (CASE_CX - TAB_HALF - c, CASE_CX + TAB_HALF + c)
+    if name == "hc":
+        # hc はケース上面の側（+y）にロールのホーンの板があり、上面の側から差し込めない（タブの前の端が板の下に入る）。
+        # 膝サーボ（leg_rev 2）と同じく、ケースの底の側（-y）から差し込む: 底の壁をケースとリード線の逃げの外形で、
+        # タブの通り道を外からタブの上面の手前まで抜く。タブは上面の側の材料に当たり、タブの穴から M2 で留める
+        tab_top = -(S["mount_hole_z_mm"] + S["tab_thickness_mm"] + c)   # ケース上面からタブの上面（すきま込み）の深さ
+        out = depth_h + 1.0
+        ty, cy = y_depth(tab_top, out), y_depth(CASE_H + c - 0.01, out)
+        tx, cx = x_local(*tab_l), x_local((FRONT - CASE_L) - c - LEAD, tab_l[1])
+        tools += [box_between([tx[0], ty[0], zc0], [tx[1], ty[1], zc1]),
+                  box_between([cx[0], cy[0], zc0], [cx[1], cy[1], zc1])]
+        hy_p = y_depth(tab_top - 5.0, tab_top + 0.01)        # 下穴: タブの上面から上面の側へ 5 mm
+        for side in (-1.0, 1.0):
+            xh = hx + kx * (CASE_CX + side * S["hole_spacing_mm"] / 2.0)
+            tools.append(part.cylinder(lib.tap_drill("m2") / 2.0, hy_p[1] - hy_p[0], origin=[xh, hy_p[0], ZH],
+                                       direction=[0, 1, 0]))
+    else:
+        # 前はケース上面の側（開けた側）から軸の向きに差し込む。タブ（ケースの両端の耳）の通り道を、
+        # 開けた面の外 1 mm からタブの下面（ケース上面から -mount_hole_z）まで抜く。タブは下面の先の材料に当たって止まる
+        tx, ty = x_local(*tab_l), y_depth(-1.0, -S["mount_hole_z_mm"])
+        tools.append(box_between([tx[0], ty[0], zc0], [tx[1], ty[1], zc1]))
+    if R2:
+        tools += x_horn_pocket(rhorn, ay, az, ax + sx_r * (SPLINE_H + R_HUB_H), ax + sx_r * seat0, sx_r)
+    rollbr[name] = part.cut(part.fuse(pieces), tools, label="rollbr_" + name)
+    roll_horns[name] = rhorn
+    rollbr_boxes[name] = boxes
+    result["roll_servo_" + name] = rsv.body
+    result["roll_horn_" + name] = rhorn.body
+    result["rollbr_" + name] = rollbr[name]
+
 # --- しっぽ（tail_dof >= 1） ---
 # 1本目のリンク: 左右のホーンの上の水平な板（下面は胴体の上面から joint_gap、ホーンは板の中に切り込む）。
 #   tail_dof=1 では、これがしっぽ。後ろへ伸び、先端におもりの球が載る。
@@ -580,9 +800,12 @@ chassis_collision = assembly.collision("box", size_mm=body_box, offset={"positio
 if TRI or TAIL:
     # 胴体の後端の台（胴体の箱の外）にも衝突の箱を足す（倒れると台が床にめり込んでいた）。胴体と同じ扱い。
     chassis_collision = [chassis_collision]
-    if TRI:
+    if TRI and not ROLL_HC:
         chassis_collision.append(box_collision([HC_X - H_SHAFT, HC_YB - hc_depth, z_bot],
                                                [-BL / 2.0 + w, HC_YB, z_top], "hc_mount_box"))
+    for name in roll_mounts:
+        # 前のロールのサーボの台（胴体の側面の外）。脚の順（lf, rf）
+        chassis_collision.append(box_collision(roll_mounts[name][0], roll_mounts[name][1], "roll_mount_box_" + name))
     if TAIL:
         # 左右のサーボのケースは台の下から出るので、箱の下はケースの下とすきままで
         chassis_collision.append(box_collision([TY[0] - H_SHAFT, -HW, z_top - CASE_H - c],
@@ -602,9 +825,48 @@ drive_by = {}
 dynamics = []
 hip_joints = {}
 knee_joints = {}
+roll_joints = {}
 feet = {}
+
+
+def roll_frame(point, sign):
+    """ロールの関節のコネクタ: +Z をワールドの sign*x に向ける（y まわりに sign*90 度）。"""
+    return {"position": list(point), "axis": [0, 1, 0], "angle_degrees": 90.0 * sign}
+
+
 for name in LEG_NAMES:
     L = legs[name]
+    hip_parent = c_chassis
+    j_roll = None
+    if name in ROLL_LEGS:
+        # ロールのサーボ（胴体に溶接）、そのホーンと台（ホーンは台に溶接）。関節は胴体 → 台
+        c_rsv = assembly.component(roll_servos[name].body, appearance="mechanism", role="hardware",
+                                   label="roll_servo_" + name)
+        c_rhorn = assembly.component(roll_horns[name].body, appearance="mechanism", role="hardware",
+                                     label="roll_horn_" + name)
+        c_rbr = assembly.component(rollbr[name], appearance="shell", role="link", label="rollbr_" + name)
+        for key, cv in (("c_roll_servo_", c_rsv), ("c_roll_horn_", c_rhorn), ("c_rollbr_", c_rbr)):
+            result[key + name] = cv
+        comps += [c_rsv, c_rhorn, c_rbr]
+        contacts.append((c_rsv, c_rhorn))
+        joints += [weld(c_chassis, c_rsv, "roll_servo_" + name), weld(c_rbr, c_rhorn, "roll_horn_" + name)]
+        r_pt = ([HR_X, HR_Y, ZH] if name == "hc" else [RO_X, (1.0 if name == "lf" else -1.0) * RO_Y, RO_Z])
+        sign = 1.0 if name == "lf" else -1.0      # 外へ開くのが正: 左は +x、右と hc（足先 y < 0）は -x まわり
+        j_roll = assembly.joint("revolute",
+                                assembly.connector(c_chassis, "origin", offset=roll_frame(r_pt, sign)),
+                                assembly.connector(c_rbr, "origin", offset=roll_frame(r_pt, sign)),
+                                angle_limits_degrees=[p.roll_min, p.roll_max], label="roll_" + name)
+        result["roll_" + name] = j_roll
+        joints.append(j_roll)
+        roll_joints[name] = j_roll
+        bodies += [
+            assembly.body(c_rsv, density_kg_m3=roll_servos[name].spec["effective_density_kg_m3"]),
+            assembly.body(c_rhorn, density_kg_m3=roll_horns[name].spec["density_kg_m3"]),
+            assembly.body(c_rbr, density_kg_m3=p.pla_density,
+                          collision=[box_collision(lo, hi, "rollbr_box_%s_%d" % (name, i), 1)
+                                     for i, (lo, hi) in enumerate(rollbr_boxes[name])]),
+        ]
+        hip_parent = c_rbr
     c_hsv = assembly.component(L["hsv"].body, appearance="mechanism", role="hardware", label="hip_servo_" + name)
     c_hhorn = assembly.component(L["hhorn"].body, appearance="mechanism", role="hardware", label="hip_horn_" + name)
     c_thigh = assembly.component(L["thigh"], appearance="shell", role="link", label="thigh_" + name)
@@ -618,11 +880,11 @@ for name in LEG_NAMES:
     comps += [c_hsv, c_hhorn, c_thigh, c_ksv, c_khorn, c_shin, c_foot]
     # サーボの出力軸（スプライン先端）にホーンが載る: 意図した接触
     contacts += [(c_hsv, c_hhorn), (c_ksv, c_khorn)]
-    joints += [weld(c_chassis, c_hsv, "hip_servo_" + name), weld(c_thigh, c_hhorn, "hip_horn_" + name),
+    joints += [weld(hip_parent, c_hsv, "hip_servo_" + name), weld(c_thigh, c_hhorn, "hip_horn_" + name),
                weld(c_thigh, c_ksv, "knee_servo_" + name), weld(c_shin, c_khorn, "knee_horn_" + name),
                weld(c_shin, c_foot, "foot_" + name)]
     j_hip = assembly.joint("revolute",
-                           assembly.connector(c_chassis, "origin", offset=hinge_frame(L["hip"])),
+                           assembly.connector(hip_parent, "origin", offset=hinge_frame(L["hip"])),
                            assembly.connector(c_thigh, "origin", offset=hinge_frame(L["hip"])),
                            angle_limits_degrees=hip_limits(L["sx"]), label="hip_" + name)
     j_knee = assembly.joint("revolute",
@@ -661,8 +923,9 @@ for name in LEG_NAMES:
                                                    friction=0.9, contact_group=2, label="foot_ball_" + name)),
     ]
     # 角度指令型PWMサーボ: 失速トルクでクランプした位置アクチュエータ（剛性 = 5度で失速トルク）。
-    for kind, j in (("hip", j_hip), ("knee", j_knee)):
-        lo, hi = hip_limits(L["sx"]) if kind == "hip" else (p.knee_min, p.knee_max)
+    for kind, j in ([("roll", j_roll)] if j_roll is not None else []) + [("hip", j_hip), ("knee", j_knee)]:
+        lo, hi = {"roll": (p.roll_min, p.roll_max), "hip": hip_limits(L["sx"]),
+                  "knee": (p.knee_min, p.knee_max)}[kind]
         a = assembly.actuator(j, kind="position", control_deg="0",
                               stiffness_nmm_per_deg=STALL / 5.0, damping_nmms_per_deg=STALL / 100.0,
                               torque_limit_nmm=STALL, rated_torque_nmm=STALL * p.rated_fraction,
@@ -777,6 +1040,8 @@ obs = [
     assembly.observation(c_chassis, "component_position", name="pos", role="privileged"),
 ]
 for name in LEG_NAMES:
+    if name in roll_joints:
+        obs.append(assembly.observation(roll_joints[name], "position", name="q_roll_" + name, role="privileged"))
     obs.append(assembly.observation(hip_joints[name], "position", name="q_hip_" + name, role="privileged"))
     obs.append(assembly.observation(knee_joints[name], "position", name="q_knee_" + name, role="privileged"))
     obs.append(assembly.observation(feet[name], "contact", name="ft_" + name, role="privileged"))
@@ -887,7 +1152,7 @@ randomisation = [
 if HAS_BAT:
     randomisation.append(assembly.randomise(c_bat, "mass", scale=[0.6, 1.4], label="rand_battery_mass"))  # 重心位置も動く
 for name in LEG_NAMES:
-    for j in (hip_joints[name], knee_joints[name]):
+    for j in ([roll_joints[name]] if name in roll_joints else []) + [hip_joints[name], knee_joints[name]]:
         randomisation.append(assembly.randomise(j, "damping", scale=[0.7, 1.3]))      # サーボ速度のばらつき
         randomisation.append(assembly.randomise(j, "friction_loss", scale=[0.5, 2.0]))
 for j in tail_joints:

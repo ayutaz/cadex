@@ -7,7 +7,8 @@ from pathlib import Path
 
 from .stl import mesh_stats
 
-PRINTED = ("chassis", "cover", "thigh_", "shin_", "foot_", "tail_link_")  # しっぽの先端のおもり tail_tip は購入品
+# しっぽの先端のおもり tail_tip は購入品。rollbr_ は3本足のロールの台（股サーボを持つ印刷部品）
+PRINTED = ("chassis", "cover", "thigh_", "shin_", "foot_", "tail_link_", "rollbr_")
 # 一般的な家庭用FDM（Bambu Lab A1 / Ender-3 系）の造形範囲 [mm]
 BED_MM = (220.0, 220.0, 250.0)
 NOZZLE_MM = 0.4

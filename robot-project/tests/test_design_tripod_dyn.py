@@ -32,6 +32,16 @@ def test_新しい_params_の既定値では出力が変わらない(name, overr
     assert signature(log0) == baseline
 
 
+TRI_R2_DYN = dict(TRI_R2_WAVE, hc_foot_center=1.0, vel_source=1.0, wave_swing=0.8)
+
+
+def test_tri_r2_dyn_の出力は基準ログと同じ():
+    # 基準ログ design_log_tri-r2-dyn.json は、ロール（leg_roll）を足す前の設計スクリプト（コミット 9c00eebdc の版）の出力
+    baseline = json.loads((DATA / "design_log_tri-r2-dyn.json").read_text())
+    _, log = run_design(**TRI_R2_DYN)
+    assert signature(log) == baseline
+
+
 # --- 1. hc の足先を重心の後ろへ ---
 
 def _foot(log, leg):

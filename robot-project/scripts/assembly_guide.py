@@ -41,19 +41,29 @@ LEGS = ("lf", "rf", "lh", "rh")
 BOLTS = ["body_bolt_0", "body_bolt_1"]
 Y_DIRS = ((0, -1, 0), (0, 1, 0))
 Z_DIRS = ((0, 0, -1), (0, 0, 1))
-ALL_DIRS = ((1, 0, 0), (-1, 0, 0)) + Y_DIRS + Z_DIRS
+X_DIRS = ((1, 0, 0), (-1, 0, 0))
+ALL_DIRS = X_DIRS + Y_DIRS + Z_DIRS
 
 
-def layout(legs=LEGS, tail=()) -> dict:
-    """脚（例 lf, rf, lh, rh、3本足は lf, rf, hc）としっぽの関節（tail_yaw, tail_pitch）から、
+def layout(legs=LEGS, tail=(), roll=()) -> dict:
+    """脚（例 lf, rf, lh, rh、3本足は lf, rf, hc）としっぽの関節（tail_yaw, tail_pitch）と、
+    ロールの関節がある脚（3本足の tri3。例 lf, rf）から、
     印刷部品・全部品・プレート・組立の段・差し込みとリード線の確かめ方・判定の組を作る。
+
+    ロールのある脚では、股サーボは胴体ではなくロールの台 rollbr_<脚> に入り、胴体にはロールのサーボが入る。
+    そのため、その脚の股サーボの差し込みとリード線は台で確かめ、胴体と cover はロールのサーボで確かめる
+    （胴体の外にある股サーボを胴体で確かめると、光線が当たらず中身なしで「入る」になる）。
 
     既定（4脚、しっぽなし）は、前の決め打ちの定数と同じ。左前脚 lf で代表させる確かめに加え、
     3本足の後ろの脚 hc（胴体の後端の台に付く）と、しっぽのサーボ・ホーンの差し込みも確かめる。
     """
     legs = list(legs)
     tail = list(tail)
+    roll = [g for g in legs if g in set(roll)]
     n = len(legs)
+    roll_printed = [f"rollbr_{g}" for g in roll]
+    roll_servos = [f"roll_servo_{g}" for g in roll]
+    roll_horns = [f"roll_horn_{g}" for g in roll]
     tail_printed = ["tail_link_1"] + (["tail_link_2"] if "tail_pitch" in tail else []) if tail else []
     tail_bought = []
     if "tail_yaw" in tail:
@@ -64,12 +74,13 @@ def layout(legs=LEGS, tail=()) -> dict:
         tail_bought.append("tail_tip")
     tail_parts = tail_printed + tail_bought
     printed = (["chassis", "cover"] + [f"thigh_{g}" for g in legs] + [f"shin_{g}" for g in legs]
-               + [f"foot_{g}" for g in legs] + tail_printed)
+               + [f"foot_{g}" for g in legs] + tail_printed + roll_printed)
     hip_servos = [f"hip_servo_{g}" for g in legs]
     knee_servos = [f"knee_servo_{g}" for g in legs]
     hip_horns = [f"hip_horn_{g}" for g in legs]
     knee_horns = [f"knee_horn_{g}" for g in legs]
-    all_parts = printed + hip_servos + knee_servos + hip_horns + knee_horns + BOLTS + ["esp32", "imu"] + tail_bought
+    all_parts = (printed + hip_servos + knee_servos + hip_horns + knee_horns + BOLTS + ["esp32", "imu"] + tail_bought
+                 + roll_servos + roll_horns)
 
     # 1枚のプレートに載せる部品。失敗したときの損を小さくするため、種類ごとに分ける。
     plates = [
@@ -81,27 +92,40 @@ def layout(legs=LEGS, tail=()) -> dict:
     ]
     if tail_printed:
         plates.append({"key": "plate5_tail", "title": "しっぽのリンク", "parts": list(tail_printed)})
+    if roll_printed:
+        plates.append({"key": "plate6_roll", "title": f"ロールの台 {len(roll)}個", "parts": list(roll_printed)})
 
     # 組立の段。shown は描く部品、new はその段で足す部品（橙色）。detail は1脚だけを拡大した段。
     # 視点: (方位角, 仰角)。MuJoCo の方位角はカメラが向く方向で、270 なら左（+Y）から、225 なら左前から見る。
-    body = ["chassis"] + hip_servos
+    # ロールのある脚の股サーボは、胴体ではなく台に入る（胴体にはロールのサーボが入る）
+    body = ["chassis"] + [f"hip_servo_{g}" for g in legs if g not in roll] + roll_servos
     closed = body + ["cover"] + BOLTS
-    thighs = closed + hip_horns + [f"thigh_{g}" for g in legs] + knee_servos
+    rolled = roll_horns + roll_printed + [f"hip_servo_{g}" for g in roll]
+    thighs = closed + rolled + hip_horns + [f"thigh_{g}" for g in legs] + knee_servos
     shins = thighs + knee_horns + [f"shin_{g}" for g in legs]
     feet = shins + [f"foot_{g}" for g in legs]
     done = feet + tail_parts
+    step1_title = (f"股サーボ {n}個を chassis に入れる" if not roll else
+                   f"股サーボ {n - len(roll)}個とロールのサーボ {len(roll)}個を chassis に入れる")
     steps = [
-        {"key": "step1_hip_servos", "title": f"股サーボ {n}個を chassis に入れる",
-         "shown": body, "new": hip_servos, "view": (225.0, -35.0), "zoom": 1.05},
+        {"key": "step1_hip_servos", "title": step1_title,
+         "shown": body, "new": body[1:], "view": (225.0, -35.0), "zoom": 1.05},
         {"key": "step2_cover", "title": "cover を被せて M2x10 を 2本締める",
          "shown": closed, "new": ["cover"] + BOLTS, "view": (225.0, -35.0), "zoom": 1.05},
+    ]
+    if roll:
+        steps.append({"key": "step2b_roll", "title": "股サーボをロールの台に入れ、ロールのホーンを台に留めてロールのサーボの軸に差す",
+                      "shown": closed + rolled, "new": list(rolled), "view": (225.0, -25.0), "zoom": 1.05})
+    lf_roll = [f"roll_horn_{g}" for g in roll if g == "lf"] + [f"rollbr_{g}" for g in roll if g == "lf"] + \
+        [f"hip_servo_{g}" for g in roll if g == "lf"]
+    steps += [
         {"key": "step3_knee_servo", "title": "膝サーボを上腿に入れる（左前脚、外側から見た図）", "detail": True,
          "shown": ["thigh_lf", "knee_servo_lf"], "new": ["knee_servo_lf"], "view": (240.0, -20.0), "zoom": 1.15},
         # leg_rev 2 は膝サーボを内側（胴体の側）から差し込むので、差し込み口とホーンの凹みが見える内側からも描く
         {"key": "step3b_knee_servo_inside", "title": "膝サーボを上腿に入れる（左前脚、内側から見た図）", "detail": True,
          "shown": ["thigh_lf", "knee_servo_lf"], "new": ["knee_servo_lf"], "view": (120.0, -20.0), "zoom": 1.15},
         {"key": "step4_hip_horn", "title": "股ホーンを上腿に留め、股サーボの軸に差す（左前脚）", "detail": True,
-         "shown": closed + ["hip_horn_lf", "thigh_lf", "knee_servo_lf"], "new": ["hip_horn_lf", "thigh_lf"],
+         "shown": closed + lf_roll + ["hip_horn_lf", "thigh_lf", "knee_servo_lf"], "new": ["hip_horn_lf", "thigh_lf"],
          "view": (225.0, -15.0), "zoom": 0.9},
         {"key": "step5_thighs", "title": f"{n}本の上腿を付けた状態",
          "shown": thighs, "new": hip_horns + [f"thigh_{g}" for g in legs] + knee_servos,
@@ -159,14 +183,40 @@ def layout(legs=LEGS, tail=()) -> dict:
         void_checks.append({"part": part, "insert": insert, "label": label})
         verdict_voids[name] = (part, insert)
 
-    if "hc" in legs:
+    if "lf" in roll:
+        # 左前脚にロールがある: 股サーボは胴体の外のロールの台に入り、胴体と cover にはロールのサーボが入る。
+        # 胴体の外にある股サーボを胴体で確かめると中身なしで通るので、その組は確かめから外す
+        body_parts = ("chassis", "cover", "chassis+cover")
+        fit_checks[:] = [c for c in fit_checks if not (c["insert"] == "hip_servo_lf" and c["part"] in body_parts)]
+        void_checks[:] = [c for c in void_checks if not (c["insert"] == "hip_servo_lf" and c["part"] in body_parts)]
+        for k in ("hip_servo_into_chassis", "cover_closes"):
+            del verdict_fits[k]
+        del verdict_voids["hip_lead_exits"]
+        add_fit("roll_servo_into_chassis", "chassis", "roll_servo_lf", ALL_DIRS, "ロールのサーボを chassis の台に入れる")
+        add_fit("cover_closes", "cover", "roll_servo_lf", Z_DIRS, "cover をロールのサーボの上に被せる")
+        add_fit("hip_servo_into_rollbr", "rollbr_lf", "hip_servo_lf", ALL_DIRS, "股サーボをロールの台に入れる")
+        add_fit("roll_horn_into_rollbr", "rollbr_lf", "roll_horn_lf", ALL_DIRS, "ロールのホーンをロールの台の凹みに入れる")
+        add_void("hip_lead_exits", "rollbr_lf", "hip_servo_lf", "股サーボを入れたロールの台")
+        add_void("roll_lead_exits", "chassis+cover", "roll_servo_lf", "ロールのサーボを挟んだ胴体（線は胴体の空洞から cover の窓へ）")
+    if "hc" in roll:
+        # 後ろの脚にもロールがある: 股サーボは台に、ロールのサーボは胴体の後ろの中に入る
+        add_fit("hc_roll_servo_into_chassis", "chassis", "roll_servo_hc", ALL_DIRS, "後ろの脚のロールのサーボを chassis に入れる")
+        add_fit("hc_cover_closes", "cover", "roll_servo_hc", Z_DIRS, "cover を後ろの脚のロールのサーボの上に被せる")
+        add_fit("hc_hip_servo_into_rollbr", "rollbr_hc", "hip_servo_hc", ALL_DIRS, "後ろの脚の股サーボをロールの台に入れる")
+        add_fit("hc_roll_horn_into_rollbr", "rollbr_hc", "roll_horn_hc", ALL_DIRS, "後ろの脚のロールのホーンを台の凹みに入れる")
+    elif "hc" in legs:
         # 3本足の後ろの脚: 股サーボは胴体の後端の台に入る（左前脚とは別の場所なので別に確かめる）
         add_fit("hc_hip_servo_into_chassis", "chassis", "hip_servo_hc", Z_DIRS, "後ろの脚の股サーボを chassis の台に入れる")
         add_fit("hc_cover_closes", "cover", "hip_servo_hc", Z_DIRS, "cover を後ろの脚の股サーボの上に被せる")
+    if "hc" in legs:
         add_fit("hc_knee_servo_into_thigh", "thigh_hc", "knee_servo_hc", Y_DIRS, "後ろの脚の膝サーボを上腿に入れる")
         add_fit("hc_hip_horn_into_thigh", "thigh_hc", "hip_horn_hc", Y_DIRS, "後ろの脚の股ホーンを上腿の凹みに入れる")
         add_fit("hc_knee_horn_into_shin", "shin_hc", "knee_horn_hc", Y_DIRS, "後ろの脚の膝ホーンを下腿の凹みに入れる")
-        add_void("hc_hip_lead_exits", "chassis+cover", "hip_servo_hc", "後ろの脚の股サーボを挟んだ胴体（線は通り道から空洞へ）")
+        if "hc" in roll:
+            add_void("hc_hip_lead_exits", "rollbr_hc", "hip_servo_hc", "後ろの脚の股サーボを入れたロールの台")
+            add_void("hc_roll_lead_exits", "chassis+cover", "roll_servo_hc", "後ろの脚のロールのサーボを入れた胴体（線は通り道から空洞へ）")
+        else:
+            add_void("hc_hip_lead_exits", "chassis+cover", "hip_servo_hc", "後ろの脚の股サーボを挟んだ胴体（線は通り道から空洞へ）")
         add_void("hc_knee_lead_exits", "thigh_hc", "knee_servo_hc", "後ろの脚の膝サーボを入れた上腿")
     if "tail_yaw" in tail:
         # 左右のサーボの軸は +Z。上下どちらかから胴体（chassis と cover を組んだもの）の台に入るか
@@ -178,20 +228,22 @@ def layout(legs=LEGS, tail=()) -> dict:
                 "しっぽの上下のサーボを1本目のリンクのハウジングに入れる")
         add_fit("tail_pitch_horn_into_link", "tail_link_2", "tail_pitch_horn", Y_DIRS, "しっぽの上下のホーンを2本目のリンクの凹みに入れる")
         add_void("tail_pitch_lead_exits", "tail_link_1", "tail_pitch_servo", "しっぽの上下のサーボを入れたハウジング")
-    return {"legs": legs, "tail": tail, "printed": printed, "all": all_parts, "plates": plates, "steps": steps,
+    return {"legs": legs, "tail": tail, "roll": roll, "printed": printed, "all": all_parts, "plates": plates, "steps": steps,
             "fit_checks": fit_checks, "void_checks": void_checks, "verdict_fits": verdict_fits,
             "verdict_voids": verdict_voids}
 
 
 def read_layout(variant: str) -> dict:
-    """robot/mjcf/<variant>/ のモデルから脚としっぽの関節を読み、layout を作る（q8.robot の model_legs・model_joints）。"""
+    """robot/mjcf/<variant>/ のモデルから脚・しっぽ・ロールの関節を読み、layout を作る（q8.robot の model_legs・model_joints）。"""
     import mujoco
 
     from q8.robot import model_joints, model_legs
 
     model_xml = next((ROOT / "robot" / "mjcf" / variant).glob("*-model.xml"))
     m = mujoco.MjModel.from_xml_path(str(model_xml))
-    return layout(model_legs(m), [j for j in model_joints(m) if j.startswith("tail_")])
+    joints = model_joints(m)
+    return layout(model_legs(m), [j for j in joints if j.startswith("tail_")],
+                  [j[len("roll_"):] for j in joints if j.startswith("roll_")])
 
 
 _DEFAULT = layout()
@@ -440,12 +492,59 @@ def _read_parts(mesh_dir: Path, names: str) -> np.ndarray:
     return np.concatenate([read_stl(mesh_dir / f"{n}.stl") for n in names.split("+")])
 
 
+SURROUND_MIN = 0.05  # 差し込む部品の投影のうち、部品の材料を通る光線の割合の下限（3軸のうち最も少ないもの）
+
+
+def surround_fraction(part: np.ndarray, insert: np.ndarray, *, samples: int = 12) -> float:
+    """insert の投影を X・Y・Z の平行な光線で覆い、part の材料を通る光線の割合の、3軸のうち最も少ないもの。
+
+    0 なら、insert はどれかの軸の向きで part と並んでいない（part の外にある）。そのまま確かめると、
+    光線が part に当たらず「入る」、閉じた空間も 0 になって、中身なしで通る。
+    """
+    lo = insert.reshape(-1, 3).min(axis=0)
+    hi = insert.reshape(-1, 3).max(axis=0)
+    fracs = []
+    for axis in range(3):
+        d = np.zeros(3)
+        d[axis] = 1.0
+        others = [i for i in range(3) if i != axis]
+        total = hit = 0
+        for u in np.linspace(lo[others[0]], hi[others[0]], samples + 2)[1:-1]:
+            for w in np.linspace(lo[others[1]], hi[others[1]], samples + 2)[1:-1]:
+                origin = np.zeros(3)
+                origin[others[0]], origin[others[1]] = u, w
+                origin[axis] = lo[axis] - 1000.0
+                if len(_ray_hits(insert, origin, d)) < 2:
+                    continue
+                total += 1
+                hit += len(_ray_hits(part, origin, d)) > 0
+        fracs.append(hit / total if total else 0.0)
+    return min(fracs)
+
+
+def _surrounded(part: np.ndarray, insert: np.ndarray, c: dict) -> None:
+    frac = surround_fraction(part, insert)
+    if frac < SURROUND_MIN:
+        raise ValueError(f"{c['insert']} は {c['part']} の外にある（材料を通る光線 {frac:.2f}）。"
+                         "この組では差し込みもリード線も確かめられない（layout の組を見直す）")
+
+
 def fit_checks(mesh_dir: Path, checks=None) -> list[dict]:
     out = []
     for c in (FIT_CHECKS if checks is None else checks):
-        frac = blocked_fraction(_read_parts(mesh_dir, c["part"]), read_stl(mesh_dir / f"{c['insert']}.stl"),
-                                c["direction"])
+        part, insert = _read_parts(mesh_dir, c["part"]), read_stl(mesh_dir / f"{c['insert']}.stl")
+        _surrounded(part, insert, c)
+        frac = blocked_fraction(part, insert, c["direction"])
         out.append({**c, "direction": list(c["direction"]), "blocked_fraction": round(frac, 3)})
+    return out
+
+
+def enclosed_voids(mesh_dir: Path, checks=None) -> list[dict]:
+    out = []
+    for c in (VOID_CHECKS if checks is None else checks):
+        part, insert = _read_parts(mesh_dir, c["part"]), read_stl(mesh_dir / f"{c['insert']}.stl")
+        _surrounded(part, insert, c)
+        out.append({**c, "enclosed_void_mm3": round(enclosed_void_mm3(part, insert), 0)})
     return out
 
 
@@ -504,9 +603,7 @@ def print_plan(mesh_dir: Path, lay: dict | None = None) -> dict:
         "fit_checks": fit_checks(mesh_dir, lay["fit_checks"]),
         "enclosed_voids_note": "部品にサーボを入れた状態で外につながらない空間（mm³、0.35 mm のボクセル、すきまは塞いだものとみなす）。"
                                "0 でなければ、リード線の逃げが外へ抜けていない。",
-        "enclosed_voids": [{**c, "enclosed_void_mm3": round(enclosed_void_mm3(
-            _read_parts(mesh_dir, c["part"]), read_stl(mesh_dir / f"{c['insert']}.stl")), 0)}
-            for c in lay["void_checks"]],
+        "enclosed_voids": enclosed_voids(mesh_dir, lay["void_checks"]),
     }
     plan["assembly_verdict_note"] = ("組立の要所ごとの判定。fit はどれか1つの向きで当たる光線が 0、"
                                      f"リード線は閉じた空間が {VOID_LIMIT_MM3:g} mm³ 未満なら True。")

@@ -40,7 +40,7 @@ LEGS = ("lf", "rf", "lh", "rh")
 
 
 def intended_contacts(model=None) -> set[frozenset]:
-    """サーボとホーンの意図した接触。脚としっぽ（tail_yaw・tail_pitch）はモデルから読む。"""
+    """サーボとホーンの意図した接触。脚・しっぽ（tail_yaw・tail_pitch）・3本足のロール（roll_<脚>）はモデルから読む。"""
     legs = model_legs(model) if model is not None else LEGS
     pairs = set()
     for leg in legs:
@@ -50,6 +50,9 @@ def intended_contacts(model=None) -> set[frozenset]:
         for j in model_joints(model):
             if j.startswith("tail_"):
                 pairs.add(frozenset((f"c_{j}_servo", f"c_{j}_horn")))
+            elif j.startswith("roll_"):
+                leg = j[len("roll_"):]
+                pairs.add(frozenset((f"c_roll_servo_{leg}", f"c_roll_horn_{leg}")))
     return pairs
 
 
