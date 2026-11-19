@@ -309,9 +309,15 @@ def test_real_policy_end_to_end(tmp_path, real_policy, real_task):
     layout = ex.resolve_layout(policy, task=task)
     samples = qz.calibration_samples(policy, count=600, seed=2)
     qp = qz.quantize_policy(policy, samples[:400])
+    names = [str(a.get("actuator")).split("/")[0] for a in policy.actions]
     if len(policy.actions) != len(cx.DEFAULT_JOINTS):
         # しっぽ・3本足など関節が8個でない機体の方策は、配備側（8自由度の実機）では書き出さずに止める。
         with pytest.raises(ValueError, match=f"関節 {len(cx.DEFAULT_JOINTS)} 個"):
+            ex.render_header(policy, qp, layout=layout, clock_period_s=ex.clock_period_s(task))
+        return
+    if names != list(cx.DEFAULT_JOINTS):
+        # 関節が8個でも名前・順番が違う機体（tri3-r8 のロール付き3本足など）も、サーボの割り当てとずれるので止める。
+        with pytest.raises(ValueError, match="関節の名前または順番が実機の割り当てと違う"):
             ex.render_header(policy, qp, layout=layout, clock_period_s=ex.clock_period_s(task))
         return
     binary = _build_host(tmp_path, policy, qp, layout, clock_period_s=ex.clock_period_s(task))
