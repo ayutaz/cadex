@@ -1,0 +1,114 @@
+{
+  "variant": "tri3-r9",
+  "design": {
+    "total_mass_g": 281.4,
+    "com_height_mm": 72.2,
+    "support_margin_mm": 23.3,
+    "trot_rated_ratio": 0.391,
+    "hold_rated_ratio": 0.348,
+    "thigh_mm": 40.0,
+    "shin_mm": 44.0,
+    "bom_jpy": 7332
+  },
+  "fixed_gait": {
+    "skipped": "四足でないため（固定歩容は lf/rf/lh/rh のトロット専用）"
+  },
+  "policy": {
+    "pass_rate": 0.0,
+    "metrics": {
+      "completed": {
+        "mean": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "n": 10
+      },
+      "falls": {
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "n": 10
+      },
+      "mean_forward_speed_mm_s": {
+        "mean": 74.73212952792314,
+        "min": 51.752166846151276,
+        "max": 89.32652847804158,
+        "n": 10
+      },
+      "speed_ratio": {
+        "mean": 1.024311817031901,
+        "min": 0.9864017634603736,
+        "max": 1.0684055290640244,
+        "n": 10
+      },
+      "speed_error_rms_mm_s": {
+        "mean": 11.513997534876932,
+        "min": 10.592970337687893,
+        "max": 12.686650147605068,
+        "n": 10
+      },
+      "max_tilt_deg": {
+        "mean": 9.982487705382452,
+        "min": 9.065695741578962,
+        "max": 11.201249867083694,
+        "n": 10
+      },
+      "max_heading_deg": {
+        "mean": 22.788458503697843,
+        "min": 21.447227886842697,
+        "max": 24.00943967065883,
+        "n": 10
+      },
+      "steps_min": {
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "n": 10
+      },
+      "slip_share_max": {
+        "mean": 1.0484877729971755,
+        "min": 0.9851123709781807,
+        "max": 1.0805847781102182,
+        "n": 10
+      },
+      "effort_rms_rated_ratio_max": {
+        "mean": 0.7844182765003195,
+        "min": 0.732725906946271,
+        "max": 0.8426235412850586,
+        "n": 10
+      },
+      "effort_peak_ratio_max": {
+        "mean": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "n": 10
+      },
+      "cost_of_transport": {
+        "mean": 2.170008884418723,
+        "min": 1.9585482433758423,
+        "max": 2.7125865439967276,
+        "n": 10
+      },
+      "command_rate_rms": {
+        "mean": 3.4170213792337343,
+        "min": 2.962805663814273,
+        "max": 3.717279274232371,
+        "n": 10
+      }
+    }
+  },
+  "metric_labels": {
+    "completed": "最後まで転倒・沈み込みなし（1=成功）",
+    "falls": "転倒（1=転倒）",
+    "mean_forward_speed_mm_s": "平均前進速度 [mm/s]",
+    "speed_ratio": "速度比（実速度 / 指令）",
+    "speed_error_rms_mm_s": "目標速度追従誤差 RMS [mm/s]",
+    "max_tilt_deg": "最大傾斜 [deg]（姿勢安定性）",
+    "max_heading_deg": "向きのずれの最大 [deg]（直進性。旋回指令は未学習）",
+    "steps_min": "最少の脚の歩数（すり足でないこと）",
+    "slip_share_max": "接地中の滑りの割合（最大の脚）",
+    "effort_rms_rated_ratio_max": "モーター負荷: RMSトルク / 推定連続定格（最大の関節）",
+    "effort_peak_ratio_max": "モーター負荷: ピークトルク / 失速トルク",
+    "cost_of_transport": "移動コスト（機械仕事 / 重量 × 距離）",
+    "command_rate_rms": "指令の変化率 RMS [range/s]（滑らかさ）"
+  }
+}

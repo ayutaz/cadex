@@ -1,0 +1,202 @@
+{
+ "2101": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 4.802668307605201,
+   "argmin": "c_shin_lf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 61.63765194058674,
+   "argmin": "c_chassis/collision1",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.0,
+   "minz": -1.3968143181919945,
+   "argmin": "c_foot_lf/collision0",
+   "frames": 402
+  }
+ },
+ "2102": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 4.08968255437367,
+   "argmin": "c_shin_lf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 59.44857920373394,
+   "argmin": "c_chassis/collision1",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.0,
+   "minz": -1.6147047008528794,
+   "argmin": "c_foot_lf/collision0",
+   "frames": 402
+  }
+ },
+ "2103": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 4.588570876055728,
+   "argmin": "c_shin_lf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 60.63177319873119,
+   "argmin": "c_chassis/collision1",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.0,
+   "minz": -1.2176018711830725,
+   "argmin": "c_foot_lf/collision0",
+   "frames": 402
+  }
+ },
+ "2104": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 4.240994132568817,
+   "argmin": "c_shin_lf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 61.213779803699666,
+   "argmin": "c_chassis/collision1",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.0,
+   "minz": -1.7178617831673417,
+   "argmin": "c_foot_lf/collision0",
+   "frames": 402
+  }
+ },
+ "2105": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 3.8820775913495478,
+   "argmin": "c_shin_lf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 61.06202153566575,
+   "argmin": "c_chassis/collision1",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.0024875621890547263,
+   "minz": -2.0764810707397974,
+   "argmin": "c_foot_lf/collision0",
+   "frames": 402
+  }
+ },
+ "2106": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 4.409876422758318,
+   "argmin": "c_shin_lf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 59.13025914765299,
+   "argmin": "c_chassis/collision1",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.0,
+   "minz": -1.4758073465156496,
+   "argmin": "c_foot_lf/collision0",
+   "frames": 402
+  }
+ },
+ "2107": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 3.9623696237926715,
+   "argmin": "c_shin_lf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 58.64897755345409,
+   "argmin": "c_chassis/collision1",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.0,
+   "minz": -1.802351634669563,
+   "argmin": "c_foot_lf/collision0",
+   "frames": 402
+  }
+ },
+ "2108": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 4.448913382635739,
+   "argmin": "c_shin_lf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 61.08629783929567,
+   "argmin": "c_chassis/collision1",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.0,
+   "minz": -1.6169890740814719,
+   "argmin": "c_foot_lf/collision0",
+   "frames": 402
+  }
+ },
+ "2109": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 4.070051776656678,
+   "argmin": "c_shin_lf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 60.13085072791959,
+   "argmin": "c_chassis/collision1",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.0,
+   "minz": -1.7722687474659313,
+   "argmin": "c_foot_lf/collision0",
+   "frames": 402
+  }
+ },
+ "2110": {
+  "nc": {
+   "frac2": 0.0,
+   "minz": 4.613564358221893,
+   "argmin": "c_shin_lf/collision0",
+   "frames": 402
+  },
+  "chassis": {
+   "frac2": 0.0,
+   "minz": 61.37303630938758,
+   "argmin": "c_chassis/collision1",
+   "frames": 402
+  },
+  "foot": {
+   "frac2": 0.0,
+   "minz": -1.4699100445452231,
+   "argmin": "c_foot_lf/collision0",
+   "frames": 402
+  }
+ }
+}
