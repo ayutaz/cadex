@@ -1,0 +1,209 @@
+{
+ "note": "足以外の当たり判定（c_thigh/c_shin/c_rollbr/c_chassis ほか）の最も低い点を、トレースの各フレームの姿勢から求めた。床は z=0。2 mm 以上沈んだ評価シードは合格に数えない。",
+ "passes_raw": "0/10",
+ "passes_corrected": "0/10",
+ "seeds_with_sink_ge_2mm": [],
+ "max_depth_mm": 0.0,
+ "per_seed": {
+  "2101": {
+   "frames": 401,
+   "frac_below_2mm": 0.0,
+   "max_depth_mm": 0.0,
+   "worst": "c_shin_lf",
+   "per_body_depth": {
+    "c_chassis": 0.0,
+    "c_rollbr_lf": 0.0,
+    "c_thigh_lf": 0.0,
+    "c_shin_lf": 0.0,
+    "c_rollbr_rf": 0.0,
+    "c_thigh_rf": 0.0,
+    "c_shin_rf": 0.0,
+    "c_rollbr_hc": 0.0,
+    "c_thigh_hc": 0.0,
+    "c_shin_hc": 0.0
+   },
+   "frac_any_negative": 0.0,
+   "min_foot": -1.4838924253453563
+  },
+  "2102": {
+   "frames": 401,
+   "frac_below_2mm": 0.0,
+   "max_depth_mm": 0.0,
+   "worst": "c_shin_lf",
+   "per_body_depth": {
+    "c_chassis": 0.0,
+    "c_rollbr_lf": 0.0,
+    "c_thigh_lf": 0.0,
+    "c_shin_lf": 0.0,
+    "c_rollbr_rf": 0.0,
+    "c_thigh_rf": 0.0,
+    "c_shin_rf": 0.0,
+    "c_rollbr_hc": 0.0,
+    "c_thigh_hc": 0.0,
+    "c_shin_hc": 0.0
+   },
+   "frac_any_negative": 0.0,
+   "min_foot": -1.6952585324143072
+  },
+  "2103": {
+   "frames": 401,
+   "frac_below_2mm": 0.0,
+   "max_depth_mm": 0.0,
+   "worst": "c_shin_lf",
+   "per_body_depth": {
+    "c_chassis": 0.0,
+    "c_rollbr_lf": 0.0,
+    "c_thigh_lf": 0.0,
+    "c_shin_lf": 0.0,
+    "c_rollbr_rf": 0.0,
+    "c_thigh_rf": 0.0,
+    "c_shin_rf": 0.0,
+    "c_rollbr_hc": 0.0,
+    "c_thigh_hc": 0.0,
+    "c_shin_hc": 0.0
+   },
+   "frac_any_negative": 0.0,
+   "min_foot": -1.424509581656249
+  },
+  "2104": {
+   "frames": 401,
+   "frac_below_2mm": 0.0,
+   "max_depth_mm": 0.0,
+   "worst": "c_shin_lf",
+   "per_body_depth": {
+    "c_chassis": 0.0,
+    "c_rollbr_lf": 0.0,
+    "c_thigh_lf": 0.0,
+    "c_shin_lf": 0.0,
+    "c_rollbr_rf": 0.0,
+    "c_thigh_rf": 0.0,
+    "c_shin_rf": 0.0,
+    "c_rollbr_hc": 0.0,
+    "c_thigh_hc": 0.0,
+    "c_shin_hc": 0.0
+   },
+   "frac_any_negative": 0.0,
+   "min_foot": -1.3538276753939495
+  },
+  "2105": {
+   "frames": 401,
+   "frac_below_2mm": 0.0,
+   "max_depth_mm": 0.0,
+   "worst": "c_shin_lf",
+   "per_body_depth": {
+    "c_chassis": 0.0,
+    "c_rollbr_lf": 0.0,
+    "c_thigh_lf": 0.0,
+    "c_shin_lf": 0.0,
+    "c_rollbr_rf": 0.0,
+    "c_thigh_rf": 0.0,
+    "c_shin_rf": 0.0,
+    "c_rollbr_hc": 0.0,
+    "c_thigh_hc": 0.0,
+    "c_shin_hc": 0.0
+   },
+   "frac_any_negative": 0.0,
+   "min_foot": -1.6347956204466447
+  },
+  "2106": {
+   "frames": 401,
+   "frac_below_2mm": 0.0,
+   "max_depth_mm": 0.0,
+   "worst": "c_shin_lf",
+   "per_body_depth": {
+    "c_chassis": 0.0,
+    "c_rollbr_lf": 0.0,
+    "c_thigh_lf": 0.0,
+    "c_shin_lf": 0.0,
+    "c_rollbr_rf": 0.0,
+    "c_thigh_rf": 0.0,
+    "c_shin_rf": 0.0,
+    "c_rollbr_hc": 0.0,
+    "c_thigh_hc": 0.0,
+    "c_shin_hc": 0.0
+   },
+   "frac_any_negative": 0.0,
+   "min_foot": -1.2708279299039411
+  },
+  "2107": {
+   "frames": 401,
+   "frac_below_2mm": 0.0,
+   "max_depth_mm": 0.0,
+   "worst": "c_shin_lf",
+   "per_body_depth": {
+    "c_chassis": 0.0,
+    "c_rollbr_lf": 0.0,
+    "c_thigh_lf": 0.0,
+    "c_shin_lf": 0.0,
+    "c_rollbr_rf": 0.0,
+    "c_thigh_rf": 0.0,
+    "c_shin_rf": 0.0,
+    "c_rollbr_hc": 0.0,
+    "c_thigh_hc": 0.0,
+    "c_shin_hc": 0.0
+   },
+   "frac_any_negative": 0.0,
+   "min_foot": -1.4730165382700315
+  },
+  "2108": {
+   "frames": 401,
+   "frac_below_2mm": 0.0,
+   "max_depth_mm": 0.0,
+   "worst": "c_shin_lf",
+   "per_body_depth": {
+    "c_chassis": 0.0,
+    "c_rollbr_lf": 0.0,
+    "c_thigh_lf": 0.0,
+    "c_shin_lf": 0.0,
+    "c_rollbr_rf": 0.0,
+    "c_thigh_rf": 0.0,
+    "c_shin_rf": 0.0,
+    "c_rollbr_hc": 0.0,
+    "c_thigh_hc": 0.0,
+    "c_shin_hc": 0.0
+   },
+   "frac_any_negative": 0.0,
+   "min_foot": -1.4050367422542482
+  },
+  "2109": {
+   "frames": 401,
+   "frac_below_2mm": 0.0,
+   "max_depth_mm": 0.0,
+   "worst": "c_shin_lf",
+   "per_body_depth": {
+    "c_chassis": 0.0,
+    "c_rollbr_lf": 0.0,
+    "c_thigh_lf": 0.0,
+    "c_shin_lf": 0.0,
+    "c_rollbr_rf": 0.0,
+    "c_thigh_rf": 0.0,
+    "c_shin_rf": 0.0,
+    "c_rollbr_hc": 0.0,
+    "c_thigh_hc": 0.0,
+    "c_shin_hc": 0.0
+   },
+   "frac_any_negative": 0.0,
+   "min_foot": -1.6759051711269688
+  },
+  "2110": {
+   "frames": 401,
+   "frac_below_2mm": 0.0,
+   "max_depth_mm": 0.0,
+   "worst": "c_shin_lf",
+   "per_body_depth": {
+    "c_chassis": 0.0,
+    "c_rollbr_lf": 0.0,
+    "c_thigh_lf": 0.0,
+    "c_shin_lf": 0.0,
+    "c_rollbr_rf": 0.0,
+    "c_thigh_rf": 0.0,
+    "c_shin_rf": 0.0,
+    "c_rollbr_hc": 0.0,
+    "c_thigh_hc": 0.0,
+    "c_shin_hc": 0.0
+   },
+   "frac_any_negative": 0.0,
+   "min_foot": -1.727443708173662
+  }
+ }
+}
