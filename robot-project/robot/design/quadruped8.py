@@ -56,6 +56,8 @@ p = params(
     w_effort=num(0.5, min=0.0, max=5.0, step=0.1, label="報酬の罰の重み: トルク（失速トルクで正規化した2乗）"),
     w_effort_rated=num(0.3, min=0.0, max=5.0, step=0.1, label="報酬の罰の重み: 推定連続定格を超えるトルク（4乗）"),
     slip_cost=num(0.0, min=0.0, max=5.0, step=0.1, label="報酬の罰の重み: 接地した足の滑り（0 なら項も観測も足さない）"),
+    swing_contact_cost=num(0.0, min=0.0, max=5.0, step=0.1,
+                           label="報酬の罰の重み: 遊脚の位相で接地している足（脚ごと、3本足の波だけ。0 なら項を足さない）"),
     armature=num(20.0, unit="kg*mm2", min=0.0, max=200.0, step=1.0,
                  label="サーボのロータ慣性（出力軸換算、推定値）"),
     # 1 は mini までの形（base・leg120・mini などの生成物はこの形）。STL で調べると脚が組めない
@@ -181,6 +183,11 @@ if p.leg_roll not in (0.0, 1.0, 2.0):
 LEG_ROLL = int(p.leg_roll)
 if LEG_ROLL and not TRI:
     raise ValueError("leg_roll（ロールの関節）は3本足（rear_legs=1）だけ: %r" % p.leg_roll)
+if not 0.0 <= p.swing_contact_cost <= 5.0:
+    raise ValueError("swing_contact_cost は 0〜5: %r" % p.swing_contact_cost)
+SWING_CONTACT = p.swing_contact_cost > 0.0
+if SWING_CONTACT and not (TRI and GAIT_MODE == 1):
+    raise ValueError("swing_contact_cost > 0 は3本足の波（rear_legs=1、gait_mode=1）だけ: %r" % p.swing_contact_cost)
 if not p.roll_min < 0.0 < p.roll_max:
     raise ValueError("roll_min < 0 < roll_max にする（ロールの角 0 が立位）: %r, %r" % (p.roll_min, p.roll_max))
 ROLL_LEGS = ("lf", "rf", "hc")[:{0: 0, 1: 2, 2: 3}[LEG_ROLL]]
@@ -1157,6 +1164,14 @@ if SLIP:
     rewards.append(assembly.reward("(" + " + ".join(
         "ft_{l}_down * ((fv_{l}_x / 100)^2 + (fv_{l}_y / 100)^2)".format(l=leg) for leg in LEG_NAMES)
         + ") / %d" % len(LEG_NAMES), weight=-p.slip_cost, label="foot_slip"))
+if SWING_CONTACT:
+    # 遊脚の位相で接地している足への、脚ごとの罰。遊脚の度合い (0.5 - 0.5·st_k) は gait_contact と同じ st_k から作る
+    # （遊脚の中心で約 1、立脚で約 0）。脚で割らず和のまま。gait_contact は3脚の平均を引くので、1本（hc）を
+    # 引きずっても前の2本の点で埋まり、swing_lift も3脚の和なので前の2本で稼げた（tri3-r9 は hc の歩数 0）。
+    swing_st = ["tanh(5*(%s + %s))" % (ph, "%g" % p.wave_swing) for ph in WAVE_PHASE]
+    rewards.append(assembly.reward(" + ".join("(0.5 - 0.5*%s) * ft_%s_down" % (st, leg)
+                                              for st, leg in zip(swing_st, LEG_NAMES)),
+                                   weight=-p.swing_contact_cost, label="swing_contact"))
 terminations = [
     assembly.termination(UP, below=0.7, label="fell"),          # 約45度以上傾いた
     assembly.termination("pos_z", below=-30.0, label="sank"),   # 胴体が立位から30 mm以上下がった
