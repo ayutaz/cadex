@@ -507,6 +507,25 @@ def test_tri_r2_dyn_dr_は_wave_dr_と機体_名前_ラベル_entropy_だけが�
         {k: v for k, v in ref["instance"].items() if k != "label"}
 
 
+@pytest.mark.parametrize("variant", ["tri3-r8", "tri3-r9"])
+def test_tri3_configs_match_dyn(variant):
+    # 横に開く関節を足した3本足。tri-r2-dyn-dr と、機体・名前・ラベル・バンドルのパスだけが違う
+    ref = json.loads((ROOT / "configs" / "train_full_tri-r2-dyn-dr.json").read_text(encoding="utf-8"))
+    other = json.loads((ROOT / "configs" / f"train_full_{variant}-dr.json").read_text(encoding="utf-8"))
+    assert other["name"] == f"full-{variant}-dr"
+    assert other["bundle"] == f"artifacts/{variant}-dr/cut/walk-task.json"
+    assert other["trainer"]["label"] == f"q8 vast.ai full {variant}-dr"
+    assert other["instance"]["label"] == f"q8-full-{variant}-dr"
+    assert other["trainer"]["iterations"] == 1000
+    ignore = {"_comment", "name", "bundle", "trainer", "instance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == \
+        {k: v for k, v in ref.items() if k not in ignore}
+    assert {k: v for k, v in other["trainer"].items() if k != "label"} == \
+        {k: v for k, v in ref["trainer"].items() if k != "label"}
+    assert {k: v for k, v in other["instance"].items() if k != "label"} == \
+        {k: v for k, v in ref["instance"].items() if k != "label"}
+
+
 @pytest.mark.parametrize("variant", TAIL_TRI_DR_BUILT)
 def test_しっぽと3本足の_dr_のバンドルは今の機体に_dr_を足したもの(variant, tmp_path):
     from q8 import dr_bundle
