@@ -119,6 +119,25 @@ def test_pack_plate_refuses_what_does_not_fit():
         ag.pack_plate([(str(i), (80.0, 80.0)) for i in range(5)], bed=(180.0, 180.0), margin=5.0, gap=5.0)
 
 
+def test_split_plate_は収まらない板を2枚目に分ける():
+    # 3本足の hc の足先を中央へ寄せた機体（tri-r2-dyn）は、股サーボの台が胴体の横へ出て、
+    # chassis と cover（各 125.6 x 90.7 mm）が 180 mm のベッドに並ばない
+    plate = {"key": "plate1_body", "title": "胴体（chassis と cover）", "parts": ["chassis", "cover"]}
+    big = [("chassis", (125.6, 90.65)), ("cover", (125.6, 90.65))]
+    out = ag.split_plate(plate, big, bed=(180.0, 180.0))
+    assert [o["key"] for o in out] == ["plate1_body", "plate1_body_2"]
+    assert [[q["name"] for q in o["placed"]] for o in out] == [["chassis"], ["cover"]]
+    assert [o["parts"] for o in out] == [["chassis"], ["cover"]]
+    assert "2枚目" in out[1]["title"]
+    # 収まる板は1枚のまま（キー・題・部品は変えない）
+    small = [("chassis", (96.0, 62.0)), ("cover", (96.0, 62.0))]
+    (one,) = ag.split_plate(plate, small, bed=(180.0, 180.0))
+    assert {k: one[k] for k in ("key", "title", "parts")} == plate
+    assert one["placed"] == ag.pack_plate(small, bed=(180.0, 180.0))
+    with pytest.raises(ValueError):
+        ag.split_plate(plate, [("big", (200.0, 10.0))], bed=(180.0, 180.0))
+
+
 def test_plates_print_every_printed_part_once():
     names = [n for plate in ag.PLATES for n in plate["parts"]]
     assert sorted(names) == sorted(ag.PRINTED_PARTS)

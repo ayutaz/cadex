@@ -304,6 +304,33 @@ def pack_plate(items, *, bed=BED_MM, margin=5.0, gap=5.0) -> list[dict]:
     return placed
 
 
+def split_plate(plate: dict, items, *, bed=BED_MM, margin=5.0, gap=5.0) -> list[dict]:
+    """板 plate の部品 items（(名前, (幅, 奥行き))）を詰める。1枚に収まらなければ、順に詰めて2枚目以降へ分ける。
+
+    収まる板は、キー・題・部品をそのまま1枚で返す（今までの機体の印刷計画は変わらない）。
+    2枚目以降のキーは ``<key>_2``、題は「（2枚目）」を足したもの。1つの部品がベッドに収まらなければ ValueError。
+    """
+    try:
+        return [{**plate, "placed": pack_plate(items, bed=bed, margin=margin, gap=gap)}]
+    except ValueError:
+        pass
+    groups: list[list] = [[]]
+    for item in items:
+        pack_plate([item], bed=bed, margin=margin, gap=gap)   # 1つでも収まらなければここで ValueError
+        try:
+            pack_plate(groups[-1] + [item], bed=bed, margin=margin, gap=gap)
+            groups[-1].append(item)
+        except ValueError:
+            groups.append([item])
+    out = []
+    for i, group in enumerate(groups):
+        key = plate["key"] if i == 0 else f"{plate['key']}_{i + 1}"
+        title = plate["title"] if i == 0 else f"{plate['title']}（{i + 1}枚目）"
+        out.append({**plate, "key": key, "title": title, "parts": [n for n, _ in group],
+                    "placed": pack_plate(group, bed=bed, margin=margin, gap=gap)})
+    return out
+
+
 def _ray_hits(tris: np.ndarray, origin: np.ndarray, d: np.ndarray) -> np.ndarray:
     """直線 origin + s d と三角形の交点の s（昇順）。Möller–Trumbore。"""
     a, b, c = tris[:, 0], tris[:, 1], tris[:, 2]
@@ -463,10 +490,9 @@ def print_plan(mesh_dir: Path, lay: dict | None = None) -> dict:
     plates = []
     for plate in lay["plates"]:
         items = [(n, tuple(parts[n]["footprint_mm"])) for n in plate["parts"]]
-        placed = pack_plate(items)
-        plates.append({**plate, "placed": placed,
-                       "filament_g": round(sum(parts[n]["volume_cm3"] for n in plate["parts"])
-                                           * EFFECTIVE_DENSITY_G_CM3, 6)})
+        for sub in split_plate(plate, items):
+            plates.append({**sub, "filament_g": round(sum(parts[n]["volume_cm3"] for n in sub["parts"])
+                                                      * EFFECTIVE_DENSITY_G_CM3, 6)})
     plan = {
         "bed_mm": list(BED_MM),
         "effective_density_g_cm3": EFFECTIVE_DENSITY_G_CM3,

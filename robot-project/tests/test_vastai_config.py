@@ -464,8 +464,11 @@ TAIL_TRI_DR = {
     "tri-r2-free-dr": "tri-r2",
     "tri-r2-wave-dr": "tri-r2-wave",
 }
-#: バンドルを作り終えた案（機体の形は ef0451348 の版）
-TAIL_TRI_DR_BUILT = tuple(sorted(TAIL_TRI_DR))
+#: 3本足の直し（tri-r2-dyn: hc の足先を重心の後ろへ、速度を重心で、波の遊脚を短く）。学習設定は tri-r2-wave-dr と
+#: entropy も違うので TAIL_TRI_DR には入れない（test_tri_r2_dyn_dr_は_wave_dr_と…）
+DR_SOURCE = {**TAIL_TRI_DR, "tri-r2-dyn-dr": "tri-r2-dyn"}
+#: バンドルを作り終えた案（機体の形は ef0451348 の版。tri-r2-dyn-dr は hc_foot_center などを足した版）
+TAIL_TRI_DR_BUILT = tuple(sorted(TAIL_TRI_DR)) + ("tri-r2-dyn-dr",)
 
 
 @pytest.mark.parametrize("variant", sorted(TAIL_TRI_DR))
@@ -508,13 +511,13 @@ def test_tri_r2_dyn_dr_は_wave_dr_と機体_名前_ラベル_entropy_だけが�
 def test_しっぽと3本足の_dr_のバンドルは今の機体に_dr_を足したもの(variant, tmp_path):
     from q8 import dr_bundle
 
-    source = ROOT / "robot" / "mjcf" / TAIL_TRI_DR[variant] / "cut"
+    source = ROOT / "robot" / "mjcf" / DR_SOURCE[variant] / "cut"
     out = ROOT / "artifacts" / variant / "cut"
     # 今の機体のカットモデルから作り直すと、置いてあるバンドルと1バイトも違わない（機体を作り直したら作り直す）
     dr_bundle.build(source, tmp_path)
     for name in ("cut.xml", "walk-task.json", "dr.json"):
         assert (tmp_path / name).read_bytes() == (out / name).read_bytes(), name
-    ref = _task(TAIL_TRI_DR[variant])
+    ref = _task(DR_SOURCE[variant])
     other = json.loads((out / "walk-task.json").read_text(encoding="utf-8"))
     ignore = {"model", "randomisation", "disturbance"}
     assert {k: v for k, v in other.items() if k not in ignore} == {k: v for k, v in ref.items() if k not in ignore}

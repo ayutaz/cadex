@@ -73,6 +73,21 @@ p = params(
     # 3本足の歩き方の報酬。0: 決めない（接地のリズムの報酬なし、足上げは全脚に払う）、
     # 1: 波（lf → rf → hc の順に 1/3 周期ずつ立脚をずらす）。四足はトロットで、1 は使えない。
     gait_mode=num(0.0, min=0.0, max=1.0, step=1.0, label="3本足の歩き方の報酬（0: 決めない、1: 波）"),
+    # 3本足の「動的な一歩」の直し（tri-r2-dyn）。3つとも既定値では出力が変わらない。
+    # hc_foot_center=1: hc の脚（股サーボ・台・上腿・膝サーボ・下腿・足先）をまるごと左右にずらし、
+    # 足先の中心を y = hc_foot_y に置く（既定の 0 では、上腿の板の中央面が y = 0 で、足先は y ≈ +11 mm）。
+    hc_foot_center=num(0.0, min=0.0, max=1.0, step=1.0,
+                       label="3本足の hc の足先を hc_foot_y に置く（0: 上腿の板の中央面を y = 0、1: 足先を hc_foot_y）"),
+    # 既定の -10 は、学習用の DR バンドル（payload は基準位置）で、lf と rf を上げたときの立位の静的な余裕の差が
+    # 最小になる値（実測: +11 mm で差 12.1 mm、-1 で 6.2、-4 で 4.7、-10 で 1.7）。脚をずらすと重心も同じ向きに動くので、
+    # 差は足先 1 mm あたり約 0.5 mm しか縮まない。-10.25 mm より -Y では股サーボの台が胴体から離れる（下の ValueError）。
+    hc_foot_y=num(-10.0, unit="mm", min=-10.0, max=15.0, step=0.1,
+                  label="hc_foot_center=1 のときの hc の足先の中心の y"),
+    # 追従の報酬が読む速度 vel。0: 胴体の xbody 原点（床の高さ）の速度、1: 体全体の重心の速度。
+    vel_source=num(0.0, min=0.0, max=1.0, step=1.0,
+                   label="追従の速度（0: 胴体の原点の速度 component_linear_velocity、1: 体全体の重心の速度）"),
+    # 波（gait_mode=1）の遊脚の幅: 脚の位相 cos が -wave_swing より下を遊脚にする（0.5 で周期の 1/3、0.8 で約 0.2）。
+    wave_swing=num(0.5, min=0.0, max=0.95, step=0.05, label="波の遊脚のしきい値（大きいほど遊脚が短い）"),
 )
 
 SKU = "sg90" if p.servo_sg90 >= 0.5 else "mg90s"
@@ -136,6 +151,16 @@ if GAIT_MODE == 1 and not TRI:
     raise ValueError("gait_mode=1（波）は3本足（rear_legs=1）だけ。四足の歩き方はトロット")
 if TRI and p.tail_dof >= 0.5:
     raise ValueError("しっぽ（tail_dof > 0）と3本足（rear_legs=1）は一緒に使えない")
+if p.hc_foot_center not in (0.0, 1.0):
+    raise ValueError("hc_foot_center は 0 か 1: %r" % p.hc_foot_center)
+HC_FOOT_CENTER = p.hc_foot_center == 1.0
+if HC_FOOT_CENTER and not TRI:
+    raise ValueError("hc_foot_center=1 は3本足（rear_legs=1）だけ")
+if p.vel_source not in (0.0, 1.0):
+    raise ValueError("vel_source は 0 か 1: %r" % p.vel_source)
+VEL_KIND = "centre_of_mass_velocity" if p.vel_source == 1.0 else "component_linear_velocity"
+if p.wave_swing != 0.5 and GAIT_MODE != 1:
+    raise ValueError("wave_swing は波（gait_mode=1）でだけ効く: %r" % p.wave_swing)
 
 # --- 胴体（下側シャーシ + 上側カバー）。股軸の高さで上下に分割する ---
 z_bot = ZH - CASE_W / 2.0 - c - w
@@ -151,6 +176,14 @@ if TRI:
     HC_X = -(BL / 2.0 + R + g)
     seat0 = horn_seat_of(probe.horn("cross").spec) if R2 else g
     HC_YB = -t / 2.0 - seat0           # 上腿の内面 = -t/2 になる、股サーボのケース上面の y
+    if HC_FOOT_CENTER:
+        # 足先の中心の y は、ケース上面 + 股のホーンの座 + 上腿 t + 膝のホーンの座 + 下腿 t/2（下の脚の組立と同じ式）。
+        # 膝のホーンも同じ十字ホーンなので座は seat0。今の HC_YB では t + seat0（mini-r2 で +11 mm）。
+        # 脚をまるごとずらし、足先を hc_foot_y に置く（rf を上げたときの支持線 lf–hc が重心の近くを通る）。
+        HC_YB = p.hc_foot_y - (seat0 + t + seat0 + t / 2.0)
+        if HC_YB < -(W2 - w):
+            # 台の +Y の面（= HC_YB）が胴体の側面の壁の内側まで届かないと、台が胴体から離れる
+            raise ValueError("hc_foot_y が -Y に寄りすぎ（股サーボの台が胴体から離れる）: %r" % p.hc_foot_y)
     LEG_SPECS = [("lf", 1, 1, p.hip_x, W2), ("rf", 1, -1, p.hip_x, W2), ("hc", -1, 1, HC_X, HC_YB)]
 else:
     LEG_SPECS = [("lf", 1, 1, p.hip_x, W2), ("rf", 1, -1, p.hip_x, W2),
@@ -250,8 +283,11 @@ if TRI:
     # 左右は胴体の側面の壁の内側から、タブの下 4 mm まで（逃げと同じ上限）。高さはサーボの収納部の幅。
     hc_lead_x0 = HC_X + (CASE_L - FRONT) + c + LEAD - 1.0
     hc_lead_y1 = HC_YB + S["mount_hole_z_mm"] - c - 4.0
-    bays.append(part.box(-cav_x + 1.0 - hc_lead_x0, hc_lead_y1 + (W2 - w), CASE_W + 2.0 * c,
-                         origin=[hc_lead_x0, -(W2 - w), ZH - CASE_W / 2.0 - c]))
+    # hc_foot_center=1 で足先を中央へ寄せると、股サーボが -Y へずれ、逃げが胴体の側面の壁の外に出る
+    # （mini-r2 で足先 y ≲ +7 mm）。そのときは空洞への通り道を作らず、線は逃げから胴体の外へ出る（印刷の前に要対応）。
+    if hc_lead_y1 + (W2 - w) > 0.0:
+        bays.append(part.box(-cav_x + 1.0 - hc_lead_x0, hc_lead_y1 + (W2 - w), CASE_W + 2.0 * c,
+                             origin=[hc_lead_x0, -(W2 - w), ZH - CASE_W / 2.0 - c]))
 body_cut = part.cut(hull, bays + [cavity, esp_pocket] + bolt_holes)
 if TAIL or TRI:
     # しっぽ・3本足の台は胴体の箱の外へはみ出すので、分ける箱を台まで広げる（はみ出しが両方に残らないように）
@@ -362,6 +398,9 @@ for name, sx, sy, _, yb in LEG_SPECS:
     y_th_in = yb + (horn_seat(hhorn) if R2 else g)
     y_lo, _ = y_slab(y_th_in, t, sy)
     y_kt = sy * (y_th_in + t)  # 膝サーボのケース上面 = 上腿の外面
+    # 外向き（符号 sy 側）の距離。四足と既定の hc では |y_kt| と同じ値。hc_foot_center=1 の hc は負になりうる
+    # （脚をずらして足先を y < t + seat に置くと、膝サーボのケース上面が y < 0 に来る）ので abs は使わない。
+    y_kt_out = sy * y_kt
     kx = hx - L1 * math.sin(th_r)
     kz = ZH - L1 * math.cos(th_r)
     # 上腿は「真下に伸びた姿勢」で作り、股軸まわりに th 回す。
@@ -374,7 +413,7 @@ for name, sx, sy, _, yb in LEG_SPECS:
     h_top = (TAB_HALF + CASE_CX) + c + w      # 膝軸から股側へ（タブの先端まで）
     h_bot = (CASE_L - FRONT) + c + LEAD + w   # 膝軸から足先側へ（ケース後端 + リード線の余裕）
     depth = CASE_H + c + w                    # 膝サーボのケースの奥行き（内側へ）
-    h_y_lo = (abs(y_kt) - depth) if sy > 0 else -abs(y_kt)
+    h_y_lo = (y_kt_out - depth) if sy > 0 else -y_kt_out
     housing = part.box(2.0 * hw, depth, h_top + h_bot,
                        origin=[hx - hw, h_y_lo, ZH - L1 - h_bot])
     thigh_raw = rot_y(part.fuse([beam, hub, kcap, housing]), th, hip)
@@ -389,11 +428,11 @@ for name, sx, sy, _, yb in LEG_SPECS:
     thigh_tools = [ksv.bay(clearance=c, lead_room=LEAD, ledge=4.0), hhorn.body, spline_gap, hip_access]
     if R2:
         thigh_tools += horn_pocket(hhorn, (hx, ZH), yb + SPLINE_H + HUB_H, y_th_in, sy)
-        thigh_tools += [rot_y(tool, th, hip) for tool in knee_bay_opening(hx, abs(y_kt), depth, sy)]
+        thigh_tools += [rot_y(tool, th, hip) for tool in knee_bay_opening(hx, y_kt_out, depth, sy)]
     thigh = part.cut(thigh_raw, thigh_tools, label="thigh_" + name)
 
     # 下腿: 膝ホーンの外側の板。真下に伸びた姿勢で作り、膝軸まわりに psi 回す。
-    y_sh_in = abs(y_kt) + (horn_seat(khorn) if R2 else g)
+    y_sh_in = y_kt_out + (horn_seat(khorn) if R2 else g)
     ys_lo, _ = y_slab(y_sh_in, t, sy)
     knee = [kx, 0.0, kz]
     s_hub = part.cylinder(R, t, origin=[kx, ys_lo, kz], direction=[0, 1, 0])
@@ -408,7 +447,7 @@ for name, sx, sy, _, yb in LEG_SPECS:
     k_access = part.cylinder(p.screw_hole / 2.0 + 0.8, t + 2.0, origin=[kx, sy * (y_sh_in - 1.0), kz], direction=[0, sy, 0])
     shin_tools = [khorn.body, k_spline_gap, k_access, foot]
     if R2:
-        shin_tools += horn_pocket(khorn, (kx, kz), abs(y_kt) + SPLINE_H + HUB_H, y_sh_in, sy)
+        shin_tools += horn_pocket(khorn, (kx, kz), y_kt_out + SPLINE_H + HUB_H, y_sh_in, sy)
     shin = part.cut(shin_raw, shin_tools, label="shin_" + name)
 
     legs[name] = {"sx": sx, "sy": sy, "hip": hip, "knee": knee, "foot": [fx, fy, fz], "y_th_in": y_th_in,
@@ -732,7 +771,9 @@ imu_sensor = assembly.sensor(c_imu, "imu", name="imu")
 obs = [
     assembly.observation(c_imu, "component_orientation", name="rot", sensor=imu_sensor),
     assembly.observation(c_imu, "component_angular_velocity", name="gyro", sensor=imu_sensor),
-    assembly.observation(c_chassis, "component_linear_velocity", name="vel", role="privileged"),
+    # vel_source=0 は胴体の xbody 原点（組立の原点＝床の高さ）の速度で、胴体をピッチで揺するだけで vel_x が水増しされる。
+    # 1 は胴体を根とする部分木（体全体）の重心の速度（subtreelinvel）。名前・成分・単位（mm/s、ワールド座標）は同じ。
+    assembly.observation(c_chassis, VEL_KIND, name="vel", role="privileged"),
     assembly.observation(c_chassis, "component_position", name="pos", role="privileged"),
 ]
 for name in LEG_NAMES:
@@ -802,7 +843,8 @@ def gait_rewards():
         return [assembly.reward(" + ".join(
             "%s * %s" % (lift_term(leg), " * ".join("ft_%s_down" % o for o in LEG_NAMES if o != leg))
             for leg in LEG_NAMES), weight=p.w_swing, label="swing_lift")]
-    stance = ["tanh(5*(%s + 0.5))" % ph for ph in WAVE_PHASE]       # 立脚で +、遊脚で −
+    # 立脚で +、遊脚で −。位相が -wave_swing より下が遊脚（既定 0.5 で周期の 1/3、0.8 で約 0.2 = 周期 0.7 s で 0.143 s）
+    stance = ["tanh(5*(%s + %s))" % (ph, "%g" % p.wave_swing) for ph in WAVE_PHASE]
     # 立脚の度合いの3脚の平均を引く: 全脚が接地したままなら、どの時刻も 0（四足のトロットの式と同じ意味）。
     # 脚 k を上げたときの報酬は「平均 - 脚 k の度合い」で、脚 k の遊脚の位相で正、立脚の位相で負。
     mean_st = "((%s) / 3)" % " + ".join(stance)
