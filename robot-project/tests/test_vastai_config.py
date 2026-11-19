@@ -466,9 +466,18 @@ TAIL_TRI_DR = {
 }
 #: 3本足の直し（tri-r2-dyn: hc の足先を重心の後ろへ、速度を重心で、波の遊脚を短く）。学習設定は tri-r2-wave-dr と
 #: entropy も違うので TAIL_TRI_DR には入れない（test_tri_r2_dyn_dr_は_wave_dr_と…）
-DR_SOURCE = {**TAIL_TRI_DR, "tri-r2-dyn-dr": "tri-r2-dyn"}
-#: バンドルを作り終えた案（機体の形は ef0451348 の版。tri-r2-dyn-dr は hc_foot_center などを足した版）
-TAIL_TRI_DR_BUILT = tuple(sorted(TAIL_TRI_DR)) + ("tri-r2-dyn-dr",)
+#: 横に開く関節（leg_roll）を足した3本足（計画 2026-11-19-tripod-roll、Task 5）。-slip は同じ形に
+#: 接地した足の滑りの罰（slip_cost=5）を足した機体。
+TRI3_DR = {
+    "tri3-r8-dr": "tri3-r8",
+    "tri3-r8-slip-dr": "tri3-r8-slip",
+    "tri3-r9-dr": "tri3-r9",
+    "tri3-r9-slip-dr": "tri3-r9-slip",
+}
+DR_SOURCE = {**TAIL_TRI_DR, "tri-r2-dyn-dr": "tri-r2-dyn", **TRI3_DR}
+#: バンドルを作り終えた案（機体の形は ef0451348 の版。tri-r2-dyn-dr は hc_foot_center などを足した版、
+#: tri3-* は leg_roll を足した 695920bb1 の版）
+TAIL_TRI_DR_BUILT = tuple(sorted(TAIL_TRI_DR)) + ("tri-r2-dyn-dr",) + tuple(sorted(TRI3_DR))
 
 
 @pytest.mark.parametrize("variant", sorted(TAIL_TRI_DR))
@@ -524,6 +533,35 @@ def test_tri3_configs_match_dyn(variant):
         {k: v for k, v in ref["trainer"].items() if k != "label"}
     assert {k: v for k, v in other["instance"].items() if k != "label"} == \
         {k: v for k, v in ref["instance"].items() if k != "label"}
+
+
+@pytest.mark.parametrize("variant", ["tri3-r8", "tri3-r9"])
+def test_tri3_slip_configs_match_tri3(variant):
+    # 滑りの罰を足した版。train_full_<機体>-dr.json と、名前・ラベル・バンドルのパスだけが違う
+    ref = json.loads((ROOT / "configs" / f"train_full_{variant}-dr.json").read_text(encoding="utf-8"))
+    other = json.loads((ROOT / "configs" / f"train_full_{variant}-slip-dr.json").read_text(encoding="utf-8"))
+    assert other["name"] == f"full-{variant}-slip-dr"
+    assert other["bundle"] == f"artifacts/{variant}-slip-dr/cut/walk-task.json"
+    assert other["trainer"]["label"] == f"q8 vast.ai full {variant}-slip-dr"
+    assert other["instance"]["label"] == f"q8-full-{variant}-slip-dr"
+    ignore = {"_comment", "name", "bundle", "trainer", "instance"}
+    assert {k: v for k, v in other.items() if k not in ignore} == \
+        {k: v for k, v in ref.items() if k not in ignore}
+    assert {k: v for k, v in other["trainer"].items() if k != "label"} == \
+        {k: v for k, v in ref["trainer"].items() if k != "label"}
+    assert {k: v for k, v in other["instance"].items() if k != "label"} == \
+        {k: v for k, v in ref["instance"].items() if k != "label"}
+
+
+@pytest.mark.parametrize("variant", sorted(TRI3_DR))
+def test_tri3_bundles_carry_slip_cost_only_on_slip(variant):
+    # -slip のバンドルだけが滑りの罰 foot_slip（重み -5）を持つ。罰の無い版には項が無い
+    task = json.loads((ROOT / "artifacts" / variant / "cut" / "walk-task.json").read_text(encoding="utf-8"))
+    slip = [r for r in task["reward"] if r["label"] == "foot_slip"]
+    if "-slip-" in variant:
+        assert len(slip) == 1 and slip[0]["weight"] == -5.0
+    else:
+        assert slip == []
 
 
 @pytest.mark.parametrize("variant", TAIL_TRI_DR_BUILT)

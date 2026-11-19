@@ -1,0 +1,22 @@
+{
+ "schema": "cadex-relay-v1",
+ "task_sha256": "0277d8dcc92cac18af4382368065791150334c1372afdb626c40b3f93fcb8fa2",
+ "export_sha256": "0969d8452a044b2af4f7779e76f0fbde307610f976171e1e653500a742d44d35",
+ "onto_sha256": "23804a55bc1c4a8ab3e1096c68d701c1b89135331232e5a4b7e98cc3479ccb3b",
+ "model_sha256": "d9cac80060453efa4973800d343310d8bc58e1c9e694602e18d8bc2274e553ef",
+ "sensors_kept": 29,
+ "sensors_dropped": {},
+ "sites_moved": {},
+ "observations_dropped": [],
+ "entries_dropped": [],
+ "randomisation_dropped": [
+  "task.randomisation: rand_cover_mass on c_cover",
+  "task.success.randomisation: rand_cover_mass on c_cover"
+ ],
+ "joints_only_in_source": [],
+ "joints_only_in_target": [],
+ "solver_steps": [
+  10,
+  10
+ ]
+}

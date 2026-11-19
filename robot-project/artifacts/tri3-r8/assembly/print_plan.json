@@ -1,0 +1,1732 @@
+{
+ "bed_mm": [
+  180.0,
+  180.0
+ ],
+ "effective_density_g_cm3": 0.8,
+ "overhang_deg": 45.0,
+ "note": "フィラメント量は 体積 x 実効密度 の推定。サポート・ブリム・パージは含まない。印刷時間はスライサーで確認する。",
+ "parts": {
+  "chassis": {
+   "down": [
+    1,
+    0,
+    0
+   ],
+   "overhang_mm2": 1446.6,
+   "bridge_mm2": 1352.2,
+   "bed_contact_mm2": 533.2,
+   "height_mm": 125.6,
+   "footprint_mm": [
+    11.1,
+    112.8
+   ],
+   "volume_cm3": 32.561,
+   "filament_g": 26.05,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 1674.8,
+     "overhang_mm2": 6614.9,
+     "bridge_mm2": 6614.9,
+     "height_mm": 11.1
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 1581.0,
+     "overhang_mm2": 6708.7,
+     "bridge_mm2": 6708.7,
+     "height_mm": 11.1
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 343.0,
+     "overhang_mm2": 1927.2,
+     "bridge_mm2": 1834.2,
+     "height_mm": 112.8
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 271.8,
+     "overhang_mm2": 1998.4,
+     "bridge_mm2": 1905.5,
+     "height_mm": 112.8
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 533.2,
+     "overhang_mm2": 1446.6,
+     "bridge_mm2": 1352.2,
+     "height_mm": 125.6
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 265.7,
+     "overhang_mm2": 1710.6,
+     "bridge_mm2": 1656.3,
+     "height_mm": 125.6
+    }
+   ]
+  },
+  "cover": {
+   "down": [
+    1,
+    0,
+    0
+   ],
+   "overhang_mm2": 3284.4,
+   "bridge_mm2": 3039.1,
+   "bed_contact_mm2": 954.8,
+   "height_mm": 125.6,
+   "footprint_mm": [
+    27.6,
+    112.8
+   ],
+   "volume_cm3": 51.056,
+   "filament_g": 40.84,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 1576.0,
+     "overhang_mm2": 4612.6,
+     "bridge_mm2": 4612.6,
+     "height_mm": 27.6
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 1278.8,
+     "overhang_mm2": 4909.9,
+     "bridge_mm2": 4909.9,
+     "height_mm": 27.6
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 851.3,
+     "overhang_mm2": 4905.0,
+     "bridge_mm2": 4662.7,
+     "height_mm": 112.8
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 486.6,
+     "overhang_mm2": 5269.7,
+     "bridge_mm2": 5027.4,
+     "height_mm": 112.8
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 954.8,
+     "overhang_mm2": 3284.4,
+     "bridge_mm2": 3039.1,
+     "height_mm": 125.6
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 475.9,
+     "overhang_mm2": 3757.4,
+     "bridge_mm2": 3593.5,
+     "height_mm": 125.6
+    }
+   ]
+  },
+  "thigh_lf": {
+   "down": [
+    0,
+    -1,
+    0
+   ],
+   "overhang_mm2": 0.0,
+   "bridge_mm2": 0.0,
+   "bed_contact_mm2": 1040.6,
+   "height_mm": 30.9,
+   "footprint_mm": [
+    51.2,
+    71.0
+   ],
+   "volume_cm3": 11.64,
+   "filament_g": 9.31,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 1063.5,
+     "bridge_mm2": 42.9,
+     "height_mm": 71.0
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 8.9,
+     "overhang_mm2": 1027.2,
+     "bridge_mm2": 42.8,
+     "height_mm": 71.0
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 207.4,
+     "overhang_mm2": 833.2,
+     "bridge_mm2": 833.2,
+     "height_mm": 30.9
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 1040.6,
+     "overhang_mm2": 0.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 30.9
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 6.7,
+     "overhang_mm2": 2476.3,
+     "bridge_mm2": 42.5,
+     "height_mm": 51.2
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 2442.9,
+     "bridge_mm2": 49.2,
+     "height_mm": 51.2
+    }
+   ]
+  },
+  "thigh_rf": {
+   "down": [
+    0,
+    1,
+    0
+   ],
+   "overhang_mm2": 0.0,
+   "bridge_mm2": 0.0,
+   "bed_contact_mm2": 1040.6,
+   "height_mm": 30.9,
+   "footprint_mm": [
+    51.2,
+    71.0
+   ],
+   "volume_cm3": 11.64,
+   "filament_g": 9.31,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 1063.8,
+     "bridge_mm2": 43.2,
+     "height_mm": 71.0
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 8.9,
+     "overhang_mm2": 1027.0,
+     "bridge_mm2": 42.5,
+     "height_mm": 71.0
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 1040.6,
+     "overhang_mm2": 0.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 30.9
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 207.4,
+     "overhang_mm2": 833.2,
+     "bridge_mm2": 833.2,
+     "height_mm": 30.9
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 6.7,
+     "overhang_mm2": 2476.3,
+     "bridge_mm2": 42.5,
+     "height_mm": 51.2
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 2442.9,
+     "bridge_mm2": 49.2,
+     "height_mm": 51.2
+    }
+   ]
+  },
+  "thigh_hc": {
+   "down": [
+    0,
+    1,
+    0
+   ],
+   "overhang_mm2": 0.0,
+   "bridge_mm2": 0.0,
+   "bed_contact_mm2": 1040.6,
+   "height_mm": 30.9,
+   "footprint_mm": [
+    51.2,
+    71.0
+   ],
+   "volume_cm3": 11.64,
+   "filament_g": 9.31,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 1063.8,
+     "bridge_mm2": 43.2,
+     "height_mm": 71.0
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 8.9,
+     "overhang_mm2": 1027.0,
+     "bridge_mm2": 42.5,
+     "height_mm": 71.0
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 1040.6,
+     "overhang_mm2": 0.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 30.9
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 207.4,
+     "overhang_mm2": 833.2,
+     "bridge_mm2": 833.2,
+     "height_mm": 30.9
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 6.7,
+     "overhang_mm2": 2476.3,
+     "bridge_mm2": 42.5,
+     "height_mm": 51.2
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 2442.9,
+     "bridge_mm2": 49.2,
+     "height_mm": 51.2
+    }
+   ]
+  },
+  "shin_lf": {
+   "down": [
+    0,
+    -1,
+    0
+   ],
+   "overhang_mm2": 0.0,
+   "bridge_mm2": 0.0,
+   "bed_contact_mm2": 754.0,
+   "height_mm": 6.5,
+   "footprint_mm": [
+    36.7,
+    53.4
+   ],
+   "volume_cm3": 4.498,
+   "filament_g": 3.6,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 187.2,
+     "bridge_mm2": 48.9,
+     "height_mm": 53.4
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 6.7,
+     "overhang_mm2": 186.8,
+     "bridge_mm2": 42.1,
+     "height_mm": 53.4
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 579.7,
+     "overhang_mm2": 174.3,
+     "bridge_mm2": 174.3,
+     "height_mm": 6.5
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 754.0,
+     "overhang_mm2": 0.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 6.5
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 408.8,
+     "bridge_mm2": 48.5,
+     "height_mm": 36.7
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 6.7,
+     "overhang_mm2": 383.1,
+     "bridge_mm2": 41.9,
+     "height_mm": 36.7
+    }
+   ]
+  },
+  "shin_rf": {
+   "down": [
+    0,
+    1,
+    0
+   ],
+   "overhang_mm2": 0.0,
+   "bridge_mm2": 0.0,
+   "bed_contact_mm2": 754.0,
+   "height_mm": 6.5,
+   "footprint_mm": [
+    36.7,
+    53.4
+   ],
+   "volume_cm3": 4.498,
+   "filament_g": 3.6,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 187.4,
+     "bridge_mm2": 49.1,
+     "height_mm": 53.4
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 6.7,
+     "overhang_mm2": 186.6,
+     "bridge_mm2": 41.9,
+     "height_mm": 53.4
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 754.0,
+     "overhang_mm2": 0.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 6.5
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 579.7,
+     "overhang_mm2": 174.3,
+     "bridge_mm2": 174.3,
+     "height_mm": 6.5
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 408.8,
+     "bridge_mm2": 48.5,
+     "height_mm": 36.7
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 6.7,
+     "overhang_mm2": 383.1,
+     "bridge_mm2": 41.9,
+     "height_mm": 36.7
+    }
+   ]
+  },
+  "shin_hc": {
+   "down": [
+    0,
+    1,
+    0
+   ],
+   "overhang_mm2": 0.0,
+   "bridge_mm2": 0.0,
+   "bed_contact_mm2": 754.0,
+   "height_mm": 6.5,
+   "footprint_mm": [
+    36.7,
+    53.4
+   ],
+   "volume_cm3": 4.498,
+   "filament_g": 3.6,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 187.4,
+     "bridge_mm2": 49.1,
+     "height_mm": 53.4
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 6.7,
+     "overhang_mm2": 186.6,
+     "bridge_mm2": 41.9,
+     "height_mm": 53.4
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 754.0,
+     "overhang_mm2": 0.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 6.5
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 579.7,
+     "overhang_mm2": 174.3,
+     "bridge_mm2": 174.3,
+     "height_mm": 6.5
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.0,
+     "overhang_mm2": 408.8,
+     "bridge_mm2": 48.5,
+     "height_mm": 36.7
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 6.7,
+     "overhang_mm2": 383.1,
+     "bridge_mm2": 41.9,
+     "height_mm": 36.7
+    }
+   ]
+  },
+  "foot_lf": {
+   "down": [
+    0,
+    1,
+    0
+   ],
+   "overhang_mm2": 65.9,
+   "bridge_mm2": 0.0,
+   "bed_contact_mm2": 0.3,
+   "height_mm": 12.0,
+   "footprint_mm": [
+    12.0,
+    12.0
+   ],
+   "volume_cm3": 0.904,
+   "filament_g": 0.72,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 0.2,
+     "overhang_mm2": 66.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 0.2,
+     "overhang_mm2": 66.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    }
+   ]
+  },
+  "foot_rf": {
+   "down": [
+    0,
+    1,
+    0
+   ],
+   "overhang_mm2": 65.9,
+   "bridge_mm2": 0.0,
+   "bed_contact_mm2": 0.3,
+   "height_mm": 12.0,
+   "footprint_mm": [
+    12.0,
+    12.0
+   ],
+   "volume_cm3": 0.904,
+   "filament_g": 0.72,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 0.2,
+     "overhang_mm2": 66.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 0.2,
+     "overhang_mm2": 66.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    }
+   ]
+  },
+  "foot_hc": {
+   "down": [
+    0,
+    1,
+    0
+   ],
+   "overhang_mm2": 65.9,
+   "bridge_mm2": 0.0,
+   "bed_contact_mm2": 0.3,
+   "height_mm": 12.0,
+   "footprint_mm": [
+    12.0,
+    12.0
+   ],
+   "volume_cm3": 0.904,
+   "filament_g": 0.72,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 0.2,
+     "overhang_mm2": 66.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 0.2,
+     "overhang_mm2": 66.0,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 0.3,
+     "overhang_mm2": 65.9,
+     "bridge_mm2": 0.0,
+     "height_mm": 12.0
+    }
+   ]
+  },
+  "rollbr_lf": {
+   "down": [
+    0,
+    1,
+    0
+   ],
+   "overhang_mm2": 159.0,
+   "bridge_mm2": 134.1,
+   "bed_contact_mm2": 842.5,
+   "height_mm": 64.0,
+   "footprint_mm": [
+    46.1,
+    26.1
+   ],
+   "volume_cm3": 18.753,
+   "filament_g": 15.0,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 1194.3,
+     "overhang_mm2": 1278.4,
+     "bridge_mm2": 1193.6,
+     "height_mm": 26.1
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 339.2,
+     "overhang_mm2": 2133.1,
+     "bridge_mm2": 2048.2,
+     "height_mm": 26.1
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 842.5,
+     "overhang_mm2": 159.0,
+     "bridge_mm2": 134.1,
+     "height_mm": 64.0
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 6.7,
+     "overhang_mm2": 958.8,
+     "bridge_mm2": 814.0,
+     "height_mm": 64.0
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 531.5,
+     "overhang_mm2": 1459.3,
+     "bridge_mm2": 1459.3,
+     "height_mm": 46.1
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 1343.2,
+     "overhang_mm2": 647.6,
+     "bridge_mm2": 647.6,
+     "height_mm": 46.1
+    }
+   ]
+  },
+  "rollbr_rf": {
+   "down": [
+    0,
+    -1,
+    0
+   ],
+   "overhang_mm2": 159.0,
+   "bridge_mm2": 134.1,
+   "bed_contact_mm2": 842.5,
+   "height_mm": 64.0,
+   "footprint_mm": [
+    46.1,
+    26.1
+   ],
+   "volume_cm3": 18.753,
+   "filament_g": 15.0,
+   "orientations": [
+    {
+     "down": [
+      0,
+      0,
+      -1
+     ],
+     "bed_contact_mm2": 1194.3,
+     "overhang_mm2": 1278.4,
+     "bridge_mm2": 1193.6,
+     "height_mm": 26.1
+    },
+    {
+     "down": [
+      0,
+      0,
+      1
+     ],
+     "bed_contact_mm2": 339.2,
+     "overhang_mm2": 2133.1,
+     "bridge_mm2": 2048.2,
+     "height_mm": 26.1
+    },
+    {
+     "down": [
+      0,
+      1,
+      0
+     ],
+     "bed_contact_mm2": 6.7,
+     "overhang_mm2": 958.8,
+     "bridge_mm2": 814.0,
+     "height_mm": 64.0
+    },
+    {
+     "down": [
+      0,
+      -1,
+      0
+     ],
+     "bed_contact_mm2": 842.5,
+     "overhang_mm2": 159.0,
+     "bridge_mm2": 134.1,
+     "height_mm": 64.0
+    },
+    {
+     "down": [
+      1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 531.5,
+     "overhang_mm2": 1459.3,
+     "bridge_mm2": 1459.3,
+     "height_mm": 46.1
+    },
+    {
+     "down": [
+      -1,
+      0,
+      0
+     ],
+     "bed_contact_mm2": 1343.2,
+     "overhang_mm2": 647.6,
+     "bridge_mm2": 647.6,
+     "height_mm": 46.1
+    }
+   ]
+  }
+ },
+ "plates": [
+  {
+   "key": "plate1_body",
+   "title": "胴体（chassis と cover）",
+   "parts": [
+    "chassis",
+    "cover"
+   ],
+   "placed": [
+    {
+     "name": "chassis",
+     "x": 5.0,
+     "y": 5.0,
+     "w": 112.8,
+     "d": 11.1,
+     "rotated": true
+    },
+    {
+     "name": "cover",
+     "x": 5.0,
+     "y": 21.1,
+     "w": 112.8,
+     "d": 27.6,
+     "rotated": true
+    }
+   ],
+   "filament_g": 66.8936
+  },
+  {
+   "key": "plate2_thighs",
+   "title": "上腿 3本",
+   "parts": [
+    "thigh_lf",
+    "thigh_rf",
+    "thigh_hc"
+   ],
+   "placed": [
+    {
+     "name": "thigh_lf",
+     "x": 5.0,
+     "y": 5.0,
+     "w": 71.0,
+     "d": 51.2,
+     "rotated": true
+    },
+    {
+     "name": "thigh_rf",
+     "x": 81.0,
+     "y": 5.0,
+     "w": 71.0,
+     "d": 51.2,
+     "rotated": true
+    },
+    {
+     "name": "thigh_hc",
+     "x": 5.0,
+     "y": 61.2,
+     "w": 71.0,
+     "d": 51.2,
+     "rotated": true
+    }
+   ],
+   "filament_g": 27.936
+  },
+  {
+   "key": "plate3_shins",
+   "title": "下腿 3本",
+   "parts": [
+    "shin_lf",
+    "shin_rf",
+    "shin_hc"
+   ],
+   "placed": [
+    {
+     "name": "shin_lf",
+     "x": 5.0,
+     "y": 5.0,
+     "w": 53.4,
+     "d": 36.7,
+     "rotated": true
+    },
+    {
+     "name": "shin_rf",
+     "x": 63.4,
+     "y": 5.0,
+     "w": 53.4,
+     "d": 36.7,
+     "rotated": true
+    },
+    {
+     "name": "shin_hc",
+     "x": 5.0,
+     "y": 46.7,
+     "w": 53.4,
+     "d": 36.7,
+     "rotated": true
+    }
+   ],
+   "filament_g": 10.7952
+  },
+  {
+   "key": "plate4_feet",
+   "title": "足先 3個（サポートあり）",
+   "parts": [
+    "foot_lf",
+    "foot_rf",
+    "foot_hc"
+   ],
+   "placed": [
+    {
+     "name": "foot_lf",
+     "x": 5.0,
+     "y": 5.0,
+     "w": 12.0,
+     "d": 12.0,
+     "rotated": false
+    },
+    {
+     "name": "foot_rf",
+     "x": 22.0,
+     "y": 5.0,
+     "w": 12.0,
+     "d": 12.0,
+     "rotated": false
+    },
+    {
+     "name": "foot_hc",
+     "x": 39.0,
+     "y": 5.0,
+     "w": 12.0,
+     "d": 12.0,
+     "rotated": false
+    }
+   ],
+   "filament_g": 2.1696
+  },
+  {
+   "key": "plate6_roll",
+   "title": "ロールの台 2個",
+   "parts": [
+    "rollbr_lf",
+    "rollbr_rf"
+   ],
+   "placed": [
+    {
+     "name": "rollbr_lf",
+     "x": 5.0,
+     "y": 5.0,
+     "w": 46.1,
+     "d": 26.1,
+     "rotated": false
+    },
+    {
+     "name": "rollbr_rf",
+     "x": 56.1,
+     "y": 5.0,
+     "w": 46.1,
+     "d": 26.1,
+     "rotated": false
+    }
+   ],
+   "filament_g": 30.0048
+  }
+ ],
+ "fit_checks_note": "blocked_fraction は insert の投影を覆う平行な光線のうち、差し込む途中で part に当たる割合。0 なら入る。",
+ "fit_checks": [
+  {
+   "part": "thigh_lf",
+   "insert": "knee_servo_lf",
+   "direction": [
+    0,
+    -1,
+    0
+   ],
+   "label": "膝サーボを上腿に外側から入れる",
+   "blocked_fraction": 0.0
+  },
+  {
+   "part": "thigh_lf",
+   "insert": "knee_servo_lf",
+   "direction": [
+    0,
+    1,
+    0
+   ],
+   "label": "膝サーボを上腿に内側から入れる",
+   "blocked_fraction": 0.243
+  },
+  {
+   "part": "thigh_lf",
+   "insert": "hip_horn_lf",
+   "direction": [
+    0,
+    1,
+    0
+   ],
+   "label": "股ホーンを上腿の凹みに内側の面から入れる",
+   "blocked_fraction": 0.985
+  },
+  {
+   "part": "thigh_lf",
+   "insert": "hip_horn_lf",
+   "direction": [
+    0,
+    -1,
+    0
+   ],
+   "label": "股ホーンを上腿の凹みに外側の面から入れる",
+   "blocked_fraction": 0.0
+  },
+  {
+   "part": "shin_lf",
+   "insert": "knee_horn_lf",
+   "direction": [
+    0,
+    1,
+    0
+   ],
+   "label": "膝ホーンを下腿の凹みに内側の面から入れる",
+   "blocked_fraction": 0.985
+  },
+  {
+   "part": "shin_lf",
+   "insert": "knee_horn_lf",
+   "direction": [
+    0,
+    -1,
+    0
+   ],
+   "label": "膝ホーンを下腿の凹みに外側の面から入れる",
+   "blocked_fraction": 0.0
+  },
+  {
+   "part": "chassis",
+   "insert": "roll_servo_lf",
+   "direction": [
+    1,
+    0,
+    0
+   ],
+   "label": "ロールのサーボを chassis の台に入れる (1, 0, 0)",
+   "blocked_fraction": 0.261
+  },
+  {
+   "part": "chassis",
+   "insert": "roll_servo_lf",
+   "direction": [
+    -1,
+    0,
+    0
+   ],
+   "label": "ロールのサーボを chassis の台に入れる (-1, 0, 0)",
+   "blocked_fraction": 0.125
+  },
+  {
+   "part": "chassis",
+   "insert": "roll_servo_lf",
+   "direction": [
+    0,
+    -1,
+    0
+   ],
+   "label": "ロールのサーボを chassis の台に入れる (0, -1, 0)",
+   "blocked_fraction": 0.186
+  },
+  {
+   "part": "chassis",
+   "insert": "roll_servo_lf",
+   "direction": [
+    0,
+    1,
+    0
+   ],
+   "label": "ロールのサーボを chassis の台に入れる (0, 1, 0)",
+   "blocked_fraction": 0.186
+  },
+  {
+   "part": "chassis",
+   "insert": "roll_servo_lf",
+   "direction": [
+    0,
+    0,
+    -1
+   ],
+   "label": "ロールのサーボを chassis の台に入れる (0, 0, -1)",
+   "blocked_fraction": 0.0
+  },
+  {
+   "part": "chassis",
+   "insert": "roll_servo_lf",
+   "direction": [
+    0,
+    0,
+    1
+   ],
+   "label": "ロールのサーボを chassis の台に入れる (0, 0, 1)",
+   "blocked_fraction": 0.957
+  },
+  {
+   "part": "cover",
+   "insert": "roll_servo_lf",
+   "direction": [
+    0,
+    0,
+    -1
+   ],
+   "label": "cover をロールのサーボの上に被せる (0, 0, -1)",
+   "blocked_fraction": 0.496
+  },
+  {
+   "part": "cover",
+   "insert": "roll_servo_lf",
+   "direction": [
+    0,
+    0,
+    1
+   ],
+   "label": "cover をロールのサーボの上に被せる (0, 0, 1)",
+   "blocked_fraction": 0.0
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "hip_servo_lf",
+   "direction": [
+    1,
+    0,
+    0
+   ],
+   "label": "股サーボをロールの台に入れる (1, 0, 0)",
+   "blocked_fraction": 1.0
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "hip_servo_lf",
+   "direction": [
+    -1,
+    0,
+    0
+   ],
+   "label": "股サーボをロールの台に入れる (-1, 0, 0)",
+   "blocked_fraction": 0.957
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "hip_servo_lf",
+   "direction": [
+    0,
+    -1,
+    0
+   ],
+   "label": "股サーボをロールの台に入れる (0, -1, 0)",
+   "blocked_fraction": 1.0
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "hip_servo_lf",
+   "direction": [
+    0,
+    1,
+    0
+   ],
+   "label": "股サーボをロールの台に入れる (0, 1, 0)",
+   "blocked_fraction": 0.0
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "hip_servo_lf",
+   "direction": [
+    0,
+    0,
+    -1
+   ],
+   "label": "股サーボをロールの台に入れる (0, 0, -1)",
+   "blocked_fraction": 0.976
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "hip_servo_lf",
+   "direction": [
+    0,
+    0,
+    1
+   ],
+   "label": "股サーボをロールの台に入れる (0, 0, 1)",
+   "blocked_fraction": 0.976
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "roll_horn_lf",
+   "direction": [
+    1,
+    0,
+    0
+   ],
+   "label": "ロールのホーンをロールの台の凹みに入れる (1, 0, 0)",
+   "blocked_fraction": 0.0
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "roll_horn_lf",
+   "direction": [
+    -1,
+    0,
+    0
+   ],
+   "label": "ロールのホーンをロールの台の凹みに入れる (-1, 0, 0)",
+   "blocked_fraction": 0.985
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "roll_horn_lf",
+   "direction": [
+    0,
+    -1,
+    0
+   ],
+   "label": "ロールのホーンをロールの台の凹みに入れる (0, -1, 0)",
+   "blocked_fraction": 0.909
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "roll_horn_lf",
+   "direction": [
+    0,
+    1,
+    0
+   ],
+   "label": "ロールのホーンをロールの台の凹みに入れる (0, 1, 0)",
+   "blocked_fraction": 0.909
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "roll_horn_lf",
+   "direction": [
+    0,
+    0,
+    -1
+   ],
+   "label": "ロールのホーンをロールの台の凹みに入れる (0, 0, -1)",
+   "blocked_fraction": 0.909
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "roll_horn_lf",
+   "direction": [
+    0,
+    0,
+    1
+   ],
+   "label": "ロールのホーンをロールの台の凹みに入れる (0, 0, 1)",
+   "blocked_fraction": 0.909
+  },
+  {
+   "part": "chassis",
+   "insert": "hip_servo_hc",
+   "direction": [
+    0,
+    0,
+    -1
+   ],
+   "label": "後ろの脚の股サーボを chassis の台に入れる (0, 0, -1)",
+   "blocked_fraction": 0.0
+  },
+  {
+   "part": "chassis",
+   "insert": "hip_servo_hc",
+   "direction": [
+    0,
+    0,
+    1
+   ],
+   "label": "後ろの脚の股サーボを chassis の台に入れる (0, 0, 1)",
+   "blocked_fraction": 0.966
+  },
+  {
+   "part": "cover",
+   "insert": "hip_servo_hc",
+   "direction": [
+    0,
+    0,
+    -1
+   ],
+   "label": "cover を後ろの脚の股サーボの上に被せる (0, 0, -1)",
+   "blocked_fraction": 0.966
+  },
+  {
+   "part": "cover",
+   "insert": "hip_servo_hc",
+   "direction": [
+    0,
+    0,
+    1
+   ],
+   "label": "cover を後ろの脚の股サーボの上に被せる (0, 0, 1)",
+   "blocked_fraction": 0.0
+  },
+  {
+   "part": "thigh_hc",
+   "insert": "knee_servo_hc",
+   "direction": [
+    0,
+    -1,
+    0
+   ],
+   "label": "後ろの脚の膝サーボを上腿に入れる (0, -1, 0)",
+   "blocked_fraction": 0.243
+  },
+  {
+   "part": "thigh_hc",
+   "insert": "knee_servo_hc",
+   "direction": [
+    0,
+    1,
+    0
+   ],
+   "label": "後ろの脚の膝サーボを上腿に入れる (0, 1, 0)",
+   "blocked_fraction": 0.0
+  },
+  {
+   "part": "thigh_hc",
+   "insert": "hip_horn_hc",
+   "direction": [
+    0,
+    -1,
+    0
+   ],
+   "label": "後ろの脚の股ホーンを上腿の凹みに入れる (0, -1, 0)",
+   "blocked_fraction": 0.985
+  },
+  {
+   "part": "thigh_hc",
+   "insert": "hip_horn_hc",
+   "direction": [
+    0,
+    1,
+    0
+   ],
+   "label": "後ろの脚の股ホーンを上腿の凹みに入れる (0, 1, 0)",
+   "blocked_fraction": 0.0
+  },
+  {
+   "part": "shin_hc",
+   "insert": "knee_horn_hc",
+   "direction": [
+    0,
+    -1,
+    0
+   ],
+   "label": "後ろの脚の膝ホーンを下腿の凹みに入れる (0, -1, 0)",
+   "blocked_fraction": 0.985
+  },
+  {
+   "part": "shin_hc",
+   "insert": "knee_horn_hc",
+   "direction": [
+    0,
+    1,
+    0
+   ],
+   "label": "後ろの脚の膝ホーンを下腿の凹みに入れる (0, 1, 0)",
+   "blocked_fraction": 0.0
+  }
+ ],
+ "enclosed_voids_note": "部品にサーボを入れた状態で外につながらない空間（mm³、0.35 mm のボクセル、すきまは塞いだものとみなす）。0 でなければ、リード線の逃げが外へ抜けていない。",
+ "enclosed_voids": [
+  {
+   "part": "thigh_lf",
+   "insert": "knee_servo_lf",
+   "label": "膝サーボを入れた上腿",
+   "enclosed_void_mm3": 0.0
+  },
+  {
+   "part": "rollbr_lf",
+   "insert": "hip_servo_lf",
+   "label": "股サーボを入れたロールの台",
+   "enclosed_void_mm3": 2.0
+  },
+  {
+   "part": "chassis+cover",
+   "insert": "roll_servo_lf",
+   "label": "ロールのサーボを挟んだ胴体（線は胴体の空洞から cover の窓へ）",
+   "enclosed_void_mm3": 9.0
+  },
+  {
+   "part": "chassis+cover",
+   "insert": "hip_servo_hc",
+   "label": "後ろの脚の股サーボを挟んだ胴体（線は通り道から空洞へ）",
+   "enclosed_void_mm3": 6.0
+  },
+  {
+   "part": "thigh_hc",
+   "insert": "knee_servo_hc",
+   "label": "後ろの脚の膝サーボを入れた上腿",
+   "enclosed_void_mm3": 5.0
+  }
+ ],
+ "assembly_verdict_note": "組立の要所ごとの判定。fit はどれか1つの向きで当たる光線が 0、リード線は閉じた空間が 50 mm³ 未満なら True。",
+ "assembly_verdict": {
+  "knee_servo_into_thigh": true,
+  "hip_horn_into_thigh": true,
+  "knee_horn_into_shin": true,
+  "roll_servo_into_chassis": true,
+  "cover_closes": true,
+  "hip_servo_into_rollbr": true,
+  "roll_horn_into_rollbr": true,
+  "hc_hip_servo_into_chassis": true,
+  "hc_cover_closes": true,
+  "hc_knee_servo_into_thigh": true,
+  "hc_hip_horn_into_thigh": true,
+  "hc_knee_horn_into_shin": true,
+  "knee_lead_exits": true,
+  "hip_lead_exits": true,
+  "roll_lead_exits": true,
+  "hc_hip_lead_exits": true,
+  "hc_knee_lead_exits": true
+ }
+}
