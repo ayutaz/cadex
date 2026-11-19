@@ -1393,12 +1393,12 @@
    "weight": -0.5
   },
   {
-   "expression": "(tanh(5*(clock_cos + 0.8)) - ((tanh(5*(clock_cos + 0.8)) + tanh(5*((-0.5*clock_cos + 0.866025*clock_sin) + 0.8)) + tanh(5*((-0.5*clock_cos - 0.866025*clock_sin) + 0.8))) / 3)) * ft_lf_down + (tanh(5*((-0.5*clock_cos + 0.866025*clock_sin) + 0.8)) - ((tanh(5*(clock_cos + 0.8)) + tanh(5*((-0.5*clock_cos + 0.866025*clock_sin) + 0.8)) + tanh(5*((-0.5*clock_cos - 0.866025*clock_sin) + 0.8))) / 3)) * ft_rf_down + (tanh(5*((-0.5*clock_cos - 0.866025*clock_sin) + 0.8)) - ((tanh(5*(clock_cos + 0.8)) + tanh(5*((-0.5*clock_cos + 0.866025*clock_sin) + 0.8)) + tanh(5*((-0.5*clock_cos - 0.866025*clock_sin) + 0.8))) / 3)) * ft_hc_down",
+   "expression": "(tanh(5*(clock_cos + 0.5)) - ((tanh(5*(clock_cos + 0.5)) + tanh(5*((-0.5*clock_cos + 0.866025*clock_sin) + 0.5)) + tanh(5*((-0.5*clock_cos - 0.866025*clock_sin) + 0.5))) / 3)) * ft_lf_down + (tanh(5*((-0.5*clock_cos + 0.866025*clock_sin) + 0.5)) - ((tanh(5*(clock_cos + 0.5)) + tanh(5*((-0.5*clock_cos + 0.866025*clock_sin) + 0.5)) + tanh(5*((-0.5*clock_cos - 0.866025*clock_sin) + 0.5))) / 3)) * ft_rf_down + (tanh(5*((-0.5*clock_cos - 0.866025*clock_sin) + 0.5)) - ((tanh(5*(clock_cos + 0.5)) + tanh(5*((-0.5*clock_cos + 0.866025*clock_sin) + 0.5)) + tanh(5*((-0.5*clock_cos - 0.866025*clock_sin) + 0.5))) / 3)) * ft_hc_down",
    "label": "gait_contact",
    "weight": 1.0
   },
   {
-   "expression": "(0.5 - 0.5*tanh(5*(clock_cos + 0.8))) * tanh((fc_lf_z - 6.00) / 10.00) + (0.5 - 0.5*tanh(5*((-0.5*clock_cos + 0.866025*clock_sin) + 0.8))) * tanh((fc_rf_z - 6.00) / 10.00) + (0.5 - 0.5*tanh(5*((-0.5*clock_cos - 0.866025*clock_sin) + 0.8))) * tanh((fc_hc_z - 6.00) / 10.00)",
+   "expression": "(0.5 - 0.5*tanh(5*(clock_cos + 0.5))) * tanh((fc_lf_z - 6.00) / 10.00) + (0.5 - 0.5*tanh(5*((-0.5*clock_cos + 0.866025*clock_sin) + 0.5))) * tanh((fc_rf_z - 6.00) / 10.00) + (0.5 - 0.5*tanh(5*((-0.5*clock_cos - 0.866025*clock_sin) + 0.5))) * tanh((fc_hc_z - 6.00) / 10.00)",
    "label": "swing_lift",
    "weight": 1.5
   },

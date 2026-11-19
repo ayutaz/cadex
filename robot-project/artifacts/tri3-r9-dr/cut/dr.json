@@ -1,11 +1,11 @@
 {
  "schema": "q8-dr-bundle-v1",
  "source": {
-  "task_sha256": "c574e5aa583cbcfa0d9359af9307145420353885235fcb4a0dace8aabfa81339",
+  "task_sha256": "db498e5bb6d8d1c258002da211238867fed28ef208978b579b0ebd046ce0ded4",
   "model_sha256": "a8c899e921fc1d258d7f14230b60fe5ea986742d6c6705352383bdb200b1f248"
  },
  "model_sha256": "77d83d65a69d3a1b97d6cd255530fefb197a2a521d31aa8400ae503f467895bb",
- "task_sha256": "15d0ef0f83a02c552b122e2a2aaa4ead1e7bbb26f2518fc4f3cbe804e31c38f3",
+ "task_sha256": "4ec734d687b12a5ea49d2c7d6e1918e8df13210c50f008a438a569ca39b00a03",
  "servo_lag_ms": [
   1.5,
   30.0

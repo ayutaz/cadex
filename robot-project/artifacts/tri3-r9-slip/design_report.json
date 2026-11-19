@@ -1,7 +1,7 @@
 {
   "variant": "tri3-r9-slip",
   "cadex_project": "~/cadex-projects/quadruped8-tri3-r9-slip",
-  "accepted_revision": "24d0bae980e84c258dca205ccaa7d7582e7c63bad325707327a3393d82ef250d",
+  "accepted_revision": "21b717f50c97757f9eee1b5a23e5416d45c151bcb702a9f6b9ca5d86541390a3",
   "design_script": "robot/design/quadruped8.py",
   "params": {
     "body_length": 96.0,
@@ -53,7 +53,7 @@
     "hc_foot_center": 1.0,
     "hc_foot_y": -10.0,
     "vel_source": 1.0,
-    "wave_swing": 0.8,
+    "wave_swing": 0.5,
     "leg_roll": 2.0,
     "roll_min": -20.0,
     "roll_max": 20.0
@@ -477,8 +477,8 @@
     ]
   },
   "timings_s": {
-    "build_s": 12.0,
-    "clearance_s": 50.7
+    "build_s": 31.6,
+    "clearance_s": 29.0
   },
   "training_cut": {
     "fidelity_pass": true,
