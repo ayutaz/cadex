@@ -1,0 +1,246 @@
+<mujoco model="cadex-assembly">
+  <compiler angle="radian" autolimits="false"/>
+
+  <option integrator="implicitfast">
+    <flag island="disable"/>
+  </option>
+
+  <size nkey="1"/>
+
+  <worldbody>
+    <geom name="environment/floor" size="0 0 0.1" type="plane" solref="0.004"/>
+    <body name="c_chassis">
+      <inertial pos="-0.00551198 0.000314844 0.0734525" quat="0.494544 0.507874 -0.492579 0.504833" mass="0.0240768" diaginertia="3.66173e-05 2.23532e-05 1.46007e-05"/>
+      <joint name="c_chassis/free" type="free"/>
+      <geom name="c_chassis/collision0" size="0.048 0.031 0.012" pos="0 0 0.0832329" type="box" conaffinity="2147483647" solref="0.004"/>
+      <geom name="c_chassis/collision1" size="0.01545 0.01355 0.019325" pos="-0.01 0.03955 0.0880579" type="box" conaffinity="2147483647" solref="0.004"/>
+      <geom name="c_chassis/collision2" size="0.01545 0.01355 0.019325" pos="-0.01 -0.03955 0.0880579" type="box" conaffinity="2147483647" solref="0.004"/>
+      <body name="c_cover">
+        <inertial pos="-0.00997667 -0.000671638 0.0926719" quat="0.506524 0.484659 -0.515461 0.492786" mass="0.0389237" diaginertia="5.8872e-05 3.79575e-05 2.47797e-05"/>
+        <body name="c_esp">
+          <inertial pos="0 0 0.0952329" quat="0 0.707107 0 0.707107" mass="0.009" diaginertia="3.46444e-06 2.98875e-06 4.99688e-07"/>
+        </body>
+        <body name="c_body_bolt_0">
+          <inertial pos="0.03735 0 0.0823485" mass="0.000424671" diaginertia="6.05925e-09 6.05925e-09 4.44699e-10"/>
+        </body>
+        <body name="c_body_bolt_1">
+          <inertial pos="-0.03735 0.0259 0.0823485" mass="0.000424671" diaginertia="6.05925e-09 6.05925e-09 4.44699e-10"/>
+        </body>
+      </body>
+      <body name="c_imu">
+        <inertial pos="0 0.0205 0.0747329" quat="0 0.707107 0 0.707107" mass="0.002" diaginertia="1.16167e-07 7.5e-08 4.41667e-08"/>
+      </body>
+      <body name="c_roll_servo_lf">
+        <inertial pos="-0.00842435 0.0445 0.0874586" quat="0.495151 0.504802 0.504802 0.495151" mass="0.0134" diaginertia="1.548e-06 1.07291e-06 8.05544e-07"/>
+      </body>
+      <body name="c_rollbr_lf">
+        <inertial pos="0.0250774 0.0740693 0.0823125" quat="0.694047 0.295452 -0.595879 0.275564" mass="0.0150024" diaginertia="7.57372e-06 6.01924e-06 2.92817e-06"/>
+        <joint name="roll_lf" pos="0.00545 0.0445 0.0848329" axis="1 0 0" limited="true" range="-0.349066 0.349066" armature="2e-05" damping="0.0168564" frictionloss="0.002"/>
+        <geom name="c_rollbr_lf/collision0" size="0.023075 0.01545 0.0086" pos="0.033025 0.08055 0.0798329" type="box" contype="2" conaffinity="2147483647" solref="0.004"/>
+        <geom name="c_rollbr_lf/collision1" size="0.00325 0.032 0.0125" pos="0.0132 0.064 0.0848329" type="box" contype="2" conaffinity="2147483647" solref="0.004"/>
+        <body name="c_roll_horn_lf">
+          <inertial pos="0.0110836 0.0445 0.0848329" mass="0.000228973" diaginertia="9.55396e-09 4.8479e-09 4.8479e-09"/>
+        </body>
+        <body name="c_hip_servo_lf">
+          <inertial pos="0.0373743 0.0789743 0.0798329" quat="0.495151 0.504802 -0.495151 0.504802" mass="0.0134" diaginertia="1.548e-06 1.07291e-06 8.05544e-07"/>
+        </body>
+        <body name="c_thigh_lf">
+          <inertial pos="0.0248768 0.0640908 0.0536387" quat="0.960339 0.103953 0.257252 -0.0276442" mass="0.00931202" diaginertia="5.24569e-06 5.04036e-06 9.56406e-07"/>
+          <joint name="hip_lf" pos="0.04 0 0.0798329" axis="0 1 0" limited="true" range="-0.785398 0.349066" armature="2e-05" damping="0.0168564" frictionloss="0.002"/>
+          <geom name="c_thigh_lf/collision0" size="0.0065 0.02" pos="0.03 0.05735 0.0625123" quat="0.965926 0 0.258819 0" type="capsule" contype="2" conaffinity="2147483647" solref="0.004"/>
+          <body name="c_hip_horn_lf">
+            <inertial pos="0.04 0.0594664 0.0798329" quat="0.707107 0 0 0.707107" mass="0.000228973" diaginertia="9.55396e-09 4.8479e-09 4.8479e-09"/>
+          </body>
+          <body name="c_knee_servo_lf">
+            <inertial pos="0.0186871 0.0679743 0.0429179" quat="0.689573 0.676389 0.18477 -0.181238" mass="0.0134" diaginertia="1.548e-06 1.07291e-06 8.05544e-07"/>
+          </body>
+          <body name="c_shin_lf">
+            <inertial pos="0.0245564 0.0461756 0.0362632" quat="0.686836 -0.162129 -0.168035 0.688284" mass="0.0035985" diaginertia="8.47771e-07 7.55542e-07 1.1631e-07"/>
+            <joint name="knee_lf" pos="0.02 0 0.0451918" axis="0 1 0" limited="true" range="-1.0472 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002"/>
+            <geom name="c_shin_lf/collision0" size="0.004 0.016" pos="0.03 0.04635 0.0255959" quat="0.972297 0 -0.233748 0" type="capsule" contype="2" conaffinity="2147483647" solref="0.004"/>
+            <body name="c_knee_horn_lf">
+              <inertial pos="0.02 0.0484664 0.0451918" quat="0.707107 0 0 0.707107" mass="0.000228973" diaginertia="9.55396e-09 4.8479e-09 4.8479e-09"/>
+            </body>
+            <body name="c_foot_lf">
+              <inertial pos="0.04 0.04635 0.006" mass="0.00108573" diaginertia="1.56346e-08 1.56346e-08 1.56346e-08"/>
+              <geom name="c_foot_lf/collision0" size="0.006" pos="0.04 0.04635 0.006" contype="4" conaffinity="2147483647" friction="0.9" solref="0.004"/>
+              <site name="obs/7/contact" pos="0.04 0.04635 0.006" size="0.006 0.006 0.006" type="box" rgba="0 0 0 0"/>
+            </body>
+          </body>
+        </body>
+      </body>
+      <body name="c_roll_servo_rf">
+        <inertial pos="-0.00842435 -0.0445 0.0874586" quat="0.495151 0.504802 0.504802 0.495151" mass="0.0134" diaginertia="1.548e-06 1.07291e-06 8.05544e-07"/>
+      </body>
+      <body name="c_rollbr_rf">
+        <inertial pos="0.0250774 -0.0740693 0.0823125" quat="0.295452 0.694047 -0.275564 0.595879" mass="0.0150024" diaginertia="7.57372e-06 6.01924e-06 2.92817e-06"/>
+        <joint name="roll_rf" pos="0.00545 -0.0445 0.0848329" axis="-1 0 0" limited="true" range="-0.349066 0.349066" armature="2e-05" damping="0.0168564" frictionloss="0.002"/>
+        <geom name="c_rollbr_rf/collision0" size="0.023075 0.01545 0.0086" pos="0.033025 -0.08055 0.0798329" type="box" contype="2" conaffinity="2147483647" solref="0.004"/>
+        <geom name="c_rollbr_rf/collision1" size="0.00325 0.032 0.0125" pos="0.0132 -0.064 0.0848329" type="box" contype="2" conaffinity="2147483647" solref="0.004"/>
+        <body name="c_roll_horn_rf">
+          <inertial pos="0.0110836 -0.0445 0.0848329" mass="0.000228973" diaginertia="9.55396e-09 4.8479e-09 4.8479e-09"/>
+        </body>
+        <body name="c_hip_servo_rf">
+          <inertial pos="0.0373743 -0.0789743 0.0798329" quat="0.504802 0.495151 -0.504802 0.495151" mass="0.0134" diaginertia="1.548e-06 1.07291e-06 8.05544e-07"/>
+        </body>
+        <body name="c_thigh_rf">
+          <inertial pos="0.0248768 -0.0640908 0.0536387" quat="0.960339 -0.103953 0.257252 0.0276442" mass="0.00931202" diaginertia="5.24569e-06 5.04036e-06 9.56406e-07"/>
+          <joint name="hip_rf" pos="0.04 0 0.0798329" axis="0 1 0" limited="true" range="-0.785398 0.349066" armature="2e-05" damping="0.0168564" frictionloss="0.002"/>
+          <geom name="c_thigh_rf/collision0" size="0.0065 0.02" pos="0.03 -0.05735 0.0625123" quat="0.965926 0 0.258819 0" type="capsule" contype="2" conaffinity="2147483647" solref="0.004"/>
+          <body name="c_hip_horn_rf">
+            <inertial pos="0.04 -0.0594664 0.0798329" quat="0.707107 0 0 0.707107" mass="0.000228973" diaginertia="9.55396e-09 4.8479e-09 4.8479e-09"/>
+          </body>
+          <body name="c_knee_servo_rf">
+            <inertial pos="0.0186871 -0.0679743 0.0429179" quat="0.676389 0.689573 0.181238 -0.18477" mass="0.0134" diaginertia="1.548e-06 1.07291e-06 8.05544e-07"/>
+          </body>
+          <body name="c_shin_rf">
+            <inertial pos="0.0245564 -0.0461756 0.0362632" quat="0.688284 -0.168035 -0.162129 0.686836" mass="0.0035985" diaginertia="8.47771e-07 7.55542e-07 1.1631e-07"/>
+            <joint name="knee_rf" pos="0.02 0 0.0451918" axis="0 1 0" limited="true" range="-1.0472 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002"/>
+            <geom name="c_shin_rf/collision0" size="0.004 0.016" pos="0.03 -0.04635 0.0255959" quat="0.972297 0 -0.233748 0" type="capsule" contype="2" conaffinity="2147483647" solref="0.004"/>
+            <body name="c_knee_horn_rf">
+              <inertial pos="0.02 -0.0484664 0.0451918" quat="0.707107 0 0 0.707107" mass="0.000228973" diaginertia="9.55396e-09 4.8479e-09 4.8479e-09"/>
+            </body>
+            <body name="c_foot_rf">
+              <inertial pos="0.04 -0.04635 0.006" mass="0.00108573" diaginertia="1.56346e-08 1.56346e-08 1.56346e-08"/>
+              <geom name="c_foot_rf/collision0" size="0.006" pos="0.04 -0.04635 0.006" contype="4" conaffinity="2147483647" friction="0.9" solref="0.004"/>
+              <site name="obs/12/contact" pos="0.04 -0.04635 0.006" size="0.006 0.006 0.006" type="box" rgba="0 0 0 0"/>
+            </body>
+          </body>
+        </body>
+      </body>
+      <body name="c_roll_servo_hc">
+        <inertial pos="-0.0341257 -0.00687574 0.0798329" quat="0.00682447 0.707074 -0.00682447 0.707074" mass="0.0134" diaginertia="1.548e-06 1.07291e-06 8.05544e-07"/>
+      </body>
+      <body name="c_rollbr_hc">
+        <inertial pos="-0.0619648 -0.0295396 0.0837942" quat="0.428197 0.27494 -0.6681 0.542861" mass="0.0118873" diaginertia="6.38476e-06 5.79383e-06 2.26615e-06"/>
+        <joint name="roll_hc" pos="-0.048 -0.00425 0.0798329" axis="-1 0 0" limited="true" range="-0.349066 0.349066" armature="2e-05" damping="0.0168564" frictionloss="0.002"/>
+        <geom name="c_rollbr_hc/collision0" size="0.019325 0.01545 0.0086" pos="-0.068325 -0.0442 0.0798329" type="box" contype="2" conaffinity="2147483647" solref="0.004"/>
+        <geom name="c_rollbr_hc/collision1" size="0.00325 0.03395 0.01625" pos="-0.05575 -0.0257 0.0835829" type="box" contype="2" conaffinity="2147483647" solref="0.004"/>
+        <body name="c_roll_horn_hc">
+          <inertial pos="-0.0536336 -0.00425 0.0798329" mass="0.000228973" diaginertia="9.55396e-09 4.8479e-09 4.8479e-09"/>
+        </body>
+        <body name="c_hip_servo_hc">
+          <inertial pos="-0.0689243 -0.0426243 0.0798329" quat="0.495151 0.504802 -0.495151 0.504802" mass="0.0134" diaginertia="1.548e-06 1.07291e-06 8.05544e-07"/>
+        </body>
+        <body name="c_thigh_hc">
+          <inertial pos="-0.0866732 -0.0277408 0.0536387" quat="0.960339 -0.103953 0.257252 0.0276442" mass="0.00931202" diaginertia="5.24569e-06 5.04036e-06 9.56406e-07"/>
+          <joint name="hip_hc" pos="-0.07155 0 0.0798329" axis="0 1 0" limited="true" range="-0.610865 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002"/>
+          <geom name="c_thigh_hc/collision0" size="0.0065 0.02" pos="-0.08155 -0.021 0.0625123" quat="0.965926 0 0.258819 0" type="capsule" contype="2" conaffinity="2147483647" solref="0.004"/>
+          <body name="c_hip_horn_hc">
+            <inertial pos="-0.07155 -0.0231164 0.0798329" quat="0.707107 0 0 0.707107" mass="0.000228973" diaginertia="9.55396e-09 4.8479e-09 4.8479e-09"/>
+          </body>
+          <body name="c_knee_servo_hc">
+            <inertial pos="-0.0928629 -0.0316243 0.0429179" quat="0.676389 0.689573 0.181238 -0.18477" mass="0.0134" diaginertia="1.548e-06 1.07291e-06 8.05544e-07"/>
+          </body>
+          <body name="c_shin_hc">
+            <inertial pos="-0.0869936 -0.00982562 0.0362632" quat="0.688284 -0.168035 -0.162129 0.686836" mass="0.0035985" diaginertia="8.47771e-07 7.55542e-07 1.1631e-07"/>
+            <joint name="knee_hc" pos="-0.09155 0 0.0451918" axis="0 1 0" limited="true" range="-1.0472 0.785398" armature="2e-05" damping="0.0168564" frictionloss="0.002"/>
+            <geom name="c_shin_hc/collision0" size="0.004 0.016" pos="-0.08155 -0.01 0.0255959" quat="0.972297 0 -0.233748 0" type="capsule" contype="2" conaffinity="2147483647" solref="0.004"/>
+            <body name="c_knee_horn_hc">
+              <inertial pos="-0.09155 -0.0121164 0.0451918" quat="0.707107 0 0 0.707107" mass="0.000228973" diaginertia="9.55396e-09 4.8479e-09 4.8479e-09"/>
+            </body>
+            <body name="c_foot_hc">
+              <inertial pos="-0.07155 -0.01 0.006" mass="0.00108573" diaginertia="1.56346e-08 1.56346e-08 1.56346e-08"/>
+              <geom name="c_foot_hc/collision0" size="0.006" pos="-0.07155 -0.01 0.006" contype="4" conaffinity="2147483647" friction="0.9" solref="0.004"/>
+              <site name="obs/17/contact" pos="-0.07155 -0.01 0.006" size="0.006 0.006 0.006" type="box" rgba="0 0 0 0"/>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <contact>
+    <exclude name="c_chassis|c_cover" body1="c_chassis" body2="c_cover"/>
+    <exclude name="c_chassis|c_imu" body1="c_chassis" body2="c_imu"/>
+    <exclude name="c_chassis|c_roll_servo_lf" body1="c_chassis" body2="c_roll_servo_lf"/>
+    <exclude name="c_chassis|c_rollbr_lf" body1="c_chassis" body2="c_rollbr_lf"/>
+    <exclude name="c_chassis|c_roll_servo_rf" body1="c_chassis" body2="c_roll_servo_rf"/>
+    <exclude name="c_chassis|c_rollbr_rf" body1="c_chassis" body2="c_rollbr_rf"/>
+    <exclude name="c_chassis|c_roll_servo_hc" body1="c_chassis" body2="c_roll_servo_hc"/>
+    <exclude name="c_chassis|c_rollbr_hc" body1="c_chassis" body2="c_rollbr_hc"/>
+    <exclude name="c_cover|c_esp" body1="c_cover" body2="c_esp"/>
+    <exclude name="c_body_bolt_0|c_cover" body1="c_cover" body2="c_body_bolt_0"/>
+    <exclude name="c_body_bolt_1|c_cover" body1="c_cover" body2="c_body_bolt_1"/>
+    <exclude name="c_roll_horn_lf|c_rollbr_lf" body1="c_rollbr_lf" body2="c_roll_horn_lf"/>
+    <exclude name="c_hip_servo_lf|c_rollbr_lf" body1="c_rollbr_lf" body2="c_hip_servo_lf"/>
+    <exclude name="c_rollbr_lf|c_thigh_lf" body1="c_rollbr_lf" body2="c_thigh_lf"/>
+    <exclude name="c_hip_horn_lf|c_thigh_lf" body1="c_thigh_lf" body2="c_hip_horn_lf"/>
+    <exclude name="c_knee_servo_lf|c_thigh_lf" body1="c_thigh_lf" body2="c_knee_servo_lf"/>
+    <exclude name="c_shin_lf|c_thigh_lf" body1="c_thigh_lf" body2="c_shin_lf"/>
+    <exclude name="c_knee_horn_lf|c_shin_lf" body1="c_shin_lf" body2="c_knee_horn_lf"/>
+    <exclude name="c_foot_lf|c_shin_lf" body1="c_shin_lf" body2="c_foot_lf"/>
+    <exclude name="c_roll_horn_rf|c_rollbr_rf" body1="c_rollbr_rf" body2="c_roll_horn_rf"/>
+    <exclude name="c_hip_servo_rf|c_rollbr_rf" body1="c_rollbr_rf" body2="c_hip_servo_rf"/>
+    <exclude name="c_rollbr_rf|c_thigh_rf" body1="c_rollbr_rf" body2="c_thigh_rf"/>
+    <exclude name="c_hip_horn_rf|c_thigh_rf" body1="c_thigh_rf" body2="c_hip_horn_rf"/>
+    <exclude name="c_knee_servo_rf|c_thigh_rf" body1="c_thigh_rf" body2="c_knee_servo_rf"/>
+    <exclude name="c_shin_rf|c_thigh_rf" body1="c_thigh_rf" body2="c_shin_rf"/>
+    <exclude name="c_knee_horn_rf|c_shin_rf" body1="c_shin_rf" body2="c_knee_horn_rf"/>
+    <exclude name="c_foot_rf|c_shin_rf" body1="c_shin_rf" body2="c_foot_rf"/>
+    <exclude name="c_roll_horn_hc|c_rollbr_hc" body1="c_rollbr_hc" body2="c_roll_horn_hc"/>
+    <exclude name="c_hip_servo_hc|c_rollbr_hc" body1="c_rollbr_hc" body2="c_hip_servo_hc"/>
+    <exclude name="c_rollbr_hc|c_thigh_hc" body1="c_rollbr_hc" body2="c_thigh_hc"/>
+    <exclude name="c_hip_horn_hc|c_thigh_hc" body1="c_thigh_hc" body2="c_hip_horn_hc"/>
+    <exclude name="c_knee_servo_hc|c_thigh_hc" body1="c_thigh_hc" body2="c_knee_servo_hc"/>
+    <exclude name="c_shin_hc|c_thigh_hc" body1="c_thigh_hc" body2="c_shin_hc"/>
+    <exclude name="c_knee_horn_hc|c_shin_hc" body1="c_shin_hc" body2="c_knee_horn_hc"/>
+    <exclude name="c_foot_hc|c_shin_hc" body1="c_shin_hc" body2="c_foot_hc"/>
+  </contact>
+
+  <actuator>
+    <general name="roll_lf/position" joint="roll_lf" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138"/>
+    <general name="hip_lf/position" joint="hip_lf" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138"/>
+    <general name="knee_lf/position" joint="knee_lf" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138"/>
+    <general name="roll_rf/position" joint="roll_rf" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138"/>
+    <general name="hip_rf/position" joint="hip_rf" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138"/>
+    <general name="knee_rf/position" joint="knee_rf" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138"/>
+    <general name="roll_hc/position" joint="roll_hc" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138"/>
+    <general name="hip_hc/position" joint="hip_hc" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138"/>
+    <general name="knee_hc/position" joint="knee_hc" ctrllimited="false" forcelimited="true" forcerange="-0.17652 0.17652" biastype="affine" gainprm="2.02277" biasprm="0 -2.02277 -0.101138"/>
+  </actuator>
+
+  <sensor>
+    <framequat objtype="xbody" objname="c_imu" name="obs/0"/>
+    <frameangvel objtype="xbody" objname="c_imu" name="obs/1"/>
+    <subtreelinvel body="c_chassis" name="obs/2"/>
+    <framepos objtype="xbody" objname="c_chassis" name="obs/3"/>
+    <jointpos joint="roll_lf" name="obs/4"/>
+    <jointpos joint="hip_lf" name="obs/5"/>
+    <jointpos joint="knee_lf" name="obs/6"/>
+    <touch site="obs/7/contact" name="obs/7"/>
+    <subtreecom body="c_foot_lf" name="obs/8"/>
+    <jointpos joint="roll_rf" name="obs/9"/>
+    <jointpos joint="hip_rf" name="obs/10"/>
+    <jointpos joint="knee_rf" name="obs/11"/>
+    <touch site="obs/12/contact" name="obs/12"/>
+    <subtreecom body="c_foot_rf" name="obs/13"/>
+    <jointpos joint="roll_hc" name="obs/14"/>
+    <jointpos joint="hip_hc" name="obs/15"/>
+    <jointpos joint="knee_hc" name="obs/16"/>
+    <touch site="obs/17/contact" name="obs/17"/>
+    <subtreecom body="c_foot_hc" name="obs/18"/>
+
+    <actuatorfrc actuator="roll_lf/position" name="obs/20"/>
+
+    <actuatorfrc actuator="hip_lf/position" name="obs/22"/>
+
+    <actuatorfrc actuator="knee_lf/position" name="obs/24"/>
+
+    <actuatorfrc actuator="roll_rf/position" name="obs/26"/>
+
+    <actuatorfrc actuator="hip_rf/position" name="obs/28"/>
+
+    <actuatorfrc actuator="knee_rf/position" name="obs/30"/>
+
+    <actuatorfrc actuator="roll_hc/position" name="obs/32"/>
+
+    <actuatorfrc actuator="hip_hc/position" name="obs/34"/>
+
+    <actuatorfrc actuator="knee_hc/position" name="obs/36"/>
+  </sensor>
+
+  <keyframe>
+    <key name="solved"/>
+  </keyframe>
+</mujoco>
